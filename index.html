@@ -177,8 +177,8 @@
     </div>
 
     <!-- Barra Inferior Rápida para Alternar Entre os Heróis da Mesa -->
-    <div class="absolute bottom-3 sm:bottom-5 inset-x-0 z-30 px-3 flex justify-center pointer-events-none">
-      <div id="animHeroSwitcherBar" class="pointer-events-auto leather-panel rounded-full px-2.5 py-1.5 border border-[#c59b27]/50 flex items-center gap-2 overflow-x-auto max-w-[94vw] shadow-2xl"></div>
+    <div class="absolute bottom-2.5 sm:bottom-3.5 inset-x-0 z-30 px-3 flex justify-center pointer-events-none">
+      <div id="animHeroSwitcherBar" class="pointer-events-auto leather-panel rounded-full px-2.5 py-1 border border-[#c59b27]/50 flex items-center gap-2 overflow-x-auto max-w-[94vw] shadow-2xl"></div>
     </div>
 
     <!-- Canvas Transparente em Tela Cheia onde o Personagem Respira sem cortes -->
@@ -1632,10 +1632,10 @@
         const visibleSrcW = srcW * visibleWFrac;
         const visibleSrcH = srcH * visibleHFrac;
 
-        // Enquadramento estilo cena de RPG (como na referência):
-        // O personagem fica no centro sobre o pedestal/chão da sala, com margem confortável no topo e na base
-        const targetVisibleW = isMobile ? width * 0.62 : width * 0.34;
-        const targetVisibleH = isMobile ? height * 0.54 : height * 0.64;
+        // Enquadramento estilo cena de RPG:
+        // O personagem fica no centro sobre o chão de pedra na frente da escadaria (linha de chão ajustada para tocar os pés no piso)
+        const targetVisibleW = isMobile ? width * 0.64 : width * 0.35;
+        const targetVisibleH = isMobile ? height * 0.56 : height * 0.66;
         const fitScale = Math.min(targetVisibleW / visibleSrcW, targetVisibleH / visibleSrcH);
 
         const drawW = srcW * fitScale;
@@ -1645,8 +1645,8 @@
         const visibleCenterNormX = (this.animBounds.minX + this.animBounds.maxX) * 0.5;
         const offsetX = (width * 0.5) - (drawW * visibleCenterNormX);
 
-        // Posiciona os pés exatos do personagem (animBounds.maxY) na linha de chão do cenário
-        const groundLineY = isMobile ? height * 0.83 : height * 0.85;
+        // Posiciona os pés exatos do personagem (animBounds.maxY) diretamente sobre o piso do cenário (logo acima da barra inferior)
+        const groundLineY = isMobile ? height * 0.875 : height * 0.895;
         const footAnchorNormY = this.animBounds.maxY;
         const offsetY = groundLineY - (drawH * footAnchorNormY);
 
