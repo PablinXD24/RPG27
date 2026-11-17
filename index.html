@@ -120,6 +120,16 @@
 <body class="pb-24 md:pb-8">
 
   <!-- ========================================================= -->
+  <!-- TELA INICIAL DE CARREGAMENTO SILENCIOSO (EVITA FLASH LOGIN) -->
+  <!-- ========================================================= -->
+  <div id="bootLoadingScreen" class="fixed inset-0 z-[150] bg-[#120c09] flex flex-col items-center justify-center p-6 transition-opacity duration-200">
+    <div class="w-16 h-16 rounded-full bg-gradient-to-br from-[#9b1c1c] to-[#580c0c] border-2 border-[#e5c158] flex items-center justify-center shadow-2xl animate-pulse mb-4">
+      <span class="font-display text-2xl text-[#f4ead5] font-black">D20</span>
+    </div>
+    <p class="font-heading text-xs uppercase tracking-[0.25em] text-[#e5c158] font-bold">Abrindo o Tomo...</p>
+  </div>
+
+  <!-- ========================================================= -->
   <!-- MODO PROJETOR DEDICADO (?projector=1)                     -->
   <!-- Exibe APENAS o mapa ativo em tela limpa para segunda tela -->
   <!-- ========================================================= -->
@@ -188,7 +198,7 @@
   <!-- ========================================================= -->
   <!-- TELA DE AUTENTICAÇÃO / PORTAL DE ACESSO (FIREBASE AUTH)   -->
   <!-- ========================================================= -->
-  <div id="authScreen" class="min-h-screen flex items-center justify-center p-4">
+  <div id="authScreen" class="hidden min-h-screen flex items-center justify-center p-4">
     <div class="leather-panel w-full max-w-md rounded-2xl p-6 sm:p-8 border-2 border-[#c59b27]/60 shadow-2xl relative overflow-hidden">
       <div class="text-center mb-6">
         <div class="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-[#9b1c1c] to-[#580c0c] border-2 border-[#e5c158] flex items-center justify-center shadow-lg mb-3">
@@ -1119,6 +1129,8 @@
       { key: 'survival', label: 'Sobrevivência', attr: 'wis' }
     ];
 
+    const SESSION_STATE_KEY = 'tomo_dnd_ui_state_v1';
+
     // =========================================================
     // CONTROLADOR PRINCIPAL DA APLICAÇÃO (100% REALTIME DB)
     // =========================================================
@@ -1126,6 +1138,9 @@
       constructor() {
         const params = new URLSearchParams(window.location.search);
         this.isProjectorMode = params.get('projector') === '1';
+
+        this.savedUiState = this.loadUiState();
+        this.initialRestoreDone = false;
 
         this.authMode = 'login';
         this.pendingRegAvatarDataUrl = null;
@@ -1136,8 +1151,10 @@
         this.compendium = [];
         this.maps = [];
         this.activeMapState = { activeMapId: null, showGrid: false };
-        this.activeCharId = null;
-        this.rollMode = 'norm';
+        this.activeCharId = this.savedUiState.activeCharId || null;
+        this.currentView = this.savedUiState.view || 'sheet';
+        this.currentSubTab = this.savedUiState.subTab || 'combat';
+        this.rollMode = this.savedUiState.rollMode || 'norm';
         this.rollHistory = [];
 
         this.unsubUsers = null;
@@ -1166,7 +1183,13 @@
         this.animLastAvatar = null;
         this.currentBgScenarioSrc = '';
 
+        // Aplica modo de rolagem salvo
+        if (this.rollMode !== 'norm') {
+          this.setRollMode(this.rollMode, false);
+        }
+
         if (this.isProjectorMode) {
+          this.hideBootLoader();
           this.initProjectorView();
         }
 
@@ -1175,6 +1198,69 @@
 
         // Inicia o motor de animação no background
         requestAnimationFrame((n) => this.renderAnimFrame(n));
+      }
+
+      // ---------------------------------------------------------
+      // PERSISTÊNCIA DE ESTADO DE NAVEGAÇÃO (EVITA RESET AO RECARREGAR)
+      // ---------------------------------------------------------
+      loadUiState() {
+        try {
+          const raw = localStorage.getItem(SESSION_STATE_KEY);
+          return raw ? JSON.parse(raw) : {};
+        } catch (e) {
+          return {};
+        }
+      }
+
+      saveUiState(partial = {}) {
+        try {
+          this.savedUiState = {
+            ...this.savedUiState,
+            activeCharId: this.activeCharId,
+            view: this.currentView,
+            subTab: this.currentSubTab,
+            isAnimPopOpen: this.isAnimPopOpen,
+            rollMode: this.rollMode,
+            ...partial
+          };
+          localStorage.setItem(SESSION_STATE_KEY, JSON.stringify(this.savedUiState));
+        } catch (e) {}
+      }
+
+      hideBootLoader() {
+        const loader = document.getElementById('bootLoadingScreen');
+        if (loader && !loader.classList.contains('hidden')) {
+          loader.classList.add('hidden');
+        }
+      }
+
+      restoreSavedNavigationState() {
+        if (this.initialRestoreDone) return;
+        this.initialRestoreDone = true;
+
+        // Restaura visão principal (Ficha ou Livro da Comunidade)
+        if (this.savedUiState.view === 'compendium') {
+          this.switchView('compendium', false);
+        } else {
+          this.switchView('sheet', false);
+        }
+
+        // Restaura sub-aba da ficha (Combate, Magias, Inventário, Crônica)
+        if (this.savedUiState.subTab) {
+          this.switchSubTab(this.savedUiState.subTab, false);
+        }
+
+        // Restaura tela inteira dos Personagens Animados se estava aberta antes de recarregar
+        if (this.savedUiState.isAnimPopOpen) {
+          this.openAnimatedPop(false);
+        }
+
+        // Restaura posição vertical do scroll
+        if (typeof this.savedUiState.scrollY === 'number' && this.savedUiState.scrollY > 0) {
+          requestAnimationFrame(() => {
+            window.scrollTo(0, this.savedUiState.scrollY);
+          });
+        }
       }
 
       // ---------------------------------------------------------
@@ -1190,6 +1276,11 @@
         window.addEventListener('keydown', (e) => {
           if (e.key === 'Escape' && this.isAnimPopOpen) {
             this.closeAnimatedPop();
+          }
+        });
+        window.addEventListener('beforeunload', () => {
+          if (this.currentUser) {
+            this.saveUiState({ scrollY: window.scrollY });
           }
         });
       }
@@ -1242,11 +1333,13 @@
         }).join('');
       }
 
-      openAnimatedPop() {
+      openAnimatedPop(persist = true) {
         const char = this.getActiveChar();
         if (!char) return;
 
         this.isAnimPopOpen = true;
+        if (persist) this.saveUiState({ isAnimPopOpen: true });
+
         const overlay = document.getElementById('animatedPopOverlay');
         overlay.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
@@ -1267,8 +1360,10 @@
         this.resizeAnimCanvas();
       }
 
-      closeAnimatedPop() {
+      closeAnimatedPop(persist = true) {
         this.isAnimPopOpen = false;
+        if (persist) this.saveUiState({ isAnimPopOpen: false });
+
         const overlay = document.getElementById('animatedPopOverlay');
         overlay.classList.add('hidden');
         document.body.style.overflow = '';
@@ -1364,8 +1459,6 @@
 
       // ---------------------------------------------------------
       // COMPRESSÃO DE IMAGENS EM CANVAS
-      // Avatares de usuário: JPEG quadrado;
-      // Personagem: PNG transparente (sem fundo preto e sem corte na cabeça/pés)
       // ---------------------------------------------------------
       compressImageToDataUrl(file, targetSize = 220, quality = 0.8) {
         return new Promise((resolve, reject) => {
@@ -1418,7 +1511,6 @@
               const ctx = canvas.getContext('2d');
               ctx.clearRect(0, 0, w, h);
               ctx.drawImage(img, 0, 0, w, h);
-              // Exporta como image/png para preservar 100% do canal alfa transparente e proporção inteira
               resolve(canvas.toDataURL('image/png'));
             };
             img.src = e.target.result;
@@ -1473,7 +1565,6 @@
           ctx.clearRect(0, 0, c.width, c.height);
           ctx.drawImage(img, 0, 0);
 
-          // Remove fundo preto sólido caso o PNG tenha sido salvo sem alfa
           this.stripSolidBlackBackgroundIfNeeded(c);
 
           this.animActiveImage = c;
@@ -1489,7 +1580,6 @@
         const imgData = ctx.getImageData(0, 0, w, h);
         const data = imgData.data;
 
-        // Verifica se os 4 cantos já são transparentes
         const corners = [
           0,
           (w - 1) * 4,
@@ -1507,10 +1597,8 @@
           }
         }
 
-        // Se já possui transparência real (PNG com alfa), mantém intacto
         if (hasTransparentCorner || !hasDarkOpaqueCorner) return;
 
-        // Flood-fill a partir das bordas para tornar o fundo preto transparente sem afetar o personagem
         const visited = new Uint8Array(w * h);
         const stack = [];
 
@@ -1623,7 +1711,6 @@
 
         const isMobile = this.isMobileDeviceViewport();
 
-        // Calcula o tamanho real do personagem (bounding box visível) para garantir que nem a cabeça nem os pés sejam cortados
         const srcW = this.animActiveImage.width;
         const srcH = this.animActiveImage.height;
 
@@ -1632,8 +1719,6 @@
         const visibleSrcW = srcW * visibleWFrac;
         const visibleSrcH = srcH * visibleHFrac;
 
-        // Enquadramento estilo cena de RPG:
-        // O personagem fica no centro sobre o chão de pedra na frente da escadaria (linha de chão ajustada para tocar os pés no piso)
         const targetVisibleW = isMobile ? width * 0.64 : width * 0.35;
         const targetVisibleH = isMobile ? height * 0.56 : height * 0.66;
         const fitScale = Math.min(targetVisibleW / visibleSrcW, targetVisibleH / visibleSrcH);
@@ -1641,11 +1726,10 @@
         const drawW = srcW * fitScale;
         const drawH = srcH * fitScale;
 
-        // Centraliza horizontalmente com base no centro visual do personagem
         const visibleCenterNormX = (this.animBounds.minX + this.animBounds.maxX) * 0.5;
         const offsetX = (width * 0.5) - (drawW * visibleCenterNormX);
 
-        // Posiciona os pés exatos do personagem (animBounds.maxY) diretamente sobre o piso do cenário (logo acima da barra inferior)
+        // Linha de chão calibrada exatamente no piso do cenário
         const groundLineY = isMobile ? height * 0.875 : height * 0.895;
         const footAnchorNormY = this.animBounds.maxY;
         const offsetY = groundLineY - (drawH * footAnchorNormY);
@@ -1812,7 +1896,10 @@
       }
 
       async logoutUser() {
-        if (this.isAnimPopOpen) this.closeAnimatedPop();
+        if (this.isAnimPopOpen) this.closeAnimatedPop(false);
+        localStorage.removeItem(SESSION_STATE_KEY);
+        this.savedUiState = {};
+        this.initialRestoreDone = false;
         if (this.unsubUsers) this.unsubUsers();
         if (this.unsubCharacters) this.unsubCharacters();
         if (this.unsubCompendium) this.unsubCompendium();
@@ -1826,6 +1913,7 @@
           if (!user) {
             this.currentUser = null;
             this.userProfile = null;
+            this.hideBootLoader();
             if (!this.isProjectorMode) {
               document.getElementById('authScreen').classList.remove('hidden');
               document.getElementById('mainAppContainer').classList.add('hidden');
@@ -1836,6 +1924,7 @@
           this.currentUser = user;
 
           if (this.isProjectorMode) {
+            this.hideBootLoader();
             document.getElementById('authScreen').classList.add('hidden');
             document.getElementById('mainAppContainer').classList.add('hidden');
             document.getElementById('projectorScreen').classList.remove('hidden');
@@ -1845,6 +1934,7 @@
 
           document.getElementById('authScreen').classList.add('hidden');
           document.getElementById('mainAppContainer').classList.remove('hidden');
+          this.hideBootLoader();
 
           const userRef = ref(db, `users/${user.uid}`);
           try {
@@ -2150,8 +2240,10 @@
           if (!this.activeCharId || !this.characters.some(c => c.id === this.activeCharId)) {
             const ownChar = this.characters.find(c => c.ownerId === this.currentUser.uid);
             this.activeCharId = ownChar ? ownChar.id : this.characters[0].id;
+            this.saveUiState({ activeCharId: this.activeCharId });
           }
           this.renderAll();
+          this.restoreSavedNavigationState();
         }, (error) => {
           console.error("Erro na escuta Realtime DB (characters):", error);
           document.getElementById('syncStatusLabel').textContent = 'Erro de Permissão';
@@ -2238,7 +2330,6 @@
         if (!file) return;
 
         try {
-          // Salva como PNG transparente preservando proporção original (cabeça e pés inteiros)
           const dataUrl = await this.processCharacterPngToDataUrl(file, 720);
           char.avatarUrl = dataUrl;
           document.getElementById('charAvatarImg').src = dataUrl;
@@ -2259,7 +2350,10 @@
       calcProfBonus(level) { return Math.ceil((level || 1) / 4) + 1; }
 
       // Navegação
-      switchView(view) {
+      switchView(view, persist = true) {
+        this.currentView = view;
+        if (persist) this.saveUiState({ view });
+
         document.getElementById('sheetView').classList.toggle('hidden', view !== 'sheet');
         document.getElementById('compendiumView').classList.toggle('hidden', view !== 'compendium');
         document.getElementById('navSheetBtn').className = view === 'sheet'
@@ -2290,7 +2384,10 @@
         }
       }
 
-      switchSubTab(tab) {
+      switchSubTab(tab, persist = true) {
+        this.currentSubTab = tab;
+        if (persist) this.saveUiState({ subTab: tab });
+
         ['combat', 'spells', 'inventory', 'bio'].forEach(t => {
           const panel = document.getElementById(`panel-${t}`);
           if (panel) {
@@ -2425,13 +2522,16 @@
       // ---------------------------------------------------------
       // SISTEMA DE ROLAGEM DE DADOS & HISTÓRICO
       // ---------------------------------------------------------
-      setRollMode(mode) {
+      setRollMode(mode, persist = true) {
         this.rollMode = mode;
+        if (persist) this.saveUiState({ rollMode: mode });
         ['dis', 'norm', 'adv'].forEach(m => {
           const btn = document.getElementById(`mode${m.charAt(0).toUpperCase() + m.slice(1)}Btn`);
-          btn.className = m === mode
-            ? 'h-8 px-2.5 rounded text-[11px] font-heading uppercase font-bold bg-[#c59b27] text-[#120c09] transition'
-            : 'h-8 px-2.5 rounded text-[11px] font-heading uppercase font-bold text-[#d6c29f] hover:text-white transition';
+          if (btn) {
+            btn.className = m === mode
+              ? 'h-8 px-2.5 rounded text-[11px] font-heading uppercase font-bold bg-[#c59b27] text-[#120c09] transition'
+              : 'h-8 px-2.5 rounded text-[11px] font-heading uppercase font-bold text-[#d6c29f] hover:text-white transition';
+          }
         });
       }
 
@@ -2558,6 +2658,7 @@
       // ---------------------------------------------------------
       selectCharacter(id) {
         this.activeCharId = id;
+        this.saveUiState({ activeCharId: id });
         this.renderAll();
         if (this.isAnimPopOpen) {
           this.renderAnimHeroSwitcher();
@@ -2583,6 +2684,7 @@
         try {
           await set(ref(db, `characters/${newId}`), newChar);
           this.activeCharId = newId;
+          this.saveUiState({ activeCharId: newId });
         } catch (err) {
           alert("Erro ao criar ficha no Realtime Database: " + err.message);
         }
