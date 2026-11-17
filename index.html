@@ -124,7 +124,7 @@
   <!-- Exibe APENAS o mapa ativo em tela limpa para segunda tela -->
   <!-- ========================================================= -->
   <div id="projectorScreen" class="hidden fixed inset-0 z-[100] bg-[#070504] flex flex-col items-center justify-center select-none overflow-hidden">
-    <!-- Barra discreta flutuante (some automaticamente se não houver interação) -->
+    <!-- Barra discreta flutuante -->
     <div id="projectorControls" class="absolute top-3 right-3 z-20 flex items-center gap-2 bg-black/75 backdrop-blur-md border border-[#c59b27]/40 rounded-full px-3 py-1.5 opacity-80 hover:opacity-100 transition">
       <span id="projectorMapTitle" class="text-xs font-heading text-[#e5c158] px-2 max-w-[200px] truncate">Aguardando Mapa...</span>
       <button onclick="app.adjustProjectorZoom(-0.15)" class="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-[#f4ead5] font-mono-num text-sm flex items-center justify-center" title="Reduzir Zoom">-</button>
@@ -150,7 +150,7 @@
   </div>
 
   <!-- ========================================================= -->
-  <!-- POPUP TELA INTEIRA: PERSONAGEM ANIMADO NO CENÁRIO         -->
+  <!-- POPUP TELA INTEIRA: PERSONAGENS ANIMADOS NO CENÁRIO       -->
   <!-- Responsivo para Mobile (cenário 1) e PC (cenário padrão)  -->
   <!-- ========================================================= -->
   <div id="animatedPopOverlay" class="fixed inset-0 z-[120] hidden bg-black overflow-hidden select-none">
@@ -158,25 +158,30 @@
     <video id="animatedBgVideo" autoplay loop muted playsinline class="absolute inset-0 w-full h-full object-cover pointer-events-none"></video>
 
     <!-- Vinheta atmosférica sutil para integrar o herói ao cenário -->
-    <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-black/45 pointer-events-none"></div>
+    <div class="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/35 pointer-events-none"></div>
 
-    <!-- Barra Superior Flutuante (Nome do Herói + Botão Fechar) -->
-    <div class="absolute top-0 inset-x-0 z-30 p-3 sm:p-5 flex items-center justify-between gap-3 pointer-events-none">
-      <div class="pointer-events-auto leather-panel rounded-full px-4 py-2 border border-[#e5c158]/60 flex items-center gap-2.5 shadow-xl max-w-[75vw]">
+    <!-- Barra Superior Flutuante (Seletor de Heróis + Botão Fechar) -->
+    <div class="absolute top-0 inset-x-0 z-30 p-3 sm:p-5 flex items-center justify-between gap-2 sm:gap-3 pointer-events-none">
+      <div class="pointer-events-auto leather-panel rounded-full px-3.5 py-2 border border-[#e5c158]/60 flex items-center gap-2.5 shadow-xl max-w-[65vw] sm:max-w-md">
         <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
         <div class="min-w-0">
-          <h3 id="animPopCharName" class="font-display text-sm sm:text-base font-black text-[#e5c158] truncate leading-tight">Herói</h3>
+          <h3 id="animPopCharName" class="font-display text-xs sm:text-base font-black text-[#e5c158] truncate leading-tight">Herói</h3>
           <p id="animPopCharSub" class="text-[10px] sm:text-xs font-heading uppercase tracking-wider text-[#d6c29f] truncate leading-tight">Em Cena</p>
         </div>
       </div>
 
-      <button onclick="app.closeAnimatedPop()" class="pointer-events-auto h-11 px-4 rounded-full bg-[#8b1e1e]/90 hover:bg-[#a62424] active:scale-95 border-2 border-[#e5c158] text-[#f4ead5] font-heading text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-2xl transition cursor-pointer shrink-0">
+      <button onclick="app.closeAnimatedPop()" class="pointer-events-auto h-11 px-4 rounded-full bg-[#8b1e1e]/95 hover:bg-[#a62424] active:scale-95 border-2 border-[#e5c158] text-[#f4ead5] font-heading text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-2xl transition cursor-pointer shrink-0">
         <span>✕</span>
         <span>Fechar</span>
       </button>
     </div>
 
-    <!-- Canvas Transparente em Tela Cheia onde o Personagem Respira -->
+    <!-- Barra Inferior Rápida para Alternar Entre os Heróis da Mesa -->
+    <div class="absolute bottom-3 sm:bottom-5 inset-x-0 z-30 px-3 flex justify-center pointer-events-none">
+      <div id="animHeroSwitcherBar" class="pointer-events-auto leather-panel rounded-full px-2.5 py-1.5 border border-[#c59b27]/50 flex items-center gap-2 overflow-x-auto max-w-[94vw] shadow-2xl"></div>
+    </div>
+
+    <!-- Canvas Transparente em Tela Cheia onde o Personagem Respira sem cortes -->
     <canvas id="animatedCharCanvas" class="absolute inset-0 w-full h-full z-20 pointer-events-none"></canvas>
   </div>
 
@@ -288,14 +293,18 @@
           </div>
         </div>
 
-        <!-- Controles Centrais (Desktop) -->
+        <!-- Controles Centrais (Desktop) — Ficha do Herói | Livro da Comunidade | Personagens Animados -->
         <div class="hidden md:flex items-center gap-2 shrink-0">
-          <div class="flex bg-black/40 p-1 rounded-lg border border-[#c59b27]/30">
+          <div class="flex bg-black/40 p-1 rounded-lg border border-[#c59b27]/30 gap-1">
             <button id="navSheetBtn" onclick="app.switchView('sheet')" class="h-9 px-3.5 rounded-md font-heading text-xs font-bold tracking-wider uppercase transition bg-[#8b1e1e] text-[#f4ead5] border border-[#e5c158]/50">
               Ficha do Herói
             </button>
             <button id="navCompendiumBtn" onclick="app.switchView('compendium')" class="h-9 px-3.5 rounded-md font-heading text-xs font-bold tracking-wider uppercase transition text-[#d6c29f] hover:text-white">
               Livro da Comunidade
+            </button>
+            <button id="navAnimBtn" onclick="app.openAnimatedPop()" class="h-9 px-3.5 rounded-md font-heading text-xs font-bold tracking-wider uppercase transition text-[#e5c158] hover:bg-[#8b1e1e]/40 border border-[#c59b27]/40 flex items-center gap-1.5 cursor-pointer">
+              <span>🌬️</span>
+              <span>Personagens Animados</span>
             </button>
           </div>
 
@@ -446,9 +455,9 @@
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-[#b89b6a]/60">
             <div class="flex items-center gap-3.5 min-w-0">
               <div class="relative shrink-0 group">
-                <img id="charAvatarImg" src="https://api.dicebear.com/7.x/adventurer/svg?seed=Heroi" alt="Retrato do Personagem" class="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover border-2 border-[#8b1e1e] shadow-md bg-[#e6d5b8]" />
-                <label id="charAvatarUploadLabel" class="absolute inset-0 bg-black/65 opacity-0 group-hover:opacity-100 rounded-xl flex flex-col items-center justify-center text-[#f4ead5] text-[10px] font-heading uppercase font-bold cursor-pointer transition" title="Subir imagem do personagem">
-                  <span>📷 Foto</span>
+                <img id="charAvatarImg" src="https://api.dicebear.com/7.x/adventurer/svg?seed=Heroi" alt="Retrato do Personagem" class="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-contain border-2 border-[#8b1e1e] shadow-md bg-[#e6d5b8]" />
+                <label id="charAvatarUploadLabel" class="absolute inset-0 bg-black/65 opacity-0 group-hover:opacity-100 rounded-xl flex flex-col items-center justify-center text-[#f4ead5] text-[10px] font-heading uppercase font-bold cursor-pointer transition" title="Subir imagem PNG do personagem">
+                  <span>📷 PNG</span>
                   <input id="charAvatarInput" type="file" accept="image/*" onchange="app.uploadCharacterAvatar(event)" class="hidden" />
                 </label>
               </div>
@@ -465,7 +474,7 @@
                   class="font-display text-xl sm:text-3xl font-black text-[#2b1d0e] bg-transparent border-b border-dashed border-[#8b5a2b]/50 focus:border-[#8b1e1e] outline-none w-full mt-1" />
                 <div id="charAvatarUploadBar" class="mt-2">
                   <label for="charAvatarInput" class="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-[#e6d5b8] hover:bg-[#d8c29d] active:scale-95 border border-[#8b5a2b]/60 text-[#2b1d0e] font-heading text-[11px] font-bold uppercase tracking-wider cursor-pointer transition">
-                    <span>📷 Subir Imagem do Personagem</span>
+                    <span>📷 Subir Imagem PNG do Personagem</span>
                   </label>
                 </div>
               </div>
@@ -630,14 +639,13 @@
           </div>
         </div>
 
-        <!-- ABAS INTERNAS DA FICHA: COMBATE, MAGIAS, INVENTÁRIO, HISTÓRIA E ANIMAÇÃO -->
+        <!-- ABAS INTERNAS DA FICHA: COMBATE, MAGIAS, INVENTÁRIO, HISTÓRIA -->
         <div class="parchment-page rounded-xl p-4 sm:p-6">
-          <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 border-b border-[#b89b6a] pb-3 mb-4">
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 border-b border-[#b89b6a] pb-3 mb-4">
             <button onclick="app.switchSubTab('combat')" id="subTab-combat" class="subtab-btn min-h-[42px] px-3 py-2 rounded-lg font-heading text-[11px] font-bold uppercase tracking-wider bg-[#8b1e1e] text-[#f4ead5] transition">⚔️ Ataques & Poderes</button>
             <button onclick="app.switchSubTab('spells')" id="subTab-spells" class="subtab-btn min-h-[42px] px-3 py-2 rounded-lg font-heading text-[11px] font-bold uppercase tracking-wider bg-[#e6d5b8] text-[#2b1d0e] transition">✨ Grimório & Magias</button>
             <button onclick="app.switchSubTab('inventory')" id="subTab-inventory" class="subtab-btn min-h-[42px] px-3 py-2 rounded-lg font-heading text-[11px] font-bold uppercase tracking-wider bg-[#e6d5b8] text-[#2b1d0e] transition">🎒 Inventário & Ouro</button>
             <button onclick="app.switchSubTab('bio')" id="subTab-bio" class="subtab-btn min-h-[42px] px-3 py-2 rounded-lg font-heading text-[11px] font-bold uppercase tracking-wider bg-[#e6d5b8] text-[#2b1d0e] transition">📖 Crônica & Traços</button>
-            <button onclick="app.openAnimatedPop()" id="subTab-anim" class="subtab-btn min-h-[42px] px-3 py-2 rounded-lg font-heading text-[11px] font-bold uppercase tracking-wider bg-[#2b1d0e] text-[#e5c158] border border-[#c59b27] hover:bg-[#3d2914] transition cursor-pointer">🌬️ Animado</button>
           </div>
 
           <!-- SUB-ABA 1: ATAQUES E CARACTERÍSTICAS -->
@@ -789,22 +797,26 @@
     <!-- BARRA DE NAVEGAÇÃO INFERIOR MOBILE (THUMB ZONE)           -->
     <!-- ========================================================= -->
     <nav class="md:hidden fixed bottom-0 inset-x-0 z-40 leather-panel border-t-2 border-[#c59b27]/60 safe-bottom">
-      <div class="grid grid-cols-4 h-16">
+      <div class="grid grid-cols-5 h-16">
         <button onclick="app.mobileNav('party')" id="mobNav-party" class="flex flex-col items-center justify-center gap-0.5 text-[#d6c29f] hover:text-[#e5c158]">
           <span class="text-lg">🛡️</span>
-          <span class="text-[10px] font-heading uppercase font-bold">Mesa</span>
+          <span class="text-[9px] font-heading uppercase font-bold">Mesa</span>
         </button>
         <button onclick="app.mobileNav('sheet')" id="mobNav-sheet" class="flex flex-col items-center justify-center gap-0.5 text-[#e5c158] bg-[#8b1e1e]/30 border-t-2 border-[#e5c158]">
           <span class="text-lg">📜</span>
-          <span class="text-[10px] font-heading uppercase font-bold">Ficha</span>
+          <span class="text-[9px] font-heading uppercase font-bold">Ficha</span>
         </button>
         <button onclick="app.mobileNav('compendium')" id="mobNav-compendium" class="flex flex-col items-center justify-center gap-0.5 text-[#d6c29f] hover:text-[#e5c158]">
           <span class="text-lg">📖</span>
-          <span class="text-[10px] font-heading uppercase font-bold">Livro</span>
+          <span class="text-[9px] font-heading uppercase font-bold">Livro</span>
+        </button>
+        <button onclick="app.openAnimatedPop()" id="mobNav-anim" class="flex flex-col items-center justify-center gap-0.5 text-[#e5c158] hover:bg-[#8b1e1e]/30">
+          <span class="text-lg">🌬️</span>
+          <span class="text-[9px] font-heading uppercase font-bold">Animados</span>
         </button>
         <button onclick="app.toggleRollHistory()" class="flex flex-col items-center justify-center gap-0.5 text-[#d6c29f] hover:text-[#e5c158]">
           <span class="text-lg">🎲</span>
-          <span class="text-[10px] font-heading uppercase font-bold">Rolagens</span>
+          <span class="text-[9px] font-heading uppercase font-bold">Rolagens</span>
         </button>
       </div>
     </nav>
@@ -1149,6 +1161,7 @@
         this.animLastTime = 0;
         this.animActiveImage = null;
         this.animGuides = null;
+        this.animBounds = { minX: 0, maxX: 1, minY: 0, maxY: 1 };
         this.animLastCharId = null;
         this.animLastAvatar = null;
         this.currentBgScenarioSrc = '';
@@ -1214,6 +1227,21 @@
         }
       }
 
+      renderAnimHeroSwitcher() {
+        const bar = document.getElementById('animHeroSwitcherBar');
+        if (!bar) return;
+        bar.innerHTML = this.characters.map(c => {
+          const isActive = c.id === this.activeCharId;
+          const avatar = c.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(c.name)}`;
+          return `
+            <button onclick="app.selectCharacter('${c.id}')" class="flex items-center gap-2 px-3 py-1 rounded-full transition shrink-0 cursor-pointer ${isActive ? 'bg-[#8b1e1e] border border-[#e5c158] text-[#f4ead5]' : 'bg-black/45 hover:bg-black/70 border border-[#c59b27]/30 text-[#d6c29f]'}">
+              <img src="${avatar}" alt="${c.name}" class="w-6 h-6 rounded-full object-contain bg-black/40 border border-[#e5c158]/60" />
+              <span class="font-heading text-xs font-bold truncate max-w-[110px]">${c.name}</span>
+            </button>
+          `;
+        }).join('');
+      }
+
       openAnimatedPop() {
         const char = this.getActiveChar();
         if (!char) return;
@@ -1225,6 +1253,8 @@
 
         document.getElementById('animPopCharName').textContent = char.name || 'Herói';
         document.getElementById('animPopCharSub').textContent = `${char.race || ''} • ${char.class || ''} (Nv ${char.level || 1})`;
+
+        this.renderAnimHeroSwitcher();
 
         const currentAvatarUrl = char.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(char.name)}`;
         if (this.animLastCharId !== char.id || this.animLastAvatar !== currentAvatarUrl || !this.animActiveImage) {
@@ -1333,7 +1363,9 @@
       }
 
       // ---------------------------------------------------------
-      // COMPRESSÃO DE IMAGENS EM CANVAS (AVATAR E MAPAS)
+      // COMPRESSÃO DE IMAGENS EM CANVAS
+      // Avatares de usuário: JPEG quadrado;
+      // Personagem: PNG transparente (sem fundo preto e sem corte na cabeça/pés)
       // ---------------------------------------------------------
       compressImageToDataUrl(file, targetSize = 220, quality = 0.8) {
         return new Promise((resolve, reject) => {
@@ -1354,6 +1386,40 @@
 
               ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, targetSize, targetSize);
               resolve(canvas.toDataURL('image/jpeg', quality));
+            };
+            img.src = e.target.result;
+          };
+          reader.readAsDataURL(file);
+        });
+      }
+
+      processCharacterPngToDataUrl(file, maxDimension = 720) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onerror = () => reject(new Error("Falha ao ler arquivo PNG do personagem."));
+          reader.onload = (e) => {
+            const img = new Image();
+            img.onerror = () => reject(new Error("Formato de imagem inválido."));
+            img.onload = () => {
+              let w = img.width;
+              let h = img.height;
+              if (w > maxDimension || h > maxDimension) {
+                if (w >= h) {
+                  h = Math.round((h * maxDimension) / w);
+                  w = maxDimension;
+                } else {
+                  w = Math.round((w * maxDimension) / h);
+                  h = maxDimension;
+                }
+              }
+              const canvas = document.createElement('canvas');
+              canvas.width = w;
+              canvas.height = h;
+              const ctx = canvas.getContext('2d');
+              ctx.clearRect(0, 0, w, h);
+              ctx.drawImage(img, 0, 0, w, h);
+              // Exporta como image/png para preservar 100% do canal alfa transparente e proporção inteira
+              resolve(canvas.toDataURL('image/png'));
             };
             img.src = e.target.result;
           };
@@ -1394,7 +1460,7 @@
       }
 
       // ---------------------------------------------------------
-      // MOTOR DE ANIMAÇÃO 2D COM ENQUADRAMENTO RESPONSIVO (MOBILE/PC)
+      // MOTOR DE ANIMAÇÃO 2D SEM FUNDO PRETO E SEM CORTES (CABEÇA/PÉS)
       // ---------------------------------------------------------
       loadAnimationImage(src) {
         const img = new Image();
@@ -1404,21 +1470,94 @@
           c.width = img.width;
           c.height = img.height;
           const ctx = c.getContext('2d');
+          ctx.clearRect(0, 0, c.width, c.height);
           ctx.drawImage(img, 0, 0);
+
+          // Remove fundo preto sólido caso o PNG tenha sido salvo sem alfa
+          this.stripSolidBlackBackgroundIfNeeded(c);
+
           this.animActiveImage = c;
           this.autoFitGuidesAnim(c);
         };
         img.src = src;
       }
 
+      stripSolidBlackBackgroundIfNeeded(srcCanvas) {
+        const w = srcCanvas.width;
+        const h = srcCanvas.height;
+        const ctx = srcCanvas.getContext('2d');
+        const imgData = ctx.getImageData(0, 0, w, h);
+        const data = imgData.data;
+
+        // Verifica se os 4 cantos já são transparentes
+        const corners = [
+          0,
+          (w - 1) * 4,
+          ((h - 1) * w) * 4,
+          ((h - 1) * w + (w - 1)) * 4
+        ];
+
+        let hasTransparentCorner = false;
+        let hasDarkOpaqueCorner = false;
+        for (const idx of corners) {
+          if (data[idx + 3] < 40) {
+            hasTransparentCorner = true;
+          } else if (data[idx] < 18 && data[idx + 1] < 18 && data[idx + 2] < 18) {
+            hasDarkOpaqueCorner = true;
+          }
+        }
+
+        // Se já possui transparência real (PNG com alfa), mantém intacto
+        if (hasTransparentCorner || !hasDarkOpaqueCorner) return;
+
+        // Flood-fill a partir das bordas para tornar o fundo preto transparente sem afetar o personagem
+        const visited = new Uint8Array(w * h);
+        const stack = [];
+
+        const isNearBlack = (pixelIdx) => {
+          const o = pixelIdx * 4;
+          return data[o] < 24 && data[o + 1] < 24 && data[o + 2] < 24;
+        };
+
+        for (let x = 0; x < w; x++) {
+          stack.push(x);
+          stack.push((h - 1) * w + x);
+        }
+        for (let y = 0; y < h; y++) {
+          stack.push(y * w);
+          stack.push(y * w + (w - 1));
+        }
+
+        while (stack.length > 0) {
+          const idx = stack.pop();
+          if (visited[idx]) continue;
+          visited[idx] = 1;
+
+          if (!isNearBlack(idx)) continue;
+
+          data[idx * 4 + 3] = 0;
+
+          const x = idx % w;
+          const y = (idx - x) / w;
+          if (x > 0) stack.push(idx - 1);
+          if (x < w - 1) stack.push(idx + 1);
+          if (y > 0) stack.push(idx - w);
+          if (y < h - 1) stack.push(idx + w);
+        }
+
+        ctx.putImageData(imgData, 0, 0);
+      }
+
       autoFitGuidesAnim(srcCanvas) {
         const w = srcCanvas.width;
         const h = srcCanvas.height;
         const imgData = srcCanvas.getContext('2d').getImageData(0, 0, w, h).data;
-        let minY = h, maxY = 0, found = false;
+        let minX = w, maxX = 0, minY = h, maxY = 0, found = false;
         for (let y = 0; y < h; y++) {
           for (let x = 0; x < w; x++) {
-            if (imgData[(y * w + x) * 4 + 3] > 30) {
+            if (imgData[(y * w + x) * 4 + 3] > 20) {
+              if (x < minX) minX = x;
+              if (x > maxX) maxX = x;
               if (y < minY) minY = y;
               if (y > maxY) maxY = y;
               found = true;
@@ -1426,15 +1565,24 @@
           }
         }
         if (!found) {
-          this.animGuides = { neckY: 0.28, chestY: 0.40, waistY: 0.60 };
+          this.animBounds = { minX: 0, maxX: 1, minY: 0, maxY: 1 };
+          this.animGuides = { neckY: 0.28, chestY: 0.40, waistY: 0.60, footY: 0.96 };
           return;
         }
         const top = minY / h;
-        const charH = (maxY - minY) / h;
+        const bottom = maxY / h;
+        const charH = Math.max(0.1, bottom - top);
+        this.animBounds = {
+          minX: minX / w,
+          maxX: maxX / w,
+          minY: top,
+          maxY: bottom
+        };
         this.animGuides = {
-          neckY: Math.min(0.85, top + charH * 0.28),
-          chestY: Math.min(0.88, top + charH * 0.40),
-          waistY: Math.min(0.92, top + charH * 0.60)
+          neckY: Math.min(bottom - 0.05, top + charH * 0.28),
+          chestY: Math.min(bottom - 0.04, top + charH * 0.42),
+          waistY: Math.min(bottom - 0.02, top + charH * 0.60),
+          footY: bottom
         };
       }
 
@@ -1475,51 +1623,63 @@
 
         const isMobile = this.isMobileDeviceViewport();
 
-        // Enquadramento responsivo:
-        // Mobile: personagem ocupa ~58% da altura / ~78% da largura e repousa na linha de chão inferior (88% da tela)
-        // PC: personagem ocupa ~72% da altura da tela e repousa bem enquadrado no centro-base (90% da tela)
+        // Calcula o tamanho real do personagem (bounding box visível) para garantir que nem a cabeça nem os pés sejam cortados
         const srcW = this.animActiveImage.width;
         const srcH = this.animActiveImage.height;
 
-        const maxCharW = isMobile ? width * 0.78 : width * 0.45;
-        const maxCharH = isMobile ? height * 0.58 : height * 0.72;
-        const fitScale = Math.min(maxCharW / srcW, maxCharH / srcH);
+        const visibleWFrac = Math.max(0.2, this.animBounds.maxX - this.animBounds.minX);
+        const visibleHFrac = Math.max(0.2, this.animBounds.maxY - this.animBounds.minY);
+        const visibleSrcW = srcW * visibleWFrac;
+        const visibleSrcH = srcH * visibleHFrac;
+
+        // Enquadramento estilo cena de RPG (como na referência):
+        // O personagem fica no centro sobre o pedestal/chão da sala, com margem confortável no topo e na base
+        const targetVisibleW = isMobile ? width * 0.62 : width * 0.34;
+        const targetVisibleH = isMobile ? height * 0.54 : height * 0.64;
+        const fitScale = Math.min(targetVisibleW / visibleSrcW, targetVisibleH / visibleSrcH);
 
         const drawW = srcW * fitScale;
         const drawH = srcH * fitScale;
-        const offsetX = (width - drawW) * 0.5;
 
-        const groundLineY = isMobile ? height * 0.88 : height * 0.90;
-        const anchorY = 0.94;
-        const offsetY = groundLineY - (drawH * anchorY);
+        // Centraliza horizontalmente com base no centro visual do personagem
+        const visibleCenterNormX = (this.animBounds.minX + this.animBounds.maxX) * 0.5;
+        const offsetX = (width * 0.5) - (drawW * visibleCenterNormX);
 
-        // Sombra de contato realista no chão do cenário
+        // Posiciona os pés exatos do personagem (animBounds.maxY) na linha de chão do cenário
+        const groundLineY = isMobile ? height * 0.83 : height * 0.85;
+        const footAnchorNormY = this.animBounds.maxY;
+        const offsetY = groundLineY - (drawH * footAnchorNormY);
+
+        // Sombra suave de contato no chão do cenário
         ctx.save();
+        const shadowRadiusX = (visibleSrcW * fitScale) * 0.42;
+        const shadowRadiusY = (visibleSrcH * fitScale) * 0.055;
         const shadowGrad = ctx.createRadialGradient(
-          width * 0.5, groundLineY, drawW * 0.04,
-          width * 0.5, groundLineY, drawW * 0.36
+          width * 0.5, groundLineY, shadowRadiusX * 0.1,
+          width * 0.5, groundLineY, Math.max(10, shadowRadiusX)
         );
-        shadowGrad.addColorStop(0, 'rgba(0, 0, 0, 0.65)');
+        shadowGrad.addColorStop(0, 'rgba(0, 0, 0, 0.68)');
+        shadowGrad.addColorStop(0.65, 'rgba(0, 0, 0, 0.28)');
         shadowGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
         ctx.fillStyle = shadowGrad;
         ctx.beginPath();
-        ctx.ellipse(width * 0.5, groundLineY, drawW * 0.36, drawH * 0.045, 0, 0, Math.PI * 2);
+        ctx.ellipse(width * 0.5, groundLineY, Math.max(12, shadowRadiusX), Math.max(4, shadowRadiusY), 0, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
 
         const sig = this.computeBreathSignalAnim(this.animTime);
 
-        // Intensidade proporcional ao tamanho na tela
-        const scaleFactor = drawH / 450;
-        const chestExpandX = 0.025 * sig.chest;
-        const shoulderLiftPx = 7.0 * scaleFactor * sig.chest;
-        const headLiftPx = 5.8 * scaleFactor * sig.head;
+        const scaleFactor = (visibleSrcH * fitScale) / 450;
+        const chestExpandX = 0.022 * sig.chest;
+        const shoulderLiftPx = 6.0 * scaleFactor * sig.chest;
+        const headLiftPx = 5.0 * scaleFactor * sig.head;
 
         const neckY = this.animGuides.neckY;
         const chestY = Math.max(neckY + 0.03, this.animGuides.chestY);
         const waistY = Math.max(chestY + 0.04, this.animGuides.waistY);
+        const anchorY = footAnchorNormY;
 
-        const slices = 72;
+        const slices = 80;
         const evalSliceTransform = (ny) => {
           if (ny <= neckY) return { dy: -headLiftPx, sx: 1.0 };
           if (ny <= chestY) {
@@ -1531,13 +1691,13 @@
             return { dy: -shoulderLiftPx * smooth, sx: 1.0 + chestExpandX * smooth };
           }
           if (ny <= anchorY) {
-            const tail = Math.pow(1 - ((ny - waistY) / (anchorY - waistY)), 2) * 0.12;
+            const tail = Math.pow(1 - ((ny - waistY) / Math.max(0.01, anchorY - waistY)), 2) * 0.12;
             return { dy: -shoulderLiftPx * tail, sx: 1.0 };
           }
           return { dy: 0, sx: 1.0 };
         };
 
-        const centerX = offsetX + drawW * 0.5;
+        const centerX = offsetX + drawW * visibleCenterNormX;
 
         for (let i = 0; i < slices; i++) {
           const ny0 = i / slices;
@@ -1555,7 +1715,11 @@
           ctx.save();
           ctx.translate(centerX, dstY0);
           ctx.scale(avgSx, 1.0);
-          ctx.drawImage(this.animActiveImage, 0, sy0, srcW, sh, -drawW * 0.5, 0, drawW, dstH);
+          ctx.drawImage(
+            this.animActiveImage,
+            0, sy0, srcW, sh,
+            -drawW * visibleCenterNormX, 0, drawW, dstH
+          );
           ctx.restore();
         }
       }
@@ -2074,9 +2238,12 @@
         if (!file) return;
 
         try {
-          const dataUrl = await this.compressImageToDataUrl(file, 360, 0.85);
+          // Salva como PNG transparente preservando proporção original (cabeça e pés inteiros)
+          const dataUrl = await this.processCharacterPngToDataUrl(file, 720);
           char.avatarUrl = dataUrl;
           document.getElementById('charAvatarImg').src = dataUrl;
+          this.animLastAvatar = dataUrl;
+          this.loadAnimationImage(dataUrl);
           this.persistActiveChar();
           this.renderCharacterList();
         } catch (err) {
@@ -2392,6 +2559,9 @@
       selectCharacter(id) {
         this.activeCharId = id;
         this.renderAll();
+        if (this.isAnimPopOpen) {
+          this.renderAnimHeroSwitcher();
+        }
       }
 
       async createNewCharacter() {
@@ -2624,6 +2794,7 @@
         if (this.isAnimPopOpen) {
           document.getElementById('animPopCharName').textContent = char.name || 'Herói';
           document.getElementById('animPopCharSub').textContent = `${char.race || ''} • ${char.class || ''} (Nv ${char.level || 1})`;
+          this.renderAnimHeroSwitcher();
         }
 
         document.getElementById('ownerTagName').textContent = `Jogador: ${ownerDisplayName}`;
@@ -2866,7 +3037,7 @@
           return `
             <button onclick="app.selectCharacter('${c.id}')"
               class="w-full text-left p-2.5 rounded-lg border transition flex items-center gap-2.5 ${active ? 'bg-[#8b1e1e] border-[#e5c158] text-[#f4ead5] shadow' : 'bg-black/35 border-[#c59b27]/25 text-[#d6c29f] hover:border-[#c59b27]/60'}">
-              <img src="${charAvatar}" alt="${c.name}" class="w-10 h-10 rounded-full object-cover border border-[#e5c158]/70 shrink-0 bg-[#241710]" />
+              <img src="${charAvatar}" alt="${c.name}" class="w-10 h-10 rounded-full object-contain border border-[#e5c158]/70 shrink-0 bg-[#241710]" />
               <div class="min-w-0 flex-1">
                 <div class="flex items-center justify-between gap-1">
                   <span class="font-heading font-bold text-sm truncate">${c.name}</span>
