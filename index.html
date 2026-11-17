@@ -103,7 +103,6 @@
       padding-bottom: env(safe-area-inset-bottom, 0px);
     }
 
-    /* Remove setas nativas feias de number inputs mantendo ergonomia */
     input[type=number]::-webkit-inner-spin-button,
     input[type=number]::-webkit-outer-spin-button {
       opacity: 0.6;
@@ -217,7 +216,7 @@
               Tomo da Comunidade
             </h1>
             <p class="text-[11px] uppercase tracking-widest text-[#d6c29f]/80 font-heading truncate">
-              D&D 5e • <span id="syncStatusLabel" class="text-emerald-400">Realtime DB Conectado</span>
+              D&D 5e • <span id="syncStatusLabel" class="text-emerald-400">Mesa Conectada</span>
             </p>
           </div>
         </div>
@@ -236,10 +235,6 @@
           <button onclick="app.toggleRollHistory()" class="h-9 px-3 rounded-lg bg-[#2b1d0e] hover:bg-[#3d2914] border border-[#c59b27]/50 text-[#e5c158] font-heading text-xs font-bold flex items-center gap-1.5 transition" title="Histórico de Rolagens">
             <span>📜</span>
             <span>Log (<span id="rollCountBadge">0</span>)</span>
-          </button>
-
-          <button onclick="app.openSchemaModal()" class="h-9 px-2.5 rounded-lg border border-[#c59b27]/40 text-[#e5c158] hover:bg-[#c59b27]/15 text-xs font-mono-num" title="Ver estrutura NoSQL">
-            {JSON}
           </button>
         </div>
 
@@ -308,8 +303,18 @@
     <!-- ========================================================= -->
     <main id="sheetView" class="max-w-7xl mx-auto px-3 sm:px-5 pt-5 grid grid-cols-1 lg:grid-cols-12 gap-5">
 
-      <!-- COLUNA ESQUERDA: LISTA DE PERSONAGENS DA MESA -->
+      <!-- COLUNA ESQUERDA: LISTA DE PERSONAGENS DA MESA + INTEGRANTES ONLINE -->
       <aside id="partySidebar" class="lg:col-span-3 space-y-4 min-w-0">
+        <!-- Integrantes da Comunidade (Todos veem fotos e papéis de todos) -->
+        <div class="leather-panel rounded-xl p-4 text-[#f4ead5]">
+          <div class="flex items-center justify-between gap-2 mb-2.5">
+            <h2 class="font-heading text-xs font-bold uppercase tracking-wider text-[#e5c158] truncate">Integrantes da Mesa</h2>
+            <span id="membersCountBadge" class="text-[10px] font-mono-num px-2 py-0.5 rounded bg-black/50 border border-[#c59b27]/40 text-[#d6c29f]">0</span>
+          </div>
+          <div id="communityMembersList" class="flex items-center gap-2 overflow-x-auto pb-1"></div>
+        </div>
+
+        <!-- Fichas de Personagem -->
         <div class="leather-panel rounded-xl p-4 text-[#f4ead5]">
           <div class="flex items-center justify-between gap-2 mb-3">
             <h2 class="font-heading text-sm font-bold uppercase tracking-wider text-[#e5c158] truncate">Heróis da Mesa</h2>
@@ -366,7 +371,7 @@
         <div class="parchment-page rounded-xl p-4 sm:p-6">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-[#b89b6a]/60">
             <div class="flex items-center gap-3.5 min-w-0">
-              <!-- Retrato / Avatar do Personagem com upload -->
+              <!-- Retrato / Avatar do Personagem com upload direto (sem Storage) -->
               <div class="relative shrink-0 group">
                 <img id="charAvatarImg" src="https://api.dicebear.com/7.x/adventurer/svg?seed=Heroi" alt="Retrato do Personagem" class="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover border-2 border-[#8b1e1e] shadow-md bg-[#e6d5b8]" />
                 <label id="charAvatarUploadLabel" class="absolute inset-0 bg-black/65 opacity-0 group-hover:opacity-100 rounded-xl flex flex-col items-center justify-center text-[#f4ead5] text-[10px] font-heading uppercase font-bold cursor-pointer transition">
@@ -378,7 +383,10 @@
               <div class="min-w-0 flex-1">
                 <div class="flex flex-wrap items-center gap-2">
                   <span class="text-[11px] font-heading uppercase tracking-widest text-[#8b1e1e] font-bold">Registro de Aventureiro</span>
-                  <span id="ownerTag" class="text-[10px] font-mono-num px-2 py-0.5 rounded bg-[#e6d5b8] border border-[#b89b6a] text-[#5c4328]">Jogador</span>
+                  <span id="ownerTag" class="inline-flex items-center gap-1.5 text-[10px] font-mono-num px-2 py-0.5 rounded bg-[#e6d5b8] border border-[#b89b6a] text-[#5c4328]">
+                    <img id="ownerTagAvatar" src="" alt="" class="w-3.5 h-3.5 rounded-full object-cover hidden" />
+                    <span id="ownerTagName">Jogador</span>
+                  </span>
                 </div>
                 <input id="charNameInput" type="text" oninput="app.updateField('name', this.value)"
                   class="font-display text-xl sm:text-3xl font-black text-[#2b1d0e] bg-transparent border-b border-dashed border-[#8b5a2b]/50 focus:border-[#8b1e1e] outline-none w-full mt-1" />
@@ -767,7 +775,7 @@
             <span>📷 Alterar Foto de Perfil</span>
             <input id="profileAvatarUploadInput" type="file" accept="image/*" onchange="app.uploadUserAvatar(event)" class="hidden" />
           </label>
-          <span id="avatarUploadStatus" class="text-[11px] text-[#d6c29f]">PNG, JPG ou WEBP (Salvo no perfil)</span>
+          <span id="avatarUploadStatus" class="text-[11px] text-[#d6c29f]">Otimizada automaticamente e visível para toda a mesa</span>
         </div>
 
         <div class="space-y-3">
@@ -781,9 +789,6 @@
               <option value="player">⚔️ Jogador (Edita apenas suas fichas)</option>
               <option value="dm">👑 Mestre / DM (Edita toda a mesa e o Livro)</option>
             </select>
-          </div>
-          <div class="text-xs text-[#d6c29f]/70 font-mono-num truncate">
-            UID: <span id="profileUidDisplay">...</span>
           </div>
         </div>
 
@@ -824,24 +829,10 @@
       </div>
     </div>
 
-    <!-- ========================================================= -->
-    <!-- MODAL SCHEMA JSON (ESTRUTURA REALTIME DATABASE)           -->
-    <!-- ========================================================= -->
-    <div id="schemaModal" class="fixed inset-0 bg-black/80 z-50 hidden items-center justify-center p-4">
-      <div class="leather-panel rounded-xl max-w-2xl w-full p-6 text-[#f4ead5] space-y-4">
-        <div class="flex items-center justify-between gap-2">
-          <h3 class="font-display text-lg font-bold text-[#e5c158]">Estrutura Realtime Database (rpg27-a394d)</h3>
-          <button onclick="document.getElementById('schemaModal').classList.add('hidden')" class="w-9 h-9 rounded-lg bg-black/40 text-[#d6c29f] hover:text-white flex items-center justify-center shrink-0">✕</button>
-        </div>
-        <p class="text-xs text-[#d6c29f]">Estrutura JSON sincronizada em tempo real nos nós <code class="text-[#e5c158]">users/</code>, <code class="text-[#e5c158]">characters/</code> e <code class="text-[#e5c158]">compendium/</code>:</p>
-        <pre id="schemaJsonPreview" class="bg-black/60 border border-[#c59b27]/30 rounded-lg p-4 text-xs font-mono-num text-emerald-300 max-h-80 overflow-auto"></pre>
-      </div>
-    </div>
-
   </div>
 
   <!-- ========================================================= -->
-  <!-- FIREBASE SDK v13.4.0 (AUTH + REALTIME DB + STORAGE)       -->
+  <!-- FIREBASE SDK v13.4.0 (AUTH + REALTIME DATABASE ONLY)      -->
   <!-- ========================================================= -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
@@ -865,12 +856,6 @@
       remove,
       onValue
     } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-database.js";
-    import {
-      getStorage,
-      ref as storageRef,
-      uploadBytes,
-      getDownloadURL
-    } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-storage.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAL1LSLHbr_P0VRDEETpBeI9U6d8_dAQo0",
@@ -887,7 +872,6 @@
     getAnalytics(firebaseApp);
     const auth = getAuth(firebaseApp);
     const db = getDatabase(firebaseApp);
-    const storage = getStorage(firebaseApp);
 
     // =========================================================
     // DADOS INICIAIS DE EXEMPLO (SEED PARA NOVAS CONTAS/MESAS)
@@ -1003,24 +987,58 @@
     ];
 
     // =========================================================
-    // CONTROLADOR PRINCIPAL DA APLICAÇÃO (REALTIME DATABASE)
+    // CONTROLADOR PRINCIPAL DA APLICAÇÃO (100% REALTIME DB)
     // =========================================================
     class GrimoireApp {
       constructor() {
         this.authMode = 'login';
-        this.pendingRegAvatarFile = null;
+        this.pendingRegAvatarDataUrl = null;
         this.currentUser = null;
         this.userProfile = null;
+        this.usersMap = {};
         this.characters = [];
         this.compendium = [];
         this.activeCharId = null;
         this.rollMode = 'norm';
         this.rollHistory = [];
+        this.unsubUsers = null;
         this.unsubCharacters = null;
         this.unsubCompendium = null;
         this.saveTimeout = null;
 
         this.initFirebaseAuthListener();
+      }
+
+      // ---------------------------------------------------------
+      // COMPRESSÃO DE IMAGEM EM CANVAS (ZERO STORAGE / ZERO CORS)
+      // Gera DataURL JPEG leve (~18 KB) salvo direto no Realtime DB
+      // para que todos os jogadores vejam todas as fotos na hora.
+      // ---------------------------------------------------------
+      compressImageToDataUrl(file, targetSize = 220, quality = 0.8) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onerror = () => reject(new Error("Falha ao ler arquivo de imagem."));
+          reader.onload = (e) => {
+            const img = new Image();
+            img.onerror = () => reject(new Error("Formato de imagem inválido."));
+            img.onload = () => {
+              const canvas = document.createElement('canvas');
+              canvas.width = targetSize;
+              canvas.height = targetSize;
+              const ctx = canvas.getContext('2d');
+
+              // Recorte centralizado quadrado (object-cover)
+              const minSide = Math.min(img.width, img.height);
+              const sx = (img.width - minSide) / 2;
+              const sy = (img.height - minSide) / 2;
+
+              ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, targetSize, targetSize);
+              resolve(canvas.toDataURL('image/jpeg', quality));
+            };
+            img.src = e.target.result;
+          };
+          reader.readAsDataURL(file);
+        });
       }
 
       // ---------------------------------------------------------
@@ -1048,51 +1066,15 @@
         box.classList.remove('hidden');
       }
 
-      previewRegisterAvatar(event) {
+      async previewRegisterAvatar(event) {
         const file = event.target.files[0];
         if (!file) return;
-        this.pendingRegAvatarFile = file;
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          document.getElementById('regAvatarPreview').src = e.target.result;
-        };
-        reader.readAsDataURL(file);
-      }
-
-      async compressImageToDataUrl(file, maxSize = 256) {
-        return new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            const img = new Image();
-            img.onload = () => {
-              const canvas = document.createElement('canvas');
-              let w = img.width;
-              let h = img.height;
-              if (w > h) {
-                if (w > maxSize) { h = Math.round(h * maxSize / w); w = maxSize; }
-              } else {
-                if (h > maxSize) { w = Math.round(w * maxSize / h); h = maxSize; }
-              }
-              canvas.width = w;
-              canvas.height = h;
-              const ctx = canvas.getContext('2d');
-              ctx.drawImage(img, 0, 0, w, h);
-              resolve(canvas.toDataURL('image/jpeg', 0.82));
-            };
-            img.src = e.target.result;
-          };
-          reader.readAsDataURL(file);
-        });
-      }
-
-      async uploadImageWithFallback(file, path) {
         try {
-          const sRef = storageRef(storage, path);
-          await uploadBytes(sRef, file);
-          return await getDownloadURL(sRef);
+          const dataUrl = await this.compressImageToDataUrl(file, 220, 0.8);
+          this.pendingRegAvatarDataUrl = dataUrl;
+          document.getElementById('regAvatarPreview').src = dataUrl;
         } catch (err) {
-          console.warn("Storage indisponível ou bloqueado, usando imagem comprimida no Realtime DB:", err.message);
-          return await this.compressImageToDataUrl(file, 256);
+          this.showAuthError("Não foi possível processar a imagem escolhida.");
         }
       }
 
@@ -1112,12 +1094,13 @@
             const role = document.getElementById('authRoleInput').value || 'player';
             const cred = await createUserWithEmailAndPassword(auth, email, password);
 
-            let photoURL = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(name)}`;
-            if (this.pendingRegAvatarFile) {
-              photoURL = await this.uploadImageWithFallback(this.pendingRegAvatarFile, `avatars/${cred.user.uid}/profile.jpg`);
-            }
+            const photoURL = this.pendingRegAvatarDataUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(name)}`;
 
-            await updateProfile(cred.user, { displayName: name, photoURL: photoURL.startsWith('http') ? photoURL : null });
+            await updateProfile(cred.user, {
+              displayName: name,
+              photoURL: photoURL.startsWith('http') ? photoURL : null
+            });
+
             await set(ref(db, `users/${cred.user.uid}`), {
               uid: cred.user.uid,
               name: name,
@@ -1149,6 +1132,7 @@
       }
 
       async logoutUser() {
+        if (this.unsubUsers) this.unsubUsers();
         if (this.unsubCharacters) this.unsubCharacters();
         if (this.unsubCompendium) this.unsubCompendium();
         await signOut(auth);
@@ -1168,7 +1152,6 @@
           document.getElementById('authScreen').classList.add('hidden');
           document.getElementById('mainAppContainer').classList.remove('hidden');
 
-          // Busca ou cria perfil do usuário no Realtime Database
           const userRef = ref(db, `users/${user.uid}`);
           try {
             const snap = await get(userRef);
@@ -1215,15 +1198,14 @@
       }
 
       // ---------------------------------------------------------
-      // EDIÇÃO DE PERFIL E UPLOAD DE FOTO DO USUÁRIO
+      // EDIÇÃO DE PERFIL E UPLOAD DE FOTO DO USUÁRIO (REALTIME DB)
       // ---------------------------------------------------------
       openUserProfileModal() {
         if (!this.userProfile) return;
         document.getElementById('profileModalAvatarPreview').src = this.userProfile.photoURL || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(this.userProfile.name)}`;
         document.getElementById('profileNameInput').value = this.userProfile.name;
         document.getElementById('profileRoleSelect').value = this.userProfile.role || 'player';
-        document.getElementById('profileUidDisplay').textContent = this.userProfile.uid;
-        document.getElementById('avatarUploadStatus').textContent = 'PNG, JPG ou WEBP (Salvo no perfil)';
+        document.getElementById('avatarUploadStatus').textContent = 'Otimizada automaticamente e visível para toda a mesa';
         document.getElementById('userProfileModal').classList.remove('hidden');
         document.getElementById('userProfileModal').classList.add('flex');
       }
@@ -1232,17 +1214,20 @@
         const file = event.target.files[0];
         if (!file || !this.currentUser) return;
         const statusEl = document.getElementById('avatarUploadStatus');
-        statusEl.textContent = 'Enviando imagem...';
+        statusEl.textContent = 'Processando e sincronizando imagem...';
 
         try {
-          const url = await this.uploadImageWithFallback(file, `avatars/${this.currentUser.uid}/profile.jpg`);
-          this.userProfile.photoURL = url;
-          document.getElementById('profileModalAvatarPreview').src = url;
-          await update(ref(db, `users/${this.currentUser.uid}`), { photoURL: url });
+          const dataUrl = await this.compressImageToDataUrl(file, 220, 0.8);
+          this.userProfile.photoURL = dataUrl;
+          document.getElementById('profileModalAvatarPreview').src = dataUrl;
+
+          await update(ref(db, `users/${this.currentUser.uid}`), { photoURL: dataUrl });
           this.updateUserHeaderUI();
-          statusEl.textContent = '✅ Foto atualizada com sucesso!';
+          this.renderCommunityMembers();
+          this.renderAll();
+          statusEl.textContent = '✅ Foto salva e visível para todos os jogadores!';
         } catch (err) {
-          statusEl.textContent = '❌ Erro ao atualizar foto.';
+          statusEl.textContent = '❌ Erro ao salvar imagem: ' + err.message;
           console.error(err);
         }
       }
@@ -1264,7 +1249,7 @@
           this.renderAll();
           document.getElementById('userProfileModal').classList.add('hidden');
         } catch (err) {
-          alert("Erro ao salvar perfil no Realtime Database: " + err.message);
+          alert("Erro ao salvar perfil: " + err.message);
         }
       }
 
@@ -1272,13 +1257,24 @@
       // SINCRONIZAÇÃO EM TEMPO REAL COM REALTIME DATABASE
       // ---------------------------------------------------------
       subscribeToRealtimeData() {
-        // 1. Escuta personagens da comunidade
+        // 1. Escuta todos os integrantes da comunidade (para exibir fotos de todos os jogadores)
+        const usersRef = ref(db, 'users');
+        this.unsubUsers = onValue(usersRef, (snapshot) => {
+          this.usersMap = snapshot.val() || {};
+          if (this.currentUser && this.usersMap[this.currentUser.uid]) {
+            this.userProfile = this.usersMap[this.currentUser.uid];
+            this.updateUserHeaderUI();
+          }
+          this.renderCommunityMembers();
+          this.renderAll();
+        });
+
+        // 2. Escuta personagens da comunidade
         const charsRef = ref(db, 'characters');
         this.unsubCharacters = onValue(charsRef, async (snapshot) => {
           const rawVal = snapshot.val();
           const list = rawVal ? Object.values(rawVal) : [];
 
-          // Se o banco ainda estiver vazio, cria o primeiro herói de exemplo para o usuário
           if (list.length === 0 && this.currentUser) {
             const newId = `char_${this.currentUser.uid}_${Date.now()}`;
             const starter = buildStarterCharacter(this.currentUser.uid, this.userProfile.name, newId);
@@ -1298,12 +1294,11 @@
           document.getElementById('syncStatusLabel').className = 'text-red-400';
         });
 
-        // 2. Escuta o Livro da Comunidade (Compêndio)
+        // 3. Escuta o Livro da Comunidade (Compêndio)
         const compRef = ref(db, 'compendium');
         this.unsubCompendium = onValue(compRef, async (snapshot) => {
           const rawVal = snapshot.val();
           if (!rawVal) {
-            // Popula compêndio inicial se for Mestre ou se estiver vazio
             if (this.userProfile?.role === 'dm') {
               await set(compRef, DEFAULT_COMPENDIUM);
             } else {
@@ -1315,6 +1310,31 @@
           this.compendium = Object.values(rawVal);
           this.renderCompendium();
         });
+      }
+
+      renderCommunityMembers() {
+        const container = document.getElementById('communityMembersList');
+        const members = Object.values(this.usersMap || {});
+        document.getElementById('membersCountBadge').textContent = members.length;
+
+        if (!members.length) {
+          container.innerHTML = `<span class="text-xs text-[#d6c29f]/70">Carregando integrantes...</span>`;
+          return;
+        }
+
+        container.innerHTML = members.map(m => {
+          const avatar = m.photoURL || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(m.name || 'Player')}`;
+          const isDM = m.role === 'dm';
+          return `
+            <div class="flex flex-col items-center shrink-0 w-14 text-center" title="${m.name} (${isDM ? 'Mestre' : 'Jogador'})">
+              <div class="relative">
+                <img src="${avatar}" alt="${m.name}" class="w-11 h-11 rounded-full object-cover border-2 ${isDM ? 'border-[#e5c158]' : 'border-[#c59b27]/50'} bg-[#241710]" />
+                ${isDM ? '<span class="absolute -bottom-1 -right-1 text-[10px] bg-[#8b1e1e] rounded-full px-1 border border-[#e5c158]">👑</span>' : ''}
+              </div>
+              <span class="text-[10px] text-[#f4ead5] font-semibold truncate w-full mt-1">${m.name}</span>
+            </div>
+          `;
+        }).join('');
       }
 
       getActiveChar() {
@@ -1355,13 +1375,13 @@
         if (!file) return;
 
         try {
-          const url = await this.uploadImageWithFallback(file, `characters/${char.id}/portrait.jpg`);
-          char.avatarUrl = url;
-          document.getElementById('charAvatarImg').src = url;
+          const dataUrl = await this.compressImageToDataUrl(file, 220, 0.8);
+          char.avatarUrl = dataUrl;
+          document.getElementById('charAvatarImg').src = dataUrl;
           this.persistActiveChar();
           this.renderCharacterList();
         } catch (err) {
-          alert("Erro ao enviar retrato do personagem.");
+          alert("Erro ao processar retrato do personagem: " + err.message);
         }
       }
 
@@ -1856,17 +1876,6 @@
         }
       }
 
-      openSchemaModal() {
-        const preview = {
-          databaseURL: "https://rpg27-a394d-default-rtdb.firebaseio.com",
-          currentUser: this.userProfile,
-          activeCharacter: this.getActiveChar()
-        };
-        document.getElementById('schemaJsonPreview').textContent = JSON.stringify(preview, null, 2);
-        document.getElementById('schemaModal').classList.remove('hidden');
-        document.getElementById('schemaModal').classList.add('flex');
-      }
-
       // =========================================================
       // RENDERIZAÇÃO DA INTERFACE
       // =========================================================
@@ -1885,9 +1894,21 @@
 
         this.renderCharacterList();
 
-        // Cabeçalho e Retrato do Personagem
+        // Cabeçalho, Retrato do Personagem e Foto do Dono (vinda de users/{ownerId})
+        const ownerRecord = this.usersMap[char.ownerId];
+        const ownerDisplayName = ownerRecord?.name || char.ownerName || 'Integrante';
+        const ownerAvatarUrl = ownerRecord?.photoURL || '';
+
         document.getElementById('charAvatarImg').src = char.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(char.name)}`;
-        document.getElementById('ownerTag').textContent = `Jogador: ${char.ownerName || 'Integrante'}`;
+        document.getElementById('ownerTagName').textContent = `Jogador: ${ownerDisplayName}`;
+        const ownerTagAvatar = document.getElementById('ownerTagAvatar');
+        if (ownerAvatarUrl) {
+          ownerTagAvatar.src = ownerAvatarUrl;
+          ownerTagAvatar.classList.remove('hidden');
+        } else {
+          ownerTagAvatar.classList.add('hidden');
+        }
+
         document.getElementById('charNameInput').value = char.name || '';
         document.getElementById('charClassInput').value = char.class || '';
         document.getElementById('charLevelInput').value = char.level || 1;
@@ -1951,7 +1972,7 @@
           `;
         }).join('');
 
-        // Testes de Resistência (Alinhamento em Grade Fixa)
+        // Testes de Resistência
         document.getElementById('savingThrowsList').innerHTML = ATTRIBUTES_META.map(attr => {
           const isProf = char.savingThrows?.[attr.key];
           const total = this.calcMod(char.attributes[attr.key]) + (isProf ? profBonus : 0);
@@ -1971,7 +1992,7 @@
 
         document.getElementById('proficienciesText').value = char.otherProficiencies || '';
 
-        // 18 Perícias (Alinhamento em Grade Fixa)
+        // 18 Perícias
         document.getElementById('skillsList').innerHTML = SKILLS_META.map(sk => {
           const level = char.skills?.[sk.key] || 0;
           const total = this.calcMod(char.attributes[sk.attr]) + (level * profBonus);
@@ -2122,19 +2143,24 @@
         list.innerHTML = this.characters.map(c => {
           const active = c.id === this.activeCharId;
           const isMine = this.currentUser && c.ownerId === this.currentUser.uid;
-          const avatar = c.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(c.name)}`;
+          const ownerRecord = this.usersMap[c.ownerId];
+          const ownerName = ownerRecord?.name || c.ownerName || 'Integrante';
+          const ownerPhoto = ownerRecord?.photoURL || '';
+          const charAvatar = c.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(c.name)}`;
+
           return `
             <button onclick="app.selectCharacter('${c.id}')"
               class="w-full text-left p-2.5 rounded-lg border transition flex items-center gap-2.5 ${active ? 'bg-[#8b1e1e] border-[#e5c158] text-[#f4ead5] shadow' : 'bg-black/35 border-[#c59b27]/25 text-[#d6c29f] hover:border-[#c59b27]/60'}">
-              <img src="${avatar}" alt="${c.name}" class="w-10 h-10 rounded-full object-cover border border-[#e5c158]/70 shrink-0 bg-[#241710]" />
+              <img src="${charAvatar}" alt="${c.name}" class="w-10 h-10 rounded-full object-cover border border-[#e5c158]/70 shrink-0 bg-[#241710]" />
               <div class="min-w-0 flex-1">
                 <div class="flex items-center justify-between gap-1">
                   <span class="font-heading font-bold text-sm truncate">${c.name}</span>
                   <span class="text-[10px] font-mono-num px-1.5 py-0.5 rounded bg-black/40 shrink-0">Nv ${c.level}</span>
                 </div>
                 <div class="text-xs opacity-85 truncate mt-0.5">${c.race} • ${c.class}</div>
-                <div class="text-[10px] font-mono-num opacity-75 mt-0.5 truncate">
-                  ${isMine ? '⭐ Seu Herói' : `👤 ${c.ownerName || 'Integrante'}`}
+                <div class="flex items-center gap-1.5 text-[10px] font-mono-num opacity-85 mt-1 truncate">
+                  ${ownerPhoto ? `<img src="${ownerPhoto}" alt="" class="w-3.5 h-3.5 rounded-full object-cover shrink-0" />` : ''}
+                  <span class="truncate">${isMine ? '⭐ Seu Herói' : ownerName}</span>
                 </div>
               </div>
             </button>
