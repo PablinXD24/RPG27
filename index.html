@@ -1,0 +1,2966 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Tomo da Comunidade | Livro & Fichas D&D 5e</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Tipografia clássica de Livro do Jogador D&D -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@600;700;800&family=Crimson+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        serif: ['"Crimson Pro"', 'Georgia', 'serif'],
+                        display: ['"Cinzel"', 'serif'],
+                        epic: ['"Cinzel Decorative"', 'serif'],
+                    },
+                    colors: {
+                        tavern: {
+                            950: '#100b08',
+                            900: '#18110c',
+                            800: '#241912',
+                            700: '#36251b',
+                        },
+                        parchment: {
+                            50: '#fbf6ea',
+                            100: '#f5ebd6',
+                            200: '#eadbc0',
+                            300: '#dec8a3',
+                            400: '#cbb082',
+                        },
+                        ink: {
+                            900: '#1f140c',
+                            800: '#2e1e13',
+                            700: '#4a3322',
+                            600: '#6b4d37',
+                        },
+                        crimson: {
+                            600: '#8b1e1e',
+                            700: '#6e1414',
+                            800: '#4f0d0d',
+                        },
+                        brass: {
+                            400: '#e2be53',
+                            500: '#c59b27',
+                            600: '#9c7818',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Prevenção absoluta de overflow horizontal e box-sizing universal */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            overflow-x: hidden;
+            max-width: 100vw;
+            width: 100%;
+        }
+
+        body {
+            background-color: #120c09;
+            color: #23170e;
+            font-family: 'Crimson Pro', Georgia, serif;
+            background-image: 
+                radial-gradient(ellipse at top, rgba(197, 155, 39, 0.08), transparent 55%),
+                radial-gradient(ellipse at bottom, rgba(139, 30, 30, 0.12), transparent 60%),
+                repeating-linear-gradient(90deg, rgba(255,255,255,0.012) 0px, rgba(255,255,255,0.012) 1px, transparent 1px, transparent 14px);
+            padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+        }
+
+        @media (min-width: 768px) {
+            body {
+                padding-bottom: 2rem;
+            }
+        }
+
+        /* Textura de Pergaminho Envelhecido (Vellum Sheet) */
+        .parchment-sheet {
+            background-color: #f4ead5;
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(255, 252, 242, 0.72), transparent 70%),
+                radial-gradient(circle at 0% 100%, rgba(189, 158, 108, 0.28), transparent 50%),
+                radial-gradient(circle at 100% 100%, rgba(189, 158, 108, 0.28), transparent 50%),
+                linear-gradient(to bottom, #f7efe0, #efe2c6);
+            box-shadow: 
+                0 20px 50px rgba(0, 0, 0, 0.75),
+                inset 0 0 40px rgba(138, 102, 52, 0.22);
+            border: 2px solid #8c6d3f;
+            position: relative;
+            max-width: 100%;
+            overflow: hidden;
+        }
+
+        /* Sub-cartões de pergaminho dentro da ficha */
+        .vellum-box {
+            background: rgba(251, 246, 234, 0.85);
+            border: 1.5px solid #b59663;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.85), 0 2px 6px rgba(46, 30, 19, 0.08);
+            min-width: 0;
+            max-width: 100%;
+        }
+
+        .vellum-card-hover {
+            background: linear-gradient(160deg, #faf3e3 0%, #ede0c4 100%);
+            border: 2px solid #9c7a44;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(168, 132, 74, 0.15);
+            transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+            min-width: 0;
+        }
+
+        .vellum-card-hover:hover {
+            transform: translateY(-3px);
+            border-color: #8b1e1e;
+            box-shadow: 0 16px 32px rgba(0, 0, 0, 0.65), 0 0 0 1px #c59b27;
+        }
+
+        /* Painel de Couro Escuro e Latão */
+        .leather-panel {
+            background: linear-gradient(180deg, #211610 0%, #160f0b 100%);
+            border-bottom: 2px solid #9c7818;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.75);
+        }
+
+        .leather-bottom-bar {
+            background: linear-gradient(180deg, #1b120d 0%, #100b08 100%);
+            border-top: 2px solid #9c7818;
+            box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.8);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        /* Divisor Clássico de Livro D&D */
+        .dnd-divider {
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #8b1e1e 20%, #c59b27 50%, #8b1e1e 80%, transparent);
+            border: none;
+            margin: 0.75rem 0;
+        }
+
+        /* Selo de Cera Carmesim */
+        .wax-seal {
+            background: radial-gradient(circle at 35% 35%, #b82929, #7a1414 70%, #4d0a0a 100%);
+            box-shadow: 0 3px 8px rgba(0,0,0,0.45), inset 0 1px 2px rgba(255,180,180,0.4);
+            border: 1.5px solid #570c0c;
+        }
+
+        /* Ergonomia de Toque & Prevenção de Zoom no iOS Safari */
+        .touch-target {
+            min-width: 44px;
+            min-height: 44px;
+        }
+
+        input, select, textarea {
+            font-size: 16px !important; /* Previne auto-zoom no iOS Safari */
+            min-width: 0;
+        }
+
+        /* Remove setas nativas que deslocam a centralização em inputs numéricos estreitos */
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+
+        input:focus, select:focus, textarea:focus, button:focus-visible {
+            outline: 2px solid #c59b27;
+            outline-offset: 1px;
+        }
+
+        .tabular-nums {
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Ocultar scrollbar horizontal mantendo scroll suave */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Custom Scrollbar temática */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #18110c;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #6e4f28;
+            border-radius: 4px;
+            border: 1px solid #18110c;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #8b1e1e;
+        }
+
+        /* Animação de rolagem de dados */
+        @keyframes diceTumble {
+            0% { transform: scale(0.85) rotate(-8deg) translateY(10px); opacity: 0; }
+            60% { transform: scale(1.03) rotate(2deg) translateY(-2px); opacity: 1; }
+            100% { transform: scale(1) rotate(0deg) translateY(0); opacity: 1; }
+        }
+        .dice-animate {
+            animation: diceTumble 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-crimson-600 selection:text-parchment-50">
+
+    <!-- ==================== TELA DE AUTENTICAÇÃO / PORTAL DA TAVERNA ==================== -->
+    <div id="auth-screen" class="fixed inset-0 z-50 bg-tavern-950/95 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+        <div class="parchment-sheet max-w-md w-full rounded-2xl p-5 sm:p-7 space-y-5 my-auto shadow-2xl">
+            
+            <!-- Brasão Superior -->
+            <div class="text-center space-y-2">
+                <div class="w-16 h-16 mx-auto rounded-2xl wax-seal flex items-center justify-center shadow-lg">
+                    <svg class="w-9 h-9 text-brass-400 drop-shadow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+                        <polygon points="12 2 21 7 21 17 12 22 3 17 3 7 12 2"/>
+                        <polyline points="12 2 12 12 21 17"/>
+                        <polyline points="12 12 3 17"/>
+                        <polyline points="3 7 12 12 21 7"/>
+                        <polygon points="12 6 17 14 7 14" stroke-width="1.2"/>
+                    </svg>
+                </div>
+                <h1 class="font-epic font-bold text-2xl sm:text-3xl tracking-wider text-ink-900">
+                    TOMO DA <span class="text-crimson-600">COMUNIDADE</span>
+                </h1>
+                <p class="font-display text-xs uppercase tracking-widest text-ink-700 font-bold">
+                    Portal de Acesso • Crônicas de Valdris (D&D 5e)
+                </p>
+            </div>
+
+            <hr class="dnd-divider">
+
+            <!-- Abas Entrar / Criar Conta -->
+            <div class="grid grid-cols-2 gap-1.5 bg-parchment-300/80 p-1 rounded-xl border border-ink-600/30">
+                <button type="button" id="auth-tab-login" onclick="app.switchAuthMode('login')" class="h-10 rounded-lg font-display text-xs font-bold uppercase tracking-wider bg-crimson-600 text-parchment-50 shadow transition-all">
+                    Entrar na Mesa
+                </button>
+                <button type="button" id="auth-tab-register" onclick="app.switchAuthMode('register')" class="h-10 rounded-lg font-display text-xs font-bold uppercase tracking-wider text-ink-800 hover:text-ink-900 transition-all">
+                    Novo Aventureiro
+                </button>
+            </div>
+
+            <!-- Formulário de Login / Cadastro -->
+            <form id="auth-form" onsubmit="app.handleAuthSubmit(event)" class="space-y-3.5">
+                
+                <!-- Campos exclusivos de Cadastro -->
+                <div id="register-fields" class="hidden space-y-3.5">
+                    <!-- Upload de Foto de Perfil no Cadastro -->
+                    <div class="flex items-center gap-3.5 bg-parchment-50/90 p-3 rounded-xl border border-ink-600/40">
+                        <div class="relative shrink-0">
+                            <img id="reg-avatar-preview" src="" alt="" class="hidden w-14 h-14 rounded-full object-cover border-2 border-brass-500 shadow">
+                            <div id="reg-avatar-placeholder" class="w-14 h-14 rounded-full bg-tavern-900 border-2 border-brass-500 flex items-center justify-center text-brass-400">
+                                <i class="ph-fill ph-user-circle text-3xl"></i>
+                            </div>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <label class="font-display text-[11px] font-bold uppercase tracking-wider text-ink-800 block">Foto de Perfil (Opcional)</label>
+                            <label for="reg-avatar-input" class="mt-1 inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-tavern-900 hover:bg-tavern-800 text-brass-400 font-display text-[11px] font-bold uppercase cursor-pointer transition-colors">
+                                <i class="ph-bold ph-camera"></i> Escolher Imagem
+                            </label>
+                            <input id="reg-avatar-input" type="file" accept="image/*" onchange="app.previewRegisterAvatar(this)" class="hidden">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="font-display text-[11px] font-bold uppercase tracking-wider text-ink-800 block">Nome do Jogador ou Mestre</label>
+                        <input id="auth-name" type="text" placeholder="Ex: Lucas (Kaelen)" class="w-full h-11 mt-1 bg-parchment-50 border border-ink-600/60 rounded-xl px-3.5 text-ink-900">
+                    </div>
+
+                    <div>
+                        <label class="font-display text-[11px] font-bold uppercase tracking-wider text-ink-800 block">Papel Inicial na Comunidade</label>
+                        <select id="auth-role" class="w-full h-11 mt-1 bg-parchment-50 border border-ink-600/60 rounded-xl px-3 font-display text-xs font-bold text-ink-900">
+                            <option value="player">Jogador (Cria e edita suas próprias fichas)</option>
+                            <option value="dm">Mestre / DM (Gerencia a mesa e o Livro SRD)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="font-display text-[11px] font-bold uppercase tracking-wider text-ink-800 block">E-mail</label>
+                    <input id="auth-email" type="email" required placeholder="aventureiro@valdris.com" class="w-full h-11 mt-1 bg-parchment-50 border border-ink-600/60 rounded-xl px-3.5 text-ink-900">
+                </div>
+
+                <div>
+                    <label class="font-display text-[11px] font-bold uppercase tracking-wider text-ink-800 block">Senha</label>
+                    <input id="auth-password" type="password" required minlength="6" placeholder="Mínimo 6 caracteres" class="w-full h-11 mt-1 bg-parchment-50 border border-ink-600/60 rounded-xl px-3.5 text-ink-900">
+                </div>
+
+                <p id="auth-error-msg" class="hidden text-xs font-bold text-crimson-700 bg-crimson-600/10 border border-crimson-600/40 rounded-lg p-2.5"></p>
+
+                <button type="submit" id="auth-submit-btn" class="w-full h-12 rounded-xl bg-crimson-600 hover:bg-crimson-700 text-parchment-50 font-display font-bold text-xs uppercase tracking-wider border-2 border-brass-500 shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer">
+                    <i class="ph-bold ph-seal-check text-base text-brass-400"></i>
+                    <span>Abrir o Grimório</span>
+                </button>
+            </form>
+
+            <!-- Divisor OU -->
+            <div class="relative flex items-center justify-center">
+                <div class="border-t border-ink-600/30 w-full"></div>
+                <span class="bg-parchment-100 px-3 font-display text-[10px] font-bold uppercase tracking-widest text-ink-600">ou</span>
+                <div class="border-t border-ink-600/30 w-full"></div>
+            </div>
+
+            <!-- Botão Login com Google -->
+            <button type="button" onclick="app.loginWithGoogle()" class="w-full h-12 rounded-xl bg-tavern-900 hover:bg-tavern-800 text-parchment-50 font-display font-bold text-xs uppercase tracking-wider border border-brass-500/70 shadow flex items-center justify-center gap-2.5 transition-all active:scale-95 cursor-pointer">
+                <i class="ph-bold ph-google-logo text-lg text-brass-400"></i>
+                <span>Continuar com Google</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ==================== CABEÇALHO DE COURO & LATÃO ==================== -->
+    <header class="sticky top-0 z-40 leather-panel text-parchment-100 w-full">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 lg:h-16 flex flex-wrap lg:flex-nowrap items-center justify-between gap-2.5">
+            
+            <!-- Brasão / Título do Tomo -->
+            <button type="button" onclick="app.navigate('characters')" class="flex items-center gap-2.5 text-left group min-h-[44px] min-w-0 shrink active:scale-95 transition-transform">
+                <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-lg wax-seal flex items-center justify-center relative shrink-0 group-hover:scale-105 transition-transform">
+                    <svg class="w-6 h-6 sm:w-7 sm:h-7 text-brass-400 drop-shadow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+                        <polygon points="12 2 21 7 21 17 12 22 3 17 3 7 12 2"/>
+                        <polyline points="12 2 12 12 21 17"/>
+                        <polyline points="12 12 3 17"/>
+                        <polyline points="3 7 12 12 21 7"/>
+                        <polygon points="12 6 17 14 7 14" stroke-width="1.2"/>
+                    </svg>
+                </div>
+                <div class="min-w-0">
+                    <h1 class="font-epic font-bold text-sm sm:text-lg xl:text-xl tracking-wider text-parchment-50 leading-none truncate">
+                        TOMO DA <span class="text-brass-400">COMUNIDADE</span>
+                    </h1>
+                    <p class="text-[10px] sm:text-[11px] font-display text-parchment-300/80 tracking-widest uppercase mt-1 truncate">
+                        Compêndio & Grimório • D&D 5e
+                    </p>
+                </div>
+            </button>
+
+            <!-- Navegação Principal (Desktop >= 768px) -->
+            <nav class="hidden md:flex items-center gap-1.5 bg-tavern-950/90 p-1 rounded-xl border border-brass-600/40 shrink-0">
+                <button id="nav-characters" onclick="app.navigate('characters')" class="nav-btn h-10 px-3.5 rounded-lg font-display text-xs font-bold tracking-wider uppercase flex items-center gap-2 transition-all bg-crimson-600 text-parchment-50 border border-brass-500/50 shadow active:scale-95 whitespace-nowrap">
+                    <i class="ph-fill ph-users-three text-base text-brass-400"></i>
+                    <span>Mesa & Fichas</span>
+                </button>
+                <button id="nav-compendium" onclick="app.navigate('compendium')" class="nav-btn h-10 px-3.5 rounded-lg font-display text-xs font-bold tracking-wider uppercase flex items-center gap-2 text-parchment-300 hover:text-brass-400 transition-all active:scale-95 whitespace-nowrap">
+                    <i class="ph-fill ph-book-open-text text-base"></i>
+                    <span>Grimório SRD</span>
+                </button>
+                <button onclick="app.toggleRollHistoryDrawer()" class="h-10 px-3 rounded-lg font-display text-xs font-bold tracking-wider uppercase flex items-center gap-1.5 text-parchment-200 hover:text-brass-400 hover:bg-tavern-800 transition-all active:scale-95 whitespace-nowrap" title="Histórico de Rolagens da Sessão">
+                    <i class="ph-fill ph-dice-twenty-faces-twenty text-base text-crimson-500"></i>
+                    <span>Histórico</span>
+                    <span id="desktop-roll-count" class="px-1.5 py-0.5 rounded-full bg-crimson-700 text-parchment-50 text-[10px] font-bold leading-none">0</span>
+                </button>
+                <button onclick="app.openFirebaseInspector()" class="h-10 px-3 rounded-lg font-display text-xs font-bold tracking-wider uppercase flex items-center gap-1.5 text-brass-400 hover:bg-brass-500/10 transition-all active:scale-95 whitespace-nowrap" title="Inspecionar Estrutura NoSQL">
+                    <i class="ph-fill ph-database text-base"></i>
+                    <span class="hidden xl:inline">NoSQL</span>
+                </button>
+            </nav>
+
+            <!-- Perfil do Usuário Logado (Foto + Papel) & Botão Sair -->
+            <div class="flex items-center gap-1.5 sm:gap-2 shrink-0 ml-auto lg:ml-0">
+                <!-- Botão Perfil / Foto do Usuário -->
+                <button type="button" onclick="app.openUserProfileModal()" class="h-11 pl-1.5 pr-3 rounded-xl bg-tavern-950 hover:bg-tavern-800 border border-brass-600/50 flex items-center gap-2 transition-all active:scale-95 min-w-0 max-w-[200px]" title="Editar Perfil e Foto">
+                    <div class="relative w-8 h-8 rounded-full overflow-hidden border border-brass-400 bg-tavern-800 flex items-center justify-center shrink-0">
+                        <img id="header-user-photo" src="" alt="Foto" class="hidden w-full h-full object-cover">
+                        <span id="header-user-initial" class="font-display font-bold text-xs text-brass-400">A</span>
+                    </div>
+                    <div class="text-left min-w-0">
+                        <p id="header-user-name" class="font-display text-[11px] font-bold text-parchment-50 truncate leading-tight">Aventureiro</p>
+                        <p id="header-user-role-label" class="text-[10px] text-brass-400 uppercase tracking-wider font-bold leading-tight">Jogador</p>
+                    </div>
+                </button>
+
+                <!-- Botão NoSQL no Mobile -->
+                <button onclick="app.openFirebaseInspector()" class="md:hidden w-11 h-11 rounded-xl bg-tavern-950 border border-brass-600/50 flex items-center justify-center text-brass-400 active:scale-95 shrink-0" aria-label="Estrutura NoSQL e Backup">
+                    <i class="ph-fill ph-database text-lg"></i>
+                </button>
+
+                <!-- Botão Sair (Logout) -->
+                <button type="button" onclick="app.logoutUser()" class="h-11 px-3 rounded-xl bg-crimson-800/80 hover:bg-crimson-600 border border-crimson-600/70 text-parchment-100 font-display text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all active:scale-95 shrink-0" title="Sair da Conta">
+                    <i class="ph-bold ph-sign-out text-base"></i>
+                    <span class="hidden sm:inline">Sair</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Barra Rápida de Dados Poliédricos + Modo Normal / Vantagem / Desvantagem -->
+        <div class="bg-tavern-950/95 border-t border-brass-600/30 py-2 px-3 sm:px-6">
+            <div class="max-w-7xl mx-auto flex items-center justify-between gap-2.5 overflow-x-auto no-scrollbar">
+                
+                <!-- Seletor de Modo de Rolagem (Normal / Vantagem / Desvantagem) -->
+                <div class="flex items-center gap-1 bg-tavern-900 p-1 rounded-lg border border-brass-600/40 shrink-0">
+                    <button id="roll-mode-normal" onclick="app.setRollMode('normal')" class="h-9 px-2.5 rounded font-display text-[11px] font-bold uppercase bg-brass-600 text-tavern-950 transition-all active:scale-95 whitespace-nowrap">Normal</button>
+                    <button id="roll-mode-adv" onclick="app.setRollMode('adv')" class="h-9 px-2.5 rounded font-display text-[11px] font-bold uppercase text-emerald-400 hover:bg-emerald-950/60 transition-all active:scale-95 whitespace-nowrap" title="Rola 2d20 e escolhe o maior">Vantagem</button>
+                    <button id="roll-mode-dis" onclick="app.setRollMode('dis')" class="h-9 px-2.5 rounded font-display text-[11px] font-bold uppercase text-red-400 hover:bg-red-950/60 transition-all active:scale-95 whitespace-nowrap" title="Rola 2d20 e escolhe o menor">Desvantagem</button>
+                </div>
+
+                <!-- Dados Poliédricos -->
+                <div class="flex items-center gap-1.5 shrink-0">
+                    <button onclick="app.rollPolyhedral(4)" class="w-11 h-10 rounded-lg bg-tavern-800 hover:bg-crimson-700 border border-brass-600/40 text-parchment-100 font-display text-xs font-bold flex items-center justify-center transition-colors active:scale-95">d4</button>
+                    <button onclick="app.rollPolyhedral(6)" class="w-11 h-10 rounded-lg bg-tavern-800 hover:bg-crimson-700 border border-brass-600/40 text-parchment-100 font-display text-xs font-bold flex items-center justify-center transition-colors active:scale-95">d6</button>
+                    <button onclick="app.rollPolyhedral(8)" class="w-11 h-10 rounded-lg bg-tavern-800 hover:bg-crimson-700 border border-brass-600/40 text-parchment-100 font-display text-xs font-bold flex items-center justify-center transition-colors active:scale-95">d8</button>
+                    <button onclick="app.rollPolyhedral(10)" class="w-11 h-10 rounded-lg bg-tavern-800 hover:bg-crimson-700 border border-brass-600/40 text-parchment-100 font-display text-xs font-bold flex items-center justify-center transition-colors active:scale-95">d10</button>
+                    <button onclick="app.rollPolyhedral(12)" class="w-11 h-10 rounded-lg bg-tavern-800 hover:bg-crimson-700 border border-brass-600/40 text-parchment-100 font-display text-xs font-bold flex items-center justify-center transition-colors active:scale-95">d12</button>
+                    <button onclick="app.rollPolyhedral(20)" class="w-12 h-10 rounded-lg bg-crimson-600 hover:bg-crimson-700 border border-brass-400 text-parchment-50 font-display text-xs font-bold flex items-center justify-center shadow transition-colors active:scale-95">d20</button>
+                    <button onclick="app.rollPolyhedral(100)" class="w-12 h-10 rounded-lg bg-tavern-800 hover:bg-crimson-700 border border-brass-600/40 text-parchment-100 font-display text-xs font-bold flex items-center justify-center transition-colors active:scale-95">d100</button>
+                </div>
+
+                <!-- Ticker da Última Rolagem (Desktop) -->
+                <button onclick="app.toggleRollHistoryDrawer()" id="last-roll-ticker" class="hidden xl:flex items-center gap-2 text-xs text-parchment-300/80 hover:text-brass-400 italic truncate text-left min-w-0 flex-1 justify-end">
+                    <span class="truncate">Clique em atributos, perícias ou armas para rolar automaticamente.</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ==================== BARRA DE NAVEGAÇÃO INFERIOR MOBILE (BOTTOM TAB BAR) ==================== -->
+    <nav class="md:hidden fixed bottom-0 inset-x-0 z-40 leather-bottom-bar">
+        <div class="grid grid-cols-4 h-16 px-1">
+            <button id="mob-nav-characters" onclick="app.navigate('characters')" class="mob-nav-btn flex flex-col items-center justify-center gap-0.5 text-brass-400 font-display text-[10px] font-bold uppercase tracking-wider active:scale-95 transition-transform">
+                <i class="ph-fill ph-users-three text-xl"></i>
+                <span>Mesa</span>
+            </button>
+            <button id="mob-nav-sheet" onclick="app.openActiveOrFirstSheet()" class="mob-nav-btn flex flex-col items-center justify-center gap-0.5 text-parchment-300/75 font-display text-[10px] font-bold uppercase tracking-wider active:scale-95 transition-transform">
+                <i class="ph-fill ph-scroll text-xl"></i>
+                <span>Ficha</span>
+            </button>
+            <button id="mob-nav-compendium" onclick="app.navigate('compendium')" class="mob-nav-btn flex flex-col items-center justify-center gap-0.5 text-parchment-300/75 font-display text-[10px] font-bold uppercase tracking-wider active:scale-95 transition-transform">
+                <i class="ph-fill ph-book-open-text text-xl"></i>
+                <span>Grimório</span>
+            </button>
+            <button onclick="app.toggleRollHistoryDrawer()" class="flex flex-col items-center justify-center gap-0.5 text-parchment-300/75 font-display text-[10px] font-bold uppercase tracking-wider active:scale-95 transition-transform relative">
+                <div class="relative inline-flex items-center justify-center">
+                    <i class="ph-fill ph-dice-twenty-faces-twenty text-xl text-crimson-500"></i>
+                    <span id="mobile-roll-count" class="absolute -top-1 -right-3 px-1.5 py-0.2 rounded-full bg-brass-500 text-tavern-950 text-[9px] font-extrabold leading-tight">0</span>
+                </div>
+                <span>Dados/Log</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- ==================== CONTEÚDO PRINCIPAL ==================== -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-7 min-w-0">
+        
+        <!-- ==================== VIEW 1: MEMBROS DA MESA (PARTY ROSTER) ==================== -->
+        <section id="view-characters" class="space-y-6 min-w-0">
+            <div class="parchment-sheet rounded-xl p-4 sm:p-8">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="min-w-0">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span id="role-badge" class="px-3 py-0.5 rounded-full font-display text-[11px] font-bold uppercase tracking-wider bg-crimson-600 text-parchment-50 border border-brass-500">
+                                Selo de Jogador
+                            </span>
+                            <span class="font-display text-xs font-bold uppercase tracking-widest text-ink-600 flex items-center gap-1">
+                                • <span class="w-2 h-2 rounded-full bg-emerald-600 inline-block"></span> Firebase Nuvem Ativo
+                            </span>
+                        </div>
+                        <h2 class="font-epic text-xl sm:text-3xl font-bold text-ink-900 mt-1.5">
+                            Companhia de Aventureiros
+                        </h2>
+                        <p id="role-description" class="text-sm sm:text-base text-ink-700 mt-0.5">
+                            Abra o pergaminho do seu personagem para editar atributos, magias e equipamentos, ou consulte os aliados do grupo.
+                        </p>
+                    </div>
+
+                    <button onclick="app.createNewCharacter()" class="h-12 px-5 rounded-xl bg-crimson-600 hover:bg-crimson-700 text-parchment-50 font-display font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 border-2 border-brass-500 shadow-lg transition-all active:scale-95 cursor-pointer shrink-0">
+                        <i class="ph-bold ph-feather text-base text-brass-400"></i>
+                        <span>Forjar Novo Personagem</span>
+                    </button>
+                </div>
+
+                <hr class="dnd-divider my-5 sm:my-6">
+
+                <!-- Grid de Cards de Pergaminho dos Personagens -->
+                <div id="characters-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                    <!-- Preenchido via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== VIEW 2: FICHA DE PERSONAGEM D&D 5E ==================== -->
+        <section id="view-sheet" class="hidden space-y-4 sm:space-y-5 min-w-0">
+            
+            <!-- Barra Superior de Controle da Ficha -->
+            <div class="flex flex-wrap items-center justify-between gap-2.5 bg-tavern-900/95 p-3 rounded-xl border border-brass-600/40 text-parchment-100">
+                <button onclick="app.navigate('characters')" class="h-11 px-3.5 rounded-lg bg-tavern-800 hover:bg-tavern-700 border border-brass-600/50 font-display text-xs font-bold uppercase tracking-wider text-parchment-100 flex items-center gap-2 transition-all active:scale-95 shrink-0">
+                    <i class="ph-bold ph-arrow-left text-brass-400"></i>
+                    <span>Companhia</span>
+                </button>
+
+                <div class="flex flex-wrap items-center gap-2">
+                    <!-- Token de Inspiração Heroica -->
+                    <button id="btn-inspiration" onclick="app.toggleInspiration()" class="h-11 px-3.5 rounded-lg border font-display text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all bg-tavern-950 border-brass-600/40 text-parchment-300/60 active:scale-95 shrink-0" title="Alternar Inspiração Heroica">
+                        <i class="ph-fill ph-sparkle text-sm"></i>
+                        <span>Inspiração</span>
+                    </button>
+
+                    <!-- Indicador de Auto-Save na Nuvem -->
+                    <span id="save-status-badge" class="h-11 text-xs px-3 rounded-lg bg-tavern-950 border border-brass-600/40 text-parchment-200 font-medium flex items-center gap-1.5 shrink-0">
+                        <i class="ph-fill ph-cloud-check text-emerald-400"></i>
+                        <span id="save-status-text">Sincronizado na Nuvem</span>
+                    </span>
+
+                    <button onclick="app.deleteCurrentCharacter()" id="btn-delete-char" class="h-11 px-3.5 rounded-lg bg-crimson-800/80 hover:bg-crimson-600 border border-crimson-600 text-parchment-100 font-display text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all active:scale-95 shrink-0" aria-label="Queimar Ficha">
+                        <i class="ph-bold ph-fire text-base"></i>
+                        <span class="hidden sm:inline">Queimar</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- FOLHA DE PERGAMINHO PRINCIPAL -->
+            <div class="parchment-sheet rounded-xl p-3.5 sm:p-6 lg:p-7 space-y-5 sm:space-y-6">
+                
+                <!-- 1. CABEÇALHO CLÁSSICO DA FICHA D&D -->
+                <div class="vellum-box rounded-xl p-4 sm:p-5 border-2 border-ink-700/40">
+                    <div class="flex flex-col lg:flex-row gap-4 sm:gap-6 items-center">
+                        
+                        <!-- Brasão / Retrato do Personagem & Nível -->
+                        <div class="relative shrink-0 pb-2">
+                            <label for="char-avatar-upload" id="sheet-avatar-wrapper" class="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-tavern-900 border-4 border-brass-500 flex items-center justify-center text-3xl sm:text-4xl font-epic font-bold text-brass-400 shadow-xl select-none overflow-hidden relative cursor-pointer group" title="Clique para alterar o retrato do personagem">
+                                <img id="sheet-avatar-img" src="" alt="Retrato" class="hidden w-full h-full object-cover">
+                                <span id="sheet-avatar">K</span>
+                                <div id="sheet-avatar-overlay" class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-brass-400">
+                                    <i class="ph-bold ph-camera text-xl"></i>
+                                </div>
+                            </label>
+                            <input id="char-avatar-upload" type="file" accept="image/*" onchange="app.uploadCharacterPortrait(this)" class="hidden">
+                            <div class="absolute bottom-0 left-1/2 -translate-x-1/2 wax-seal text-parchment-50 font-display text-[11px] font-bold px-3 py-0.5 rounded-full whitespace-nowrap shadow">
+                                Nível <span id="header-level-badge">5</span>
+                            </div>
+                        </div>
+
+                        <!-- Campos de Identidade (Grid rigorosamente contido) -->
+                        <div class="flex-1 w-full min-w-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                            <div class="sm:col-span-2 min-w-0">
+                                <label class="font-display text-[11px] uppercase tracking-widest text-ink-700 font-bold block truncate">Nome do Personagem</label>
+                                <input type="text" id="input-name" oninput="app.updateField('meta.name', this.value)" class="w-full h-11 mt-1 bg-parchment-50/95 border border-ink-600/40 border-b-2 border-b-ink-700 focus:border-crimson-600 rounded-t-md px-3 text-lg font-epic font-bold text-ink-900 transition-all">
+                            </div>
+
+                            <div class="min-w-0">
+                                <label class="font-display text-[11px] uppercase tracking-widest text-ink-700 font-bold block truncate">Raça / Espécie</label>
+                                <input type="text" id="input-race" oninput="app.updateField('meta.race', this.value)" class="w-full h-11 mt-1 bg-parchment-50/95 border border-ink-600/40 border-b-ink-600 focus:border-crimson-600 rounded-t-md px-3 font-semibold text-ink-900">
+                            </div>
+
+                            <div class="min-w-0">
+                                <label class="font-display text-[11px] uppercase tracking-widest text-ink-700 font-bold block truncate">Classe & Arquétipo</label>
+                                <input type="text" id="input-class" oninput="app.updateField('meta.class', this.value)" class="w-full h-11 mt-1 bg-parchment-50/95 border border-ink-600/40 border-b-ink-600 focus:border-crimson-600 rounded-t-md px-3 font-semibold text-ink-900">
+                            </div>
+
+                            <div class="min-w-0">
+                                <label class="font-display text-[11px] uppercase tracking-widest text-ink-700 font-bold block truncate">Nível (1 a 20)</label>
+                                <input type="number" min="1" max="20" id="input-level" oninput="app.updateLevel(this.value)" class="w-full h-11 mt-1 bg-parchment-50/95 border border-ink-600/40 border-b-ink-600 focus:border-crimson-600 rounded-t-md px-3 font-display font-bold text-crimson-600 tabular-nums">
+                            </div>
+
+                            <div class="min-w-0">
+                                <label class="font-display text-[11px] uppercase tracking-widest text-ink-700 font-bold block truncate">Antecedente</label>
+                                <input type="text" id="input-background" oninput="app.updateField('meta.background', this.value)" class="w-full h-11 mt-1 bg-parchment-50/95 border border-ink-600/40 border-b-ink-600 focus:border-crimson-600 rounded-t-md px-3 font-semibold text-ink-900">
+                            </div>
+
+                            <div class="min-w-0">
+                                <label class="font-display text-[11px] uppercase tracking-widest text-ink-700 font-bold block truncate">Tendência</label>
+                                <input type="text" id="input-alignment" oninput="app.updateField('meta.alignment', this.value)" class="w-full h-11 mt-1 bg-parchment-50/95 border border-ink-600/40 border-b-ink-600 focus:border-crimson-600 rounded-t-md px-3 font-semibold text-ink-900">
+                            </div>
+
+                            <div class="min-w-0">
+                                <label class="font-display text-[11px] uppercase tracking-widest text-ink-700 font-bold block truncate">Pontos de Exp. (XP)</label>
+                                <input type="number" id="input-xp" oninput="app.updateField('meta.xp', parseInt(this.value)||0)" class="w-full h-11 mt-1 bg-parchment-50/95 border border-ink-600/40 border-b-ink-600 focus:border-crimson-600 rounded-t-md px-3 font-semibold text-ink-900 tabular-nums">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. FAIXA DE COMBATE & VITALIDADE ÁGIL (Alinhamento em 2 blocos simétricos) -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+                    
+                    <!-- Sub-bloco Esquerdo (6 cols): CA, Iniciativa e Deslocamento em alturas idênticas -->
+                    <div class="lg:col-span-6 grid grid-cols-3 gap-2.5 sm:gap-3">
+                        
+                        <!-- Classe de Armadura (Escudo Heráldico SVG centralizado) -->
+                        <div class="vellum-box rounded-xl p-3 flex flex-col items-center justify-between text-center h-full">
+                            <span class="font-display text-[10px] sm:text-[11px] uppercase tracking-wider text-ink-700 font-bold">Armadura</span>
+                            <div class="relative w-16 h-16 my-1 flex items-center justify-center shrink-0">
+                                <svg viewBox="0 0 64 68" class="absolute inset-0 w-full h-full drop-shadow">
+                                    <path d="M32 3 L60 12 V34 C60 50 47 61 32 65 C17 61 4 50 4 34 V12 Z" fill="#241912" stroke="#c59b27" stroke-width="3"/>
+                                </svg>
+                                <input type="number" id="stat-ac" oninput="app.updateField('combat.ac', parseInt(this.value)||10)" class="relative z-10 w-12 h-11 text-center bg-transparent font-display text-xl font-bold text-parchment-50 tabular-nums">
+                            </div>
+                            <span class="text-xs text-ink-600 italic">Defesa (CA)</span>
+                        </div>
+
+                        <!-- Iniciativa -->
+                        <button type="button" onclick="app.rollInitiative()" class="vellum-box rounded-xl p-3 flex flex-col items-center justify-between text-center h-full cursor-pointer hover:border-crimson-600 active:scale-95 transition-all group" title="Clique para rolar Iniciativa">
+                            <span class="font-display text-[10px] sm:text-[11px] uppercase tracking-wider text-ink-700 font-bold group-hover:text-crimson-600">Iniciativa</span>
+                            <div class="h-16 my-1 flex items-center justify-center">
+                                <span id="stat-initiative" class="font-display text-3xl font-bold text-ink-900 group-hover:text-crimson-600 tabular-nums">+3</span>
+                            </div>
+                            <span class="text-xs text-crimson-600 font-bold flex items-center justify-center gap-1">
+                                <i class="ph-fill ph-dice-twenty-faces-twenty"></i> Rolar d20
+                            </span>
+                        </button>
+
+                        <!-- Deslocamento -->
+                        <div class="vellum-box rounded-xl p-3 flex flex-col items-center justify-between text-center h-full">
+                            <span class="font-display text-[10px] sm:text-[11px] uppercase tracking-wider text-ink-700 font-bold">Deslocamento</span>
+                            <div class="h-16 my-1 flex items-center justify-center w-full">
+                                <input type="text" id="stat-speed" oninput="app.updateField('combat.speed', this.value)" class="w-full max-w-[84px] h-11 text-center bg-parchment-50/80 border border-ink-600/40 rounded-lg font-display text-lg font-bold text-ink-900 focus:border-crimson-600">
+                            </div>
+                            <span class="text-xs text-ink-600 italic">Por Turno</span>
+                        </div>
+                    </div>
+
+                    <!-- Sub-bloco Direito (6 cols): Pontos de Vida (HP) + Dano/Cura Rápida -->
+                    <div class="lg:col-span-6 vellum-box rounded-xl p-3.5 sm:p-4 border-2 border-crimson-600/40 flex flex-col justify-between gap-2.5 h-full">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="font-display text-xs uppercase tracking-wider font-bold text-crimson-700 flex items-center gap-1.5">
+                                <i class="ph-fill ph-heart text-base"></i> Pontos de Vida
+                            </span>
+                            <div class="flex items-center gap-1.5 text-xs font-semibold text-ink-800 shrink-0">
+                                <span class="font-display text-[10px] uppercase">PV Temp:</span>
+                                <input type="number" min="0" id="hp-temp" oninput="app.updateField('combat.hpTemp', Math.max(0, parseInt(this.value)||0))" class="w-14 h-9 bg-sky-50 border border-sky-700/50 rounded-lg px-1.5 text-center font-display text-sky-900 font-bold tabular-nums">
+                            </div>
+                        </div>
+
+                        <!-- Barra de Vitalidade com Transição de Cor -->
+                        <div class="w-full bg-tavern-900 h-3.5 rounded-full overflow-hidden border border-ink-700 p-0.5">
+                            <div id="hp-bar" class="bg-emerald-700 h-full rounded-full transition-all duration-300" style="width: 100%"></div>
+                        </div>
+
+                        <!-- Controles Rápidos -5 / -1 / Atual / Máx / +1 / +5 -->
+                        <div class="grid grid-cols-[auto_1fr_auto] items-center gap-1.5 sm:gap-2">
+                            <div class="flex items-center gap-1">
+                                <button onclick="app.adjustHP(-5)" class="w-10 h-11 rounded-lg bg-crimson-800 hover:bg-crimson-900 text-parchment-50 font-display font-bold text-xs shadow active:scale-95 flex items-center justify-center">-5</button>
+                                <button onclick="app.adjustHP(-1)" class="w-10 h-11 rounded-lg bg-crimson-600 hover:bg-crimson-700 text-parchment-50 font-display font-bold text-xs shadow active:scale-95 flex items-center justify-center">-1</button>
+                            </div>
+
+                            <div class="flex items-center justify-center gap-1 font-display font-bold min-w-0">
+                                <input type="number" id="hp-current" oninput="app.updateField('combat.hpCurrent', parseInt(this.value)||0)" class="w-full max-w-[60px] h-11 text-center bg-parchment-50 border border-ink-600/60 rounded-lg px-1 text-base text-ink-900 tabular-nums">
+                                <span class="text-ink-600 shrink-0">/</span>
+                                <input type="number" id="hp-max" oninput="app.updateField('combat.hpMax', Math.max(1, parseInt(this.value)||1))" class="w-full max-w-[60px] h-11 text-center bg-parchment-50 border border-ink-600/60 rounded-lg px-1 text-base text-ink-700 tabular-nums">
+                            </div>
+
+                            <div class="flex items-center gap-1">
+                                <button onclick="app.adjustHP(1)" class="w-10 h-11 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-parchment-50 font-display font-bold text-xs shadow active:scale-95 flex items-center justify-center">+1</button>
+                                <button onclick="app.adjustHP(5)" class="w-10 h-11 rounded-lg bg-emerald-800 hover:bg-emerald-900 text-parchment-50 font-display font-bold text-xs shadow active:scale-95 flex items-center justify-center">+5</button>
+                            </div>
+                        </div>
+
+                        <!-- Campo Rápido de Dano ou Cura Direta -->
+                        <div class="pt-2 border-t border-ink-600/20 flex items-center gap-1.5">
+                            <input type="number" min="1" id="hp-quick-amount" placeholder="Valor..." class="flex-1 min-w-0 h-11 bg-parchment-50 border border-ink-600/50 rounded-lg px-2.5 text-center font-display text-sm text-ink-900 tabular-nums">
+                            <button onclick="app.applyQuickHP('damage')" class="h-11 px-3 rounded-lg bg-crimson-700 hover:bg-crimson-800 text-parchment-50 font-display text-[11px] font-bold uppercase tracking-wider flex items-center justify-center gap-1 shadow active:scale-95 shrink-0">
+                                <i class="ph-bold ph-sword"></i> Dano
+                            </button>
+                            <button onclick="app.applyQuickHP('heal')" class="h-11 px-3 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-parchment-50 font-display text-[11px] font-bold uppercase tracking-wider flex items-center justify-center gap-1 shadow active:scale-95 shrink-0">
+                                <i class="ph-bold ph-heart"></i> Curar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="dnd-divider">
+
+                <!-- 3. CORPO DA FICHA (ATRIBUTOS & PERÍCIAS | ABAS DE CONTEÚDO) -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-start">
+                    
+                    <!-- COLUNA ESQUERDA (5 Cols): Atributos Clássicos, Salvaguardas e Perícias -->
+                    <div class="lg:col-span-5 space-y-4 sm:space-y-5 min-w-0">
+                        
+                        <!-- Os 6 Escudos de Atributos D&D (Grid 3x2 simétrico) -->
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3" id="attributes-container">
+                            <!-- Renderizado via JS -->
+                        </div>
+
+                        <!-- Bônus de Proficiência & Percepção Passiva lado a lado -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="vellum-box rounded-xl p-3 flex items-center justify-between gap-2">
+                                <div class="min-w-0">
+                                    <p class="font-display text-[11px] font-bold uppercase text-ink-900 leading-tight">Bônus Profic.</p>
+                                    <p class="text-[11px] text-ink-600 italic truncate">Por nível</p>
+                                </div>
+                                <span id="stat-prof-bonus" class="font-display text-lg font-bold text-brass-400 bg-tavern-900 px-2.5 py-1.5 rounded-lg border border-brass-500 tabular-nums shrink-0">+3</span>
+                            </div>
+
+                            <div class="vellum-box rounded-xl p-3 flex items-center justify-between gap-2">
+                                <div class="min-w-0">
+                                    <p class="font-display text-[11px] font-bold uppercase text-ink-900 leading-tight">Perc. Passiva</p>
+                                    <p class="text-[11px] text-ink-600 italic truncate">10 + Percepção</p>
+                                </div>
+                                <span id="passive-perception" class="font-display text-lg font-bold text-crimson-700 bg-parchment-50 px-2.5 py-1.5 rounded-lg border-2 border-ink-700/50 tabular-nums shrink-0">14</span>
+                            </div>
+                        </div>
+
+                        <!-- Testes de Resistência (Coluna única alinhada verticalmente) -->
+                        <details open class="vellum-box rounded-xl p-3.5 sm:p-4 group">
+                            <summary class="font-display text-xs uppercase tracking-wider font-bold text-crimson-700 border-b border-ink-600/30 pb-2 mb-3 flex items-center justify-between cursor-pointer list-none min-h-[36px]">
+                                <span>Testes de Resistência</span>
+                                <span class="text-xs font-serif font-normal italic text-ink-600 flex items-center gap-1">
+                                    Toque p/ proficiência <i class="ph-bold ph-caret-down group-open:rotate-180 transition-transform"></i>
+                                </span>
+                            </summary>
+                            <div id="saving-throws-list" class="space-y-1.5">
+                                <!-- Renderizado via JS -->
+                            </div>
+                        </details>
+
+                        <!-- Lista das 18 Perícias (Alinhamento em colunas retas) -->
+                        <details open class="vellum-box rounded-xl p-3.5 sm:p-4 group">
+                            <summary class="flex items-center justify-between border-b border-ink-600/30 pb-2 mb-3 cursor-pointer list-none min-h-[36px] gap-2">
+                                <h3 class="font-display text-xs uppercase tracking-wider font-bold text-crimson-700">Perícias (Skills)</h3>
+                                <span class="text-xs text-ink-600 font-semibold flex items-center gap-1 shrink-0">
+                                    ○ Normal • ● Prof • ★ Esp <i class="ph-bold ph-caret-down group-open:rotate-180 transition-transform"></i>
+                                </span>
+                            </summary>
+                            <div id="skills-list" class="space-y-1 max-h-[480px] overflow-y-auto pr-1">
+                                <!-- Renderizado via JS -->
+                            </div>
+                        </details>
+                    </div>
+
+                    <!-- COLUNA DIREITA (7 Cols): Condições, Dados de Vida, Contra a Morte, Descansos e Abas -->
+                    <div class="lg:col-span-7 space-y-4 sm:space-y-5 min-w-0">
+                        
+                        <!-- Dados de Vida & Testes Contra a Morte lado a lado -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <!-- Dados de Vida -->
+                            <div class="vellum-box rounded-xl p-3.5 flex items-center justify-between gap-3">
+                                <div class="min-w-0">
+                                    <span class="font-display text-xs uppercase tracking-wider text-ink-900 font-bold block">Dados de Vida</span>
+                                    <span class="text-xs text-ink-600 italic block">Descanso Curto</span>
+                                </div>
+                                <input type="text" id="stat-hitdice" oninput="app.updateField('combat.hitDice', this.value)" class="w-24 h-11 text-center bg-parchment-50 border border-ink-600/50 rounded-lg font-display font-bold text-crimson-700 text-base shrink-0">
+                            </div>
+
+                            <!-- Testes Contra a Morte -->
+                            <div class="vellum-box rounded-xl p-3.5 flex flex-col justify-between gap-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-display text-xs font-bold uppercase tracking-wider text-ink-900">Contra a Morte</span>
+                                    <button type="button" onclick="app.resetDeathSaves()" class="px-2 py-0.5 rounded text-xs text-crimson-700 font-bold hover:bg-crimson-600/10 active:scale-95">Limpar</button>
+                                </div>
+                                <div class="flex items-center justify-between gap-2 text-xs">
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="text-emerald-800 font-bold">Suc:</span>
+                                        <div id="death-successes" class="flex items-center gap-1.5"></div>
+                                    </div>
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="text-crimson-700 font-bold">Fal:</span>
+                                        <div id="death-failures" class="flex items-center gap-1.5"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Condições Ativas e Descansos -->
+                        <div class="vellum-box rounded-xl p-4 space-y-3.5">
+                            <div>
+                                <span class="font-display text-xs uppercase tracking-wider font-bold text-crimson-700 block mb-2">Condições & Estados</span>
+                                <div class="flex flex-wrap gap-1.5" id="conditions-container">
+                                    <!-- Renderizado via JS -->
+                                </div>
+                            </div>
+
+                            <!-- Botões de Descanso Curto & Longo -->
+                            <div class="pt-3 border-t border-ink-600/20 flex flex-wrap items-center justify-end gap-2">
+                                <button type="button" onclick="app.shortRest()" class="h-11 px-4 rounded-xl bg-parchment-200 hover:bg-parchment-300 border border-ink-600/50 font-display text-xs font-bold text-ink-900 flex items-center justify-center gap-1.5 transition-colors active:scale-95">
+                                    <i class="ph-fill ph-campfire text-crimson-600 text-base"></i> Descanso Curto
+                                </button>
+                                <button type="button" onclick="app.longRest()" class="h-11 px-4 rounded-xl bg-tavern-900 hover:bg-tavern-800 border border-brass-500 font-display text-xs font-bold text-brass-400 flex items-center justify-center gap-1.5 transition-colors shadow active:scale-95">
+                                    <i class="ph-fill ph-moon-stars text-base"></i> Descanso Longo
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Abas da Ficha -->
+                        <div class="vellum-box rounded-xl overflow-hidden border-2 border-ink-700/40">
+                            <div class="flex border-b-2 border-ink-700/40 bg-parchment-300/70 overflow-x-auto no-scrollbar">
+                                <button type="button" onclick="app.switchSheetTab('actions')" id="tab-btn-actions" class="sheet-tab-btn h-12 flex-1 px-4 font-display text-xs font-bold uppercase tracking-wider border-b-2 border-crimson-600 bg-parchment-50/90 text-crimson-700 flex items-center justify-center gap-1.5 whitespace-nowrap active:scale-95 transition-transform">
+                                    <i class="ph-fill ph-sword text-base"></i> Ações & Ataques
+                                </button>
+                                <button type="button" onclick="app.switchSheetTab('spells')" id="tab-btn-spells" class="sheet-tab-btn h-12 flex-1 px-4 font-display text-xs font-bold uppercase tracking-wider border-b-2 border-transparent text-ink-700 hover:text-ink-900 flex items-center justify-center gap-1.5 whitespace-nowrap active:scale-95 transition-transform">
+                                    <i class="ph-fill ph-sparkle text-base"></i> Grimório
+                                </button>
+                                <button type="button" onclick="app.switchSheetTab('inventory')" id="tab-btn-inventory" class="sheet-tab-btn h-12 flex-1 px-4 font-display text-xs font-bold uppercase tracking-wider border-b-2 border-transparent text-ink-700 hover:text-ink-900 flex items-center justify-center gap-1.5 whitespace-nowrap active:scale-95 transition-transform">
+                                    <i class="ph-fill ph-backpack text-base"></i> Mochila
+                                </button>
+                                <button type="button" onclick="app.switchSheetTab('features')" id="tab-btn-features" class="sheet-tab-btn h-12 flex-1 px-4 font-display text-xs font-bold uppercase tracking-wider border-b-2 border-transparent text-ink-700 hover:text-ink-900 flex items-center justify-center gap-1.5 whitespace-nowrap active:scale-95 transition-transform">
+                                    <i class="ph-fill ph-scroll text-base"></i> Talentos
+                                </button>
+                            </div>
+
+                            <!-- Conteúdo das Abas -->
+                            <div class="p-4 sm:p-5">
+                                
+                                <!-- ABA 1: AÇÕES & ATAQUES -->
+                                <div id="sheet-tab-actions" class="space-y-5">
+                                    <div class="flex flex-wrap items-center justify-between gap-2">
+                                        <h4 class="font-display text-sm font-bold uppercase tracking-wider text-ink-900">Armas & Conjurações de Combate</h4>
+                                        <button type="button" onclick="app.addAttackPrompt()" class="h-11 px-3.5 rounded-xl bg-crimson-600 hover:bg-crimson-700 text-parchment-50 font-display text-xs font-bold flex items-center gap-1.5 shadow active:scale-95 shrink-0">
+                                            <i class="ph-bold ph-plus"></i> Adicionar Ataque
+                                        </button>
+                                    </div>
+
+                                    <div id="attacks-list" class="space-y-3">
+                                        <!-- Renderizado via JS -->
+                                    </div>
+
+                                    <hr class="dnd-divider">
+
+                                    <div>
+                                        <h4 class="font-display text-xs uppercase tracking-wider font-bold text-crimson-700 mb-3">Recursos de Classe & Habilidades</h4>
+                                        <div id="resources-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            <!-- Renderizado via JS -->
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- ABA 2: GRIMÓRIO & MAGIAS -->
+                                <div id="sheet-tab-spells" class="hidden space-y-5">
+                                    <!-- Estatísticas de Conjuração -->
+                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-parchment-200/80 p-3.5 rounded-xl border border-ink-600/40 items-center">
+                                        <div class="min-w-0">
+                                            <label class="font-display text-[10px] uppercase tracking-wider text-ink-700 font-bold block">Atributo Mágico</label>
+                                            <select id="spell-ability-select" onchange="app.updateField('spellcasting.ability', this.value)" class="mt-1 w-full h-11 bg-parchment-50 border border-ink-600/60 rounded-lg px-2.5 font-display text-xs font-bold text-crimson-700">
+                                                <option value="int">Inteligência (INT)</option>
+                                                <option value="wis">Sabedoria (SAB)</option>
+                                                <option value="cha">Carisma (CAR)</option>
+                                            </select>
+                                        </div>
+                                        <div class="sm:border-x border-ink-600/30 flex sm:flex-col items-center justify-between sm:justify-center px-2 py-1">
+                                            <span class="font-display text-[10px] uppercase tracking-wider text-ink-700 font-bold">CD Resistência</span>
+                                            <span id="spell-save-dc" class="font-display text-2xl font-bold text-crimson-700 tabular-nums">15</span>
+                                        </div>
+                                        <div class="flex sm:flex-col items-center justify-between sm:justify-center px-2 py-1">
+                                            <span class="font-display text-[10px] uppercase tracking-wider text-ink-700 font-bold">Ataque Mágico</span>
+                                            <span id="spell-attack-bonus" class="font-display text-2xl font-bold text-ink-900 tabular-nums">+7</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Espaços de Magia (Spell Slots 1º ao 9º Círculo) -->
+                                    <div>
+                                        <span class="font-display text-xs uppercase tracking-wider font-bold text-crimson-700 block mb-2.5">Espaços de Magia (1º ao 9º Círculo)</span>
+                                        <div id="spell-slots-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                                            <!-- Renderizado via JS -->
+                                        </div>
+                                    </div>
+
+                                    <hr class="dnd-divider">
+
+                                    <!-- Lista de Magias -->
+                                    <div>
+                                        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                                            <span class="font-display text-xs uppercase tracking-wider font-bold text-crimson-700">Magias Memorizadas</span>
+                                            <div class="flex items-center gap-2">
+                                                <button type="button" onclick="app.addSpellPrompt()" class="h-11 px-3 rounded-xl bg-crimson-600 hover:bg-crimson-700 text-parchment-50 font-display text-xs font-bold flex items-center gap-1 shadow active:scale-95">
+                                                    <i class="ph-bold ph-plus"></i> Nova Magia
+                                                </button>
+                                                <button type="button" onclick="app.navigate('compendium')" class="h-11 px-3 rounded-xl bg-parchment-200 hover:bg-parchment-300 border border-ink-600/40 text-xs text-crimson-800 font-bold flex items-center gap-1 active:scale-95">
+                                                    <i class="ph-bold ph-book-open-text"></i> Livro SRD
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div id="spells-list" class="space-y-2.5">
+                                            <!-- Renderizado via JS -->
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- ABA 3: INVENTÁRIO & TESOURO -->
+                                <div id="sheet-tab-inventory" class="hidden space-y-5">
+                                    <!-- Algibeira de Moedas (5 colunas alinhadas e estritamente contidas) -->
+                                    <div class="grid grid-cols-5 gap-1.5 sm:gap-2.5 bg-tavern-900 text-parchment-100 p-3 rounded-xl border-2 border-brass-500 shadow-inner text-center">
+                                        <div class="min-w-0 bg-tavern-950/70 rounded-lg p-1.5 border border-brass-600/30">
+                                            <span class="font-display text-[10px] font-bold text-amber-500 block">PC</span>
+                                            <input type="number" id="coin-cp" oninput="app.updateField('inventory.coins.cp', parseInt(this.value)||0)" class="w-full h-10 text-center bg-transparent font-display font-bold text-sm text-parchment-50 tabular-nums">
+                                        </div>
+                                        <div class="min-w-0 bg-tavern-950/70 rounded-lg p-1.5 border border-brass-600/30">
+                                            <span class="font-display text-[10px] font-bold text-zinc-300 block">PP</span>
+                                            <input type="number" id="coin-sp" oninput="app.updateField('inventory.coins.sp', parseInt(this.value)||0)" class="w-full h-10 text-center bg-transparent font-display font-bold text-sm text-parchment-50 tabular-nums">
+                                        </div>
+                                        <div class="min-w-0 bg-tavern-950/70 rounded-lg p-1.5 border border-brass-600/30">
+                                            <span class="font-display text-[10px] font-bold text-sky-300 block">PE</span>
+                                            <input type="number" id="coin-ep" oninput="app.updateField('inventory.coins.ep', parseInt(this.value)||0)" class="w-full h-10 text-center bg-transparent font-display font-bold text-sm text-parchment-50 tabular-nums">
+                                        </div>
+                                        <div class="min-w-0 bg-tavern-950/70 rounded-lg p-1.5 border border-brass-500/60">
+                                            <span class="font-display text-[10px] font-bold text-brass-400 block">PO</span>
+                                            <input type="number" id="coin-gp" oninput="app.updateField('inventory.coins.gp', parseInt(this.value)||0)" class="w-full h-10 text-center bg-transparent font-display font-bold text-base text-brass-400 tabular-nums">
+                                        </div>
+                                        <div class="min-w-0 bg-tavern-950/70 rounded-lg p-1.5 border border-brass-600/30">
+                                            <span class="font-display text-[10px] font-bold text-indigo-300 block">PL</span>
+                                            <input type="number" id="coin-pp" oninput="app.updateField('inventory.coins.pp', parseInt(this.value)||0)" class="w-full h-10 text-center bg-transparent font-display font-bold text-sm text-parchment-50 tabular-nums">
+                                        </div>
+                                    </div>
+
+                                    <!-- Capacidade de Carga -->
+                                    <div class="bg-parchment-200/70 p-3.5 rounded-xl border border-ink-600/30">
+                                        <div class="flex items-center justify-between gap-2 text-xs font-bold mb-1.5 text-ink-800">
+                                            <span class="font-display uppercase tracking-wider truncate">Carga (FOR × 7,5 kg)</span>
+                                            <span id="weight-display" class="font-display tabular-nums shrink-0">18.5 / 60 kg</span>
+                                        </div>
+                                        <div class="w-full bg-parchment-300 h-2.5 rounded-full overflow-hidden border border-ink-600/40">
+                                            <div id="weight-bar" class="bg-crimson-600 h-full transition-all" style="width: 30%"></div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Lista de Itens -->
+                                    <div>
+                                        <div class="flex items-center justify-between gap-2 mb-3">
+                                            <h4 class="font-display text-xs uppercase tracking-wider font-bold text-crimson-700">Mochila & Itens Mágicos</h4>
+                                            <button type="button" onclick="app.addItemPrompt()" class="h-11 px-3.5 rounded-xl bg-crimson-600 hover:bg-crimson-700 text-parchment-50 font-display text-xs font-bold flex items-center gap-1 shadow active:scale-95 shrink-0">
+                                                <i class="ph-bold ph-plus"></i> Novo Item
+                                            </button>
+                                        </div>
+                                        <div id="inventory-list" class="space-y-2.5">
+                                            <!-- Renderizado via JS -->
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- ABA 4: TALENTOS & HISTÓRIA -->
+                                <div id="sheet-tab-features" class="hidden space-y-4">
+                                    <div>
+                                        <h4 class="font-display text-xs uppercase tracking-wider font-bold text-crimson-700 mb-2.5">Características de Classe, Raça & Talentos</h4>
+                                        <div id="features-list" class="space-y-2.5">
+                                            <!-- Renderizado via JS -->
+                                        </div>
+                                    </div>
+
+                                    <hr class="dnd-divider">
+
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                                        <div class="min-w-0">
+                                            <label class="font-display text-[11px] uppercase tracking-wider text-ink-700 font-bold block">Traços de Personalidade</label>
+                                            <textarea id="bio-traits" rows="2" oninput="app.updateField('bio.traits', this.value)" class="w-full mt-1 bg-parchment-50/90 border border-ink-600/50 rounded-lg p-2.5 text-ink-900 focus:border-crimson-600"></textarea>
+                                        </div>
+                                        <div class="min-w-0">
+                                            <label class="font-display text-[11px] uppercase tracking-wider text-ink-700 font-bold block">Ideais, Vínculos & Defeitos</label>
+                                            <textarea id="bio-ideals" rows="2" oninput="app.updateField('bio.ideals', this.value)" class="w-full mt-1 bg-parchment-50/90 border border-ink-600/50 rounded-lg p-2.5 text-ink-900 focus:border-crimson-600"></textarea>
+                                        </div>
+                                        <div class="sm:col-span-2 min-w-0">
+                                            <label class="font-display text-[11px] uppercase tracking-wider text-ink-700 font-bold block">Crônicas & História do Personagem</label>
+                                            <textarea id="bio-backstory" rows="3" oninput="app.updateField('bio.backstory', this.value)" class="w-full mt-1 bg-parchment-50/90 border border-ink-600/50 rounded-lg p-2.5 text-ink-900 focus:border-crimson-600"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== VIEW 3: LIVRO DE REGRAS (COMPÊNDIO SRD) ==================== -->
+        <section id="view-compendium" class="hidden space-y-6 min-w-0">
+            <div class="parchment-sheet rounded-xl p-4 sm:p-8 space-y-5 sm:space-y-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="min-w-0">
+                        <span class="px-3 py-0.5 rounded-full font-display text-[11px] font-bold uppercase tracking-wider bg-tavern-900 text-brass-400 border border-brass-500">
+                            Tomo Oficial & Regras da Mesa
+                        </span>
+                        <h2 class="font-epic text-xl sm:text-3xl font-bold text-ink-900 mt-1.5">
+                            Livro da Comunidade (Compêndio SRD)
+                        </h2>
+                        <p class="text-sm sm:text-base text-ink-700 mt-0.5">
+                            Consulte o acervo de raças, classes, grimório arcano e regras da casa aprovadas pelo Mestre.
+                        </p>
+                    </div>
+
+                    <!-- Botão exclusivo do Mestre -->
+                    <button id="btn-add-compendium" onclick="app.openNewCompendiumModal()" class="hidden h-12 px-4 rounded-xl bg-crimson-600 hover:bg-crimson-700 text-parchment-50 font-display font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 border-2 border-brass-500 shadow-lg transition-all active:scale-95 cursor-pointer shrink-0">
+                        <i class="ph-bold ph-quill text-base text-brass-400"></i>
+                        <span>Inscrever Nova Regra / Magia</span>
+                    </button>
+                </div>
+
+                <hr class="dnd-divider">
+
+                <!-- Busca & Filtros -->
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <div class="relative flex-1 min-w-0">
+                        <i class="ph-bold ph-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-600"></i>
+                        <input type="text" id="compendium-search" oninput="app.renderCompendium()" placeholder="Pesquisar no tomo por magia, raça, classe..." class="w-full h-11 bg-parchment-50 border-2 border-ink-600/50 focus:border-crimson-600 rounded-xl pl-10 pr-4 text-ink-900 placeholder:text-ink-600/60">
+                    </div>
+                    <div class="flex gap-1.5 overflow-x-auto no-scrollbar pb-1 sm:pb-0 shrink-0">
+                        <button onclick="app.filterCompendium('all')" class="comp-filter-btn h-11 px-3.5 rounded-xl font-display text-xs font-bold uppercase bg-crimson-600 text-parchment-50 border border-brass-500 shrink-0 active:scale-95" data-cat="all">Todos</button>
+                        <button onclick="app.filterCompendium('spell')" class="comp-filter-btn h-11 px-3.5 rounded-xl font-display text-xs font-bold uppercase bg-parchment-200 text-ink-800 hover:bg-parchment-300 border border-ink-600/40 shrink-0 active:scale-95" data-cat="spell">Magias</button>
+                        <button onclick="app.filterCompendium('race')" class="comp-filter-btn h-11 px-3.5 rounded-xl font-display text-xs font-bold uppercase bg-parchment-200 text-ink-800 hover:bg-parchment-300 border border-ink-600/40 shrink-0 active:scale-95" data-cat="race">Raças</button>
+                        <button onclick="app.filterCompendium('class')" class="comp-filter-btn h-11 px-3.5 rounded-xl font-display text-xs font-bold uppercase bg-parchment-200 text-ink-800 hover:bg-parchment-300 border border-ink-600/40 shrink-0 active:scale-95" data-cat="class">Classes</button>
+                        <button onclick="app.filterCompendium('homebrew')" class="comp-filter-btn h-11 px-3.5 rounded-xl font-display text-xs font-bold uppercase bg-parchment-200 text-ink-800 hover:bg-parchment-300 border border-ink-600/40 shrink-0 active:scale-95" data-cat="homebrew">Regras da Casa</button>
+                    </div>
+                </div>
+
+                <!-- Grid de Verbetes do Compêndio -->
+                <div id="compendium-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+                    <!-- Renderizado via JS -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ==================== DRAWER LATERAL: HISTÓRICO DE ROLAGENS DA SESSÃO ==================== -->
+    <div id="roll-history-backdrop" onclick="app.toggleRollHistoryDrawer(false)" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-xs transition-opacity"></div>
+    <aside id="roll-history-drawer" class="fixed top-0 right-0 bottom-0 z-50 w-full max-w-md bg-tavern-900 border-l-2 border-brass-500 text-parchment-100 shadow-2xl transform translate-x-full transition-transform duration-300 flex flex-col">
+        <div class="p-4 sm:p-5 bg-tavern-950 border-b border-brass-600/40 flex items-center justify-between gap-2">
+            <div class="flex items-center gap-3 min-w-0">
+                <div class="w-10 h-10 rounded-lg wax-seal flex items-center justify-center text-brass-400 shrink-0">
+                    <i class="ph-fill ph-dice-twenty-faces-twenty text-xl"></i>
+                </div>
+                <div class="min-w-0">
+                    <h3 class="font-display font-bold text-base text-brass-400 uppercase tracking-wider truncate">Registro de Rolagens</h3>
+                    <p class="text-xs text-parchment-300/70 truncate">Últimas 15 jogadas desta sessão</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+                <button onclick="app.clearRollHistory()" class="h-11 px-3 rounded-lg bg-tavern-800 hover:bg-crimson-800 text-xs font-display font-bold text-parchment-200 active:scale-95">Limpar</button>
+                <button onclick="app.toggleRollHistoryDrawer(false)" class="w-11 h-11 rounded-lg hover:bg-tavern-800 flex items-center justify-center text-parchment-300 active:scale-95" aria-label="Fechar histórico">
+                    <i class="ph-bold ph-x text-lg"></i>
+                </button>
+            </div>
+        </div>
+
+        <div id="roll-history-list" class="flex-1 overflow-y-auto p-4 space-y-2.5">
+            <p class="text-sm text-parchment-300/60 italic text-center py-8">Nenhuma rolagem realizada nesta sessão ainda.</p>
+        </div>
+    </aside>
+
+    <!-- ==================== MODAL: PERFIL DO USUÁRIO & FOTO ==================== -->
+    <div id="user-profile-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+        <div class="parchment-sheet max-w-md w-full rounded-xl p-5 sm:p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b-2 border-crimson-600 pb-2.5 gap-2">
+                <h3 class="font-display font-bold text-lg text-ink-900 truncate">Selo & Perfil do Aventureiro</h3>
+                <button onclick="app.closeUserProfileModal()" class="w-11 h-11 flex items-center justify-center text-ink-700 hover:text-crimson-600 active:scale-95 shrink-0"><i class="ph-bold ph-x text-lg"></i></button>
+            </div>
+
+            <div class="space-y-4 text-ink-900">
+                <!-- Foto de Perfil Atual + Upload -->
+                <div class="flex flex-col items-center gap-3 bg-parchment-50/90 p-4 rounded-xl border border-ink-600/40">
+                    <div class="w-24 h-24 rounded-full bg-tavern-900 border-4 border-brass-500 overflow-hidden flex items-center justify-center shadow-lg">
+                        <img id="profile-modal-img" src="" alt="Avatar" class="hidden w-full h-full object-cover">
+                        <span id="profile-modal-initial" class="font-epic text-3xl font-bold text-brass-400">A</span>
+                    </div>
+                    <label for="profile-photo-upload" class="h-11 px-4 rounded-xl bg-tavern-900 hover:bg-tavern-800 text-brass-400 font-display text-xs font-bold uppercase tracking-wider flex items-center gap-2 cursor-pointer border border-brass-500/60 shadow active:scale-95">
+                        <i class="ph-bold ph-camera text-base"></i>
+                        <span id="profile-upload-label">Alterar Foto de Perfil</span>
+                    </label>
+                    <input id="profile-photo-upload" type="file" accept="image/*" onchange="app.uploadUserProfilePhoto(this)" class="hidden">
+                </div>
+
+                <div>
+                    <label class="font-display text-xs font-bold uppercase text-ink-800">Nome de Exibição</label>
+                    <input id="profile-modal-name" type="text" class="w-full h-11 mt-1 bg-parchment-50 border border-ink-600 rounded-lg px-3 text-ink-900 font-semibold">
+                </div>
+
+                <div>
+                    <label class="font-display text-xs font-bold uppercase text-ink-800">Papel na Mesa</label>
+                    <select id="profile-modal-role" class="w-full h-11 mt-1 bg-parchment-50 border border-ink-600 rounded-lg px-3 font-display text-xs font-bold text-ink-900">
+                        <option value="player">Jogador (Edita suas próprias fichas)</option>
+                        <option value="dm">Mestre / DM (Gerencia todas as fichas & Livro SRD)</option>
+                    </select>
+                </div>
+
+                <div class="text-xs text-ink-600 bg-parchment-200/70 p-2.5 rounded-lg border border-ink-600/20">
+                    <p><strong>E-mail:</strong> <span id="profile-modal-email">—</span></p>
+                    <p class="truncate mt-0.5"><strong>UID Firebase:</strong> <span id="profile-modal-uid" class="font-mono text-[11px]">—</span></p>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-3 border-t border-ink-600/20">
+                <button onclick="app.closeUserProfileModal()" class="h-11 px-4 rounded-xl bg-parchment-300 hover:bg-parchment-400 text-ink-900 font-display text-xs font-bold uppercase active:scale-95">Cancelar</button>
+                <button onclick="app.saveUserProfileModal()" class="h-11 px-4 rounded-xl bg-crimson-600 hover:bg-crimson-700 text-parchment-50 font-display text-xs font-bold uppercase border border-brass-500 shadow active:scale-95">Salvar Perfil</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL: INSPETOR DE BANCO NOSQL (FIREBASE FIRESTORE) ==================== -->
+    <div id="firebase-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+        <div class="bg-tavern-900 max-w-3xl w-full rounded-xl border-2 border-brass-500 shadow-2xl overflow-hidden flex flex-col max-h-[85vh] text-parchment-100">
+            <div class="p-4 sm:p-5 border-b border-brass-600/40 flex items-center justify-between gap-2 bg-tavern-950">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-9 h-9 rounded-lg wax-seal flex items-center justify-center text-brass-400 shrink-0">
+                        <i class="ph-fill ph-database text-xl"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h3 class="font-display font-bold text-sm sm:text-lg text-brass-400 truncate">Cloud Firestore • Projeto rpg27-a394d</h3>
+                        <p class="text-xs text-parchment-300/70 truncate">Documentos sincronizados em tempo real na nuvem</p>
+                    </div>
+                </div>
+                <button onclick="app.closeFirebaseInspector()" class="w-11 h-11 rounded-lg hover:bg-tavern-800 flex items-center justify-center text-parchment-300 hover:text-white active:scale-95 shrink-0">
+                    <i class="ph-bold ph-x text-lg"></i>
+                </button>
+            </div>
+            
+            <div class="p-4 sm:p-5 overflow-y-auto space-y-3 flex-1 font-mono text-xs">
+                <div class="flex flex-wrap items-center justify-between gap-2 bg-tavern-950 p-3 rounded-lg border border-brass-600/30">
+                    <span class="text-parchment-200">Coleções: <strong class="text-brass-400">users</strong>, <strong class="text-emerald-400">characters</strong>, <strong class="text-amber-300">compendium</strong></span>
+                    <div class="flex gap-2">
+                        <button onclick="app.seedInitialCompendiumIfEmpty(true)" class="h-10 px-3 rounded-lg bg-crimson-700 hover:bg-crimson-600 text-parchment-50 font-sans font-semibold active:scale-95">Popular SRD Base</button>
+                        <button onclick="app.copyJsonToClipboard()" class="h-10 px-3 rounded-lg bg-brass-600 hover:bg-brass-500 text-tavern-950 font-sans font-bold active:scale-95">Copiar JSON</button>
+                    </div>
+                </div>
+                <pre id="firebase-json-preview" class="text-amber-200/90 overflow-x-auto p-3.5 rounded-lg bg-black/70 border border-brass-600/30 leading-relaxed"></pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL DINÂMICO DE PERGAMINHO ==================== -->
+    <div id="custom-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+        <div class="parchment-sheet max-w-md w-full rounded-xl p-5 sm:p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b-2 border-crimson-600 pb-2.5 gap-2">
+                <h3 id="custom-modal-title" class="font-display font-bold text-lg text-ink-900 truncate">Adicionar</h3>
+                <button onclick="app.closeCustomModal()" class="w-11 h-11 flex items-center justify-center text-ink-700 hover:text-crimson-600 active:scale-95 shrink-0"><i class="ph-bold ph-x text-lg"></i></button>
+            </div>
+            <div id="custom-modal-body" class="space-y-3 text-ink-900">
+                <!-- Inputs dinâmicos -->
+            </div>
+            <div class="flex justify-end gap-2 pt-3 border-t border-ink-600/20">
+                <button onclick="app.closeCustomModal()" class="h-11 px-4 rounded-xl bg-parchment-300 hover:bg-parchment-400 text-ink-900 font-display text-xs font-bold uppercase active:scale-95">Cancelar</button>
+                <button id="custom-modal-confirm" class="h-11 px-4 rounded-xl bg-crimson-600 hover:bg-crimson-700 text-parchment-50 font-display text-xs font-bold uppercase border border-brass-500 shadow active:scale-95">Inscrever</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== BANDEJA FLUTUANTE DE ROLAGEM DE DADOS ==================== -->
+    <div id="dice-toast-container" class="fixed bottom-20 md:bottom-6 right-3 sm:right-6 left-3 sm:left-auto z-50 flex flex-col gap-2 pointer-events-none sm:max-w-sm">
+        <!-- Toasts aparecem aqui -->
+    </div>
+
+    <!-- ==================== SCRIPT PRINCIPAL COM FIREBASE SDK v13.4.0 ==================== -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-analytics.js";
+        import {
+            getAuth,
+            onAuthStateChanged,
+            signInWithEmailAndPassword,
+            createUserWithEmailAndPassword,
+            signInWithPopup,
+            GoogleAuthProvider,
+            updateProfile,
+            signOut
+        } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-auth.js";
+        import {
+            getFirestore,
+            collection,
+            doc,
+            getDoc,
+            setDoc,
+            deleteDoc,
+            onSnapshot,
+            serverTimestamp
+        } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-firestore.js";
+        import {
+            getStorage,
+            ref as storageRef,
+            uploadBytes,
+            getDownloadURL
+        } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-storage.js";
+
+        // Configuração oficial do projeto Firebase rpg27-a394d
+        const firebaseConfig = {
+            apiKey: "AIzaSyAL1LSLHbr_P0VRDEETpBeI9U6d8_dAQo0",
+            authDomain: "rpg27-a394d.firebaseapp.com",
+            databaseURL: "https://rpg27-a394d-default-rtdb.firebaseio.com",
+            projectId: "rpg27-a394d",
+            storageBucket: "rpg27-a394d.firebasestorage.app",
+            messagingSenderId: "219813562576",
+            appId: "1:219813562576:web:a49a239f2852bee67036d5",
+            measurementId: "G-PE257990B0"
+        };
+
+        const firebaseApp = initializeApp(firebaseConfig);
+        try { getAnalytics(firebaseApp); } catch (_) {}
+        const auth = getAuth(firebaseApp);
+        const firestore = getFirestore(firebaseApp);
+        const storage = getStorage(firebaseApp);
+        const googleProvider = new GoogleAuthProvider();
+
+        /**
+         * ============================================================================
+         * CAMADA DE DADOS (FirebaseDatabaseService) - Firestore + Storage + Cache Local
+         * ============================================================================
+         */
+        class FirebaseDatabaseService {
+            constructor() {
+                this.CACHE_KEY = 'tomo_comunidade_dnd5e_cache_v5';
+                this.characters = [];
+                this.compendium = [];
+                this.unsubChars = null;
+                this.unsubCompendium = null;
+            }
+
+            getDefaultCompendium() {
+                return [
+                    {
+                        id: 'comp_1',
+                        category: 'spell',
+                        title: 'Bola de Fogo (Fireball)',
+                        subtitle: '3º Círculo • Evocação',
+                        tags: ['SRD 5.1', 'Alcance: 45m', 'V, S, M'],
+                        description: 'Um raio brilhante lampeja de seu dedo indicador até um ponto que você escolher dentro do alcance e eclode com um rugido baixo em uma explosão de chamas. Cada criatura em uma esfera de 6 metros de raio deve fazer um teste de resistência de Destreza, sofrendo 8d6 de dano de fogo se falhar, ou metade disso se passar.'
+                    },
+                    {
+                        id: 'comp_2',
+                        category: 'race',
+                        title: 'Meio-Elfo (Half-Elf)',
+                        subtitle: 'Raça • Humanoide',
+                        tags: ['SRD 5.1', '+2 CAR, +1 em dois atributos', 'Visão no Escuro 18m'],
+                        description: 'Caminhando entre dois mundos mas não pertencendo realmente a nenhum deles, meio-elfos combinam o que alguns dizem ser as melhores qualidades de seus pais elfos e humanos: curiosidade humana, inventividade e ambição temperadas pelos sentidos refinados dos elfos.'
+                    },
+                    {
+                        id: 'comp_3',
+                        category: 'class',
+                        title: 'Paladino (Paladin)',
+                        subtitle: 'Classe Marcial / Conjurador • Dado de Vida: d10',
+                        tags: ['SRD 5.1', 'Salvaguardas: SAB e CAR', 'Armaduras Pesadas'],
+                        description: 'Seja diante do altar de um deus ou em uma clareira sagrada diante dos espíritos da natureza, o juramento de um paladino é um laço poderoso que transforma um guerreiro devoto em um campeão abençoado.'
+                    },
+                    {
+                        id: 'comp_4',
+                        category: 'homebrew',
+                        title: 'Regra da Casa: Poção como Ação Bônus',
+                        subtitle: 'Regra da Mesa • Crônicas de Valdris',
+                        tags: ['Homebrew', 'Combate'],
+                        description: 'Beber uma poção de cura em si mesmo exige apenas uma Ação Bônus (rola os dados normalmente). Gastar uma Ação Completa para beber restaura o valor máximo possível dos dados da poção.'
+                    },
+                    {
+                        id: 'comp_5',
+                        category: 'spell',
+                        title: 'Passo Nebuloso (Misty Step)',
+                        subtitle: '2º Círculo • Conjuração',
+                        tags: ['SRD 5.1', 'Ação Bônus', 'Alcance: Pessoal'],
+                        description: 'Brevemente cercado por uma névoa prateada, você se teleporta a até 9 metros para um espaço desocupado que você possa ver.'
+                    }
+                ];
+            }
+
+            async ensureUserProfile(firebaseUser, extra = {}) {
+                const userRef = doc(firestore, 'users', firebaseUser.uid);
+                const snap = await getDoc(userRef);
+
+                if (snap.exists()) {
+                    const existing = snap.data();
+                    if (extra.photoURL && extra.photoURL !== existing.photoURL) {
+                        await setDoc(userRef, { photoURL: extra.photoURL }, { merge: true });
+                        existing.photoURL = extra.photoURL;
+                    }
+                    return existing;
+                }
+
+                const newProfile = {
+                    uid: firebaseUser.uid,
+                    name: extra.name || firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Aventureiro',
+                    email: firebaseUser.email || '',
+                    photoURL: extra.photoURL || firebaseUser.photoURL || '',
+                    role: extra.role || 'player',
+                    campaignId: 'camp_valdris',
+                    createdAt: new Date().toISOString()
+                };
+
+                await setDoc(userRef, newProfile);
+                return newProfile;
+            }
+
+            async updateUserProfileDoc(uid, updates) {
+                const userRef = doc(firestore, 'users', uid);
+                await setDoc(userRef, updates, { merge: true });
+            }
+
+            subscribeRealtime(onCharactersUpdate, onCompendiumUpdate) {
+                this.unsubscribeAll();
+
+                this.unsubChars = onSnapshot(collection(firestore, 'characters'), (snapshot) => {
+                    this.characters = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                    this.syncLocalCache();
+                    onCharactersUpdate(this.characters);
+                }, (err) => {
+                    console.warn('Firestore characters snapshot fallback:', err);
+                    const cached = JSON.parse(localStorage.getItem(this.CACHE_KEY) || '{}');
+                    this.characters = cached.characters || [];
+                    onCharactersUpdate(this.characters);
+                });
+
+                this.unsubCompendium = onSnapshot(collection(firestore, 'compendium'), (snapshot) => {
+                    if (snapshot.empty && this.compendium.length === 0) {
+                        this.compendium = this.getDefaultCompendium();
+                    } else {
+                        this.compendium = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                    }
+                    this.syncLocalCache();
+                    onCompendiumUpdate(this.compendium);
+                }, (err) => {
+                    console.warn('Firestore compendium snapshot fallback:', err);
+                    this.compendium = this.getDefaultCompendium();
+                    onCompendiumUpdate(this.compendium);
+                });
+            }
+
+            unsubscribeAll() {
+                if (this.unsubChars) { this.unsubChars(); this.unsubChars = null; }
+                if (this.unsubCompendium) { this.unsubCompendium(); this.unsubCompendium = null; }
+            }
+
+            syncLocalCache() {
+                localStorage.setItem(this.CACHE_KEY, JSON.stringify({
+                    characters: this.characters,
+                    compendium: this.compendium
+                }));
+            }
+
+            getCharacters() { return this.characters; }
+            getCharacterById(id) { return this.characters.find(c => c.id === id); }
+
+            async saveCharacter(charObj) {
+                const idx = this.characters.findIndex(c => c.id === charObj.id);
+                if (idx >= 0) this.characters[idx] = charObj;
+                else this.characters.push(charObj);
+                this.syncLocalCache();
+
+                const charRef = doc(firestore, 'characters', charObj.id);
+                await setDoc(charRef, { ...charObj, updatedAt: serverTimestamp() }, { merge: true });
+            }
+
+            async deleteCharacter(id) {
+                this.characters = this.characters.filter(c => c.id !== id);
+                this.syncLocalCache();
+                await deleteDoc(doc(firestore, 'characters', id));
+            }
+
+            getCompendium() { return this.compendium; }
+
+            async addCompendiumEntry(entry) {
+                this.compendium.unshift(entry);
+                this.syncLocalCache();
+                await setDoc(doc(firestore, 'compendium', entry.id), entry);
+            }
+
+            // Compressão leve de imagem + Upload no Firebase Storage (com fallback Base64 seguro)
+            async compressImageFile(file, maxSize = 320, quality = 0.82) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            let w = img.width;
+                            let h = img.height;
+                            if (w > h && w > maxSize) {
+                                h = Math.round((h * maxSize) / w);
+                                w = maxSize;
+                            } else if (h > maxSize) {
+                                w = Math.round((w * maxSize) / h);
+                                h = maxSize;
+                            }
+                            canvas.width = w;
+                            canvas.height = h;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, w, h);
+                            const dataUrl = canvas.toDataURL('image/jpeg', quality);
+                            canvas.toBlob((blob) => resolve({ blob, dataUrl }), 'image/jpeg', quality);
+                        };
+                        img.onerror = reject;
+                        img.src = e.target.result;
+                    };
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            async uploadImage(file, storagePath) {
+                const { blob, dataUrl } = await this.compressImageFile(file);
+                try {
+                    const fileRef = storageRef(storage, storagePath);
+                    await uploadBytes(fileRef, blob);
+                    return await getDownloadURL(fileRef);
+                } catch (err) {
+                    console.warn('Storage fallback para DataURL comprimido:', err);
+                    return dataUrl;
+                }
+            }
+        }
+
+        /**
+         * ============================================================================
+         * CONTROLADOR DO TOMO D&D 5E (GrimoireApp)
+         * ============================================================================
+         */
+        class GrimoireApp {
+            constructor() {
+                this.db = new FirebaseDatabaseService();
+                this.currentUser = null;
+                this.currentChar = null;
+                this.authMode = 'login';
+                this.pendingRegisterFile = null;
+                this.compendiumFilter = 'all';
+                this.rollMode = 'normal';
+                this.rollHistory = [];
+                this.saveTimeout = null;
+
+                this.SKILLS_DEF = [
+                    { key: 'acrobatics', name: 'Acrobacia', attr: 'dex' },
+                    { key: 'animalHandling', name: 'Adestrar Animais', attr: 'wis' },
+                    { key: 'arcana', name: 'Arcanismo', attr: 'int' },
+                    { key: 'athletics', name: 'Atletismo', attr: 'str' },
+                    { key: 'performance', name: 'Atuação', attr: 'cha' },
+                    { key: 'deception', name: 'Enganação', attr: 'cha' },
+                    { key: 'stealth', name: 'Furtividade', attr: 'dex' },
+                    { key: 'history', name: 'História', attr: 'int' },
+                    { key: 'intimidation', name: 'Intimidação', attr: 'cha' },
+                    { key: 'insight', name: 'Intuição', attr: 'wis' },
+                    { key: 'investigation', name: 'Investigação', attr: 'int' },
+                    { key: 'medicine', name: 'Medicina', attr: 'wis' },
+                    { key: 'nature', name: 'Natureza', attr: 'int' },
+                    { key: 'perception', name: 'Percepção', attr: 'wis' },
+                    { key: 'persuasion', name: 'Persuasão', attr: 'cha' },
+                    { key: 'sleightOfHand', name: 'Prestidigitação', attr: 'dex' },
+                    { key: 'religion', name: 'Religião', attr: 'int' },
+                    { key: 'survival', name: 'Sobrevivência', attr: 'wis' }
+                ];
+
+                this.ATTR_LABELS = {
+                    str: 'Força', dex: 'Destreza', con: 'Constituição',
+                    int: 'Inteligência', wis: 'Sabedoria', cha: 'Carisma'
+                };
+
+                this.CONDITIONS_LIST = [
+                    'Abençoado', 'Caído', 'Envenenado', 'Amedrontado', 'Invisível', 'Atordoado', 'Concentrando'
+                ];
+
+                this.initFirebaseAuthListener();
+            }
+
+            // ==================== AUTENTICAÇÃO FIREBASE ====================
+            initFirebaseAuthListener() {
+                onAuthStateChanged(auth, async (firebaseUser) => {
+                    const authScreen = document.getElementById('auth-screen');
+
+                    if (!firebaseUser) {
+                        this.currentUser = null;
+                        this.currentChar = null;
+                        this.db.unsubscribeAll();
+                        authScreen.classList.remove('hidden');
+                        return;
+                    }
+
+                    try {
+                        let uploadedPhotoUrl = '';
+                        if (this.pendingRegisterFile) {
+                            uploadedPhotoUrl = await this.db.uploadImage(
+                                this.pendingRegisterFile,
+                                `avatars/${firebaseUser.uid}/profile.jpg`
+                            );
+                            await updateProfile(firebaseUser, { photoURL: uploadedPhotoUrl });
+                            this.pendingRegisterFile = null;
+                        }
+
+                        const extra = {
+                            name: document.getElementById('auth-name')?.value?.trim() || firebaseUser.displayName,
+                            role: document.getElementById('auth-role')?.value || 'player',
+                            photoURL: uploadedPhotoUrl || firebaseUser.photoURL || ''
+                        };
+
+                        this.currentUser = await this.db.ensureUserProfile(firebaseUser, extra);
+                        authScreen.classList.add('hidden');
+                        this.updateUserRoleUI();
+
+                        // Sincronização em tempo real com Cloud Firestore
+                        this.db.subscribeRealtime(
+                            () => {
+                                this.renderCharactersList();
+                                if (this.currentChar) {
+                                    const updated = this.db.getCharacterById(this.currentChar.id);
+                                    if (updated) {
+                                        this.currentChar = updated;
+                                    }
+                                }
+                            },
+                            () => {
+                                this.renderCompendium();
+                            }
+                        );
+                    } catch (err) {
+                        console.error('Erro ao carregar perfil Firebase:', err);
+                        this.showAuthError('Falha ao conectar com o grimório na nuvem: ' + err.message);
+                    }
+                });
+            }
+
+            switchAuthMode(mode) {
+                this.authMode = mode;
+                const loginTab = document.getElementById('auth-tab-login');
+                const regTab = document.getElementById('auth-tab-register');
+                const regFields = document.getElementById('register-fields');
+                const submitBtn = document.getElementById('auth-submit-btn');
+                this.hideAuthError();
+
+                if (mode === 'register') {
+                    regTab.className = 'h-10 rounded-lg font-display text-xs font-bold uppercase tracking-wider bg-crimson-600 text-parchment-50 shadow transition-all';
+                    loginTab.className = 'h-10 rounded-lg font-display text-xs font-bold uppercase tracking-wider text-ink-800 hover:text-ink-900 transition-all';
+                    regFields.classList.remove('hidden');
+                    submitBtn.querySelector('span').textContent = 'Forjar Conta na Mesa';
+                } else {
+                    loginTab.className = 'h-10 rounded-lg font-display text-xs font-bold uppercase tracking-wider bg-crimson-600 text-parchment-50 shadow transition-all';
+                    regTab.className = 'h-10 rounded-lg font-display text-xs font-bold uppercase tracking-wider text-ink-800 hover:text-ink-900 transition-all';
+                    regFields.classList.add('hidden');
+                    submitBtn.querySelector('span').textContent = 'Abrir o Grimório';
+                }
+            }
+
+            previewRegisterAvatar(input) {
+                const file = input.files?.[0];
+                if (!file) return;
+                this.pendingRegisterFile = file;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = document.getElementById('reg-avatar-preview');
+                    const ph = document.getElementById('reg-avatar-placeholder');
+                    img.src = e.target.result;
+                    img.classList.remove('hidden');
+                    ph.classList.add('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+
+            showAuthError(msg) {
+                const el = document.getElementById('auth-error-msg');
+                el.textContent = msg;
+                el.classList.remove('hidden');
+            }
+
+            hideAuthError() {
+                document.getElementById('auth-error-msg').classList.add('hidden');
+            }
+
+            async handleAuthSubmit(event) {
+                event.preventDefault();
+                this.hideAuthError();
+                const email = document.getElementById('auth-email').value.trim();
+                const password = document.getElementById('auth-password').value;
+                const btn = document.getElementById('auth-submit-btn');
+                btn.disabled = true;
+
+                try {
+                    if (this.authMode === 'register') {
+                        const name = document.getElementById('auth-name').value.trim() || email.split('@')[0];
+                        const cred = await createUserWithEmailAndPassword(auth, email, password);
+                        await updateProfile(cred.user, { displayName: name });
+                        this.showToast('Selo Criado', `Bem-vindo à companhia, <strong>${name}</strong>!`, 'success');
+                    } else {
+                        await signInWithEmailAndPassword(auth, email, password);
+                        this.showToast('Portal Aberto', 'Autenticado com sucesso na taverna!', 'success');
+                    }
+                } catch (err) {
+                    const mapErrors = {
+                        'auth/invalid-credential': 'E-mail ou senha incorretos.',
+                        'auth/email-already-in-use': 'Este e-mail já está registrado na comunidade.',
+                        'auth/weak-password': 'A senha deve ter pelo menos 6 caracteres.',
+                        'auth/invalid-email': 'Formato de e-mail inválido.'
+                    };
+                    this.showAuthError(mapErrors[err.code] || err.message);
+                } finally {
+                    btn.disabled = false;
+                }
+            }
+
+            async loginWithGoogle() {
+                this.hideAuthError();
+                try {
+                    await signInWithPopup(auth, googleProvider);
+                    this.showToast('Acesso Google', 'Bem-vindo de volta ao Tomo da Comunidade!', 'success');
+                } catch (err) {
+                    this.showAuthError('Não foi possível entrar com Google: ' + err.message);
+                }
+            }
+
+            async logoutUser() {
+                await signOut(auth);
+                this.showToast('Sessão Encerrada', 'Você saiu da taverna com segurança.', 'info');
+            }
+
+            // ==================== PERFIL & FOTO DO USUÁRIO ====================
+            updateUserRoleUI() {
+                if (!this.currentUser) return;
+                const isDM = this.currentUser.role === 'dm';
+                const roleBadge = document.getElementById('role-badge');
+                const roleDesc = document.getElementById('role-description');
+                const btnAddComp = document.getElementById('btn-add-compendium');
+
+                // Atualiza Avatar e Nome no Cabeçalho
+                document.getElementById('header-user-name').textContent = this.currentUser.name || 'Aventureiro';
+                document.getElementById('header-user-role-label').textContent = isDM ? 'Mestre (DM)' : 'Jogador';
+
+                const photoEl = document.getElementById('header-user-photo');
+                const initEl = document.getElementById('header-user-initial');
+                if (this.currentUser.photoURL) {
+                    photoEl.src = this.currentUser.photoURL;
+                    photoEl.classList.remove('hidden');
+                    initEl.classList.add('hidden');
+                } else {
+                    photoEl.classList.add('hidden');
+                    initEl.classList.remove('hidden');
+                    initEl.textContent = (this.currentUser.name || 'A').charAt(0).toUpperCase();
+                }
+
+                if (isDM) {
+                    roleBadge.className = 'px-3 py-0.5 rounded-full font-display text-[11px] font-bold uppercase tracking-wider bg-tavern-900 text-brass-400 border border-brass-500';
+                    roleBadge.textContent = 'Coroa do Mestre (DM)';
+                    roleDesc.textContent = 'Autoridade Suprema: edite qualquer ficha da companhia e inscreva novas regras ou magias no Livro da Comunidade.';
+                    btnAddComp.classList.remove('hidden');
+                } else {
+                    roleBadge.className = 'px-3 py-0.5 rounded-full font-display text-[11px] font-bold uppercase tracking-wider bg-crimson-600 text-parchment-50 border border-brass-500';
+                    roleBadge.textContent = 'Selo de Jogador';
+                    roleDesc.textContent = 'Abra o pergaminho do seu personagem para editar atributos, magias e equipamentos, ou consulte os aliados do grupo.';
+                    btnAddComp.classList.add('hidden');
+                }
+            }
+
+            openUserProfileModal() {
+                if (!this.currentUser) return;
+                document.getElementById('profile-modal-name').value = this.currentUser.name || '';
+                document.getElementById('profile-modal-role').value = this.currentUser.role || 'player';
+                document.getElementById('profile-modal-email').textContent = this.currentUser.email || 'Conta Google';
+                document.getElementById('profile-modal-uid').textContent = this.currentUser.uid;
+
+                const img = document.getElementById('profile-modal-img');
+                const init = document.getElementById('profile-modal-initial');
+                if (this.currentUser.photoURL) {
+                    img.src = this.currentUser.photoURL;
+                    img.classList.remove('hidden');
+                    init.classList.add('hidden');
+                } else {
+                    img.classList.add('hidden');
+                    init.classList.remove('hidden');
+                    init.textContent = (this.currentUser.name || 'A').charAt(0).toUpperCase();
+                }
+
+                document.getElementById('user-profile-modal').classList.remove('hidden');
+            }
+
+            closeUserProfileModal() {
+                document.getElementById('user-profile-modal').classList.add('hidden');
+            }
+
+            async uploadUserProfilePhoto(input) {
+                const file = input.files?.[0];
+                if (!file || !this.currentUser) return;
+
+                const labelEl = document.getElementById('profile-upload-label');
+                labelEl.textContent = 'Enviando foto...';
+
+                try {
+                    const url = await this.db.uploadImage(file, `avatars/${this.currentUser.uid}/profile_${Date.now()}.jpg`);
+                    this.currentUser.photoURL = url;
+                    await this.db.updateUserProfileDoc(this.currentUser.uid, { photoURL: url });
+                    if (auth.currentUser) {
+                        await updateProfile(auth.currentUser, { photoURL: url }).catch(() => {});
+                    }
+
+                    const img = document.getElementById('profile-modal-img');
+                    const init = document.getElementById('profile-modal-initial');
+                    img.src = url;
+                    img.classList.remove('hidden');
+                    init.classList.add('hidden');
+
+                    this.updateUserRoleUI();
+                    this.showToast('Foto Atualizada', 'Seu retrato de perfil foi salvo na nuvem!', 'success');
+                } catch (err) {
+                    this.showToast('Erro no Envio', 'Não foi possível enviar a foto.', 'info');
+                } finally {
+                    labelEl.textContent = 'Alterar Foto de Perfil';
+                }
+            }
+
+            async saveUserProfileModal() {
+                if (!this.currentUser) return;
+                const newName = document.getElementById('profile-modal-name').value.trim() || this.currentUser.name;
+                const newRole = document.getElementById('profile-modal-role').value;
+
+                this.currentUser.name = newName;
+                this.currentUser.role = newRole;
+
+                await this.db.updateUserProfileDoc(this.currentUser.uid, {
+                    name: newName,
+                    role: newRole
+                });
+
+                this.updateUserRoleUI();
+                this.renderCharactersList();
+                if (this.currentChar) this.openCharacterSheet(this.currentChar.id);
+                this.closeUserProfileModal();
+                this.showToast('Perfil Salvo', 'Suas informações foram atualizadas no Firestore!', 'success');
+            }
+
+            // Cálculos oficiais D&D 5e
+            getModifier(score) { return Math.floor(((score || 10) - 10) / 2); }
+            formatMod(mod) { return mod >= 0 ? `+${mod}` : `${mod}`; }
+            getProficiencyBonus(level) { return Math.ceil((level || 1) / 4) + 1; }
+
+            triggerSaveFeedback() {
+                const textEl = document.getElementById('save-status-text');
+                if (!textEl) return;
+                textEl.textContent = 'Sincronizando...';
+                clearTimeout(this.saveTimeout);
+                this.saveTimeout = setTimeout(() => {
+                    textEl.textContent = 'Sincronizado na Nuvem';
+                }, 500);
+            }
+
+            navigate(viewName) {
+                ['characters', 'sheet', 'compendium'].forEach(v => {
+                    document.getElementById(`view-${v}`).classList.add('hidden');
+                });
+                document.getElementById(`view-${viewName}`).classList.remove('hidden');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+
+                document.querySelectorAll('.nav-btn').forEach(btn => {
+                    btn.className = 'nav-btn h-10 px-3.5 rounded-lg font-display text-xs font-bold tracking-wider uppercase flex items-center gap-2 text-parchment-300 hover:text-brass-400 transition-all active:scale-95 whitespace-nowrap';
+                });
+                const activeNav = document.getElementById(`nav-${viewName === 'sheet' ? 'characters' : viewName}`);
+                if (activeNav) {
+                    activeNav.className = 'nav-btn h-10 px-3.5 rounded-lg font-display text-xs font-bold tracking-wider uppercase flex items-center gap-2 transition-all bg-crimson-600 text-parchment-50 border border-brass-500/50 shadow active:scale-95 whitespace-nowrap';
+                }
+
+                document.querySelectorAll('.mob-nav-btn').forEach(btn => {
+                    btn.className = 'mob-nav-btn flex flex-col items-center justify-center gap-0.5 text-parchment-300/75 font-display text-[10px] font-bold uppercase tracking-wider active:scale-95 transition-transform';
+                });
+                const activeMob = document.getElementById(`mob-nav-${viewName}`);
+                if (activeMob) {
+                    activeMob.className = 'mob-nav-btn flex flex-col items-center justify-center gap-0.5 text-brass-400 font-display text-[10px] font-bold uppercase tracking-wider active:scale-95 transition-transform';
+                }
+
+                if (viewName === 'characters') {
+                    this.currentChar = null;
+                    this.renderCharactersList();
+                }
+            }
+
+            openActiveOrFirstSheet() {
+                if (this.currentChar) {
+                    this.navigate('sheet');
+                    return;
+                }
+                const chars = this.db.getCharacters();
+                const owned = chars.find(c => c.ownerId === this.currentUser?.uid) || chars[0];
+                if (owned) this.openCharacterSheet(owned.id);
+                else this.navigate('characters');
+            }
+
+            canEditCharacter(char) {
+                if (!this.currentUser) return false;
+                return this.currentUser.role === 'dm' || char.ownerId === this.currentUser.uid;
+            }
+
+            // ==================== LISTA DE PERSONAGENS ====================
+            renderCharactersList() {
+                const grid = document.getElementById('characters-grid');
+                const chars = this.db.getCharacters();
+
+                if (chars.length === 0) {
+                    grid.innerHTML = `
+                        <div class="col-span-full vellum-box rounded-xl p-8 text-center space-y-3">
+                            <i class="ph-fill ph-scroll text-4xl text-crimson-600"></i>
+                            <h3 class="font-display text-lg font-bold text-ink-900">Nenhum pergaminho na mesa ainda</h3>
+                            <p class="text-sm text-ink-700 max-w-md mx-auto">Clique em <strong>Forjar Novo Personagem</strong> acima para criar a primeira ficha da campanha diretamente no Firebase.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                grid.innerHTML = chars.map(char => {
+                    const isOwner = char.ownerId === this.currentUser?.uid;
+                    const canEdit = this.canEditCharacter(char);
+                    const hpPercent = Math.min(100, Math.max(0, Math.round((char.combat.hpCurrent / char.combat.hpMax) * 100)));
+                    const avatarHtml = char.meta.avatarUrl
+                        ? `<img src="${char.meta.avatarUrl}" alt="${char.meta.name}" class="w-full h-full object-cover">`
+                        : `<span>${char.meta.name.charAt(0).toUpperCase()}</span>`;
+
+                    return `
+                        <div onclick="app.openCharacterSheet('${char.id}')" class="vellum-card-hover rounded-xl p-4 sm:p-5 cursor-pointer flex flex-col justify-between group active:scale-[0.99]">
+                            <div>
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="flex items-center gap-3 min-w-0">
+                                        <div class="w-12 h-12 rounded-full bg-tavern-900 border-2 border-brass-500 flex items-center justify-center font-epic font-bold text-xl text-brass-400 shadow shrink-0 overflow-hidden group-hover:scale-105 transition-transform">
+                                            ${avatarHtml}
+                                        </div>
+                                        <div class="min-w-0">
+                                            <h3 class="font-display font-bold text-lg text-ink-900 group-hover:text-crimson-700 transition-colors truncate">
+                                                ${char.meta.name}
+                                            </h3>
+                                            <p class="text-sm font-medium text-ink-700 truncate">${char.meta.race} • ${char.meta.class}</p>
+                                            ${char.ownerName ? `<p class="text-[11px] text-ink-600 italic truncate">Jogador: ${char.ownerName}</p>` : ''}
+                                        </div>
+                                    </div>
+                                    <span class="px-2.5 py-0.5 rounded-full wax-seal font-display text-xs font-bold text-parchment-50 shrink-0">
+                                        Nv. ${char.meta.level}
+                                    </span>
+                                </div>
+
+                                <!-- Vitalidade -->
+                                <div class="mt-4">
+                                    <div class="flex justify-between text-xs font-bold mb-1 text-ink-800">
+                                        <span class="font-display uppercase tracking-wider">Pontos de Vida</span>
+                                        <span class="font-display text-crimson-700 tabular-nums">${char.combat.hpCurrent} / ${char.combat.hpMax}</span>
+                                    </div>
+                                    <div class="w-full bg-tavern-900 h-2.5 rounded-full overflow-hidden border border-ink-700 p-0.5">
+                                        <div class="bg-crimson-600 h-full rounded-full" style="width: ${hpPercent}%"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Atributos Rápidos -->
+                                <div class="grid grid-cols-3 gap-2 mt-4 text-center">
+                                    <div class="bg-parchment-50/85 rounded-lg p-2 border border-ink-600/30 min-w-0">
+                                        <span class="font-display text-[10px] uppercase text-ink-600 font-bold block truncate">Armadura</span>
+                                        <span class="font-display text-base font-bold text-ink-900 tabular-nums">${char.combat.ac}</span>
+                                    </div>
+                                    <div class="bg-parchment-50/85 rounded-lg p-2 border border-ink-600/30 min-w-0">
+                                        <span class="font-display text-[10px] uppercase text-ink-600 font-bold block truncate">Iniciativa</span>
+                                        <span class="font-display text-base font-bold text-ink-900 tabular-nums">${this.formatMod(this.getModifier(char.attributes.dex))}</span>
+                                    </div>
+                                    <div class="bg-parchment-50/85 rounded-lg p-2 border border-ink-600/30 min-w-0">
+                                        <span class="font-display text-[10px] uppercase text-ink-600 font-bold block truncate">Proficiência</span>
+                                        <span class="font-display text-base font-bold text-crimson-700 tabular-nums">+${this.getProficiencyBonus(char.meta.level)}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-4 pt-3 border-t border-ink-600/30 flex items-center justify-between gap-2 text-xs">
+                                <span class="${isOwner ? 'text-emerald-800' : (canEdit ? 'text-crimson-700' : 'text-ink-600')} font-bold flex items-center gap-1 truncate">
+                                    <i class="ph-fill ${canEdit ? 'ph-quill' : 'ph-eye'} shrink-0"></i>
+                                    <span class="truncate">${isOwner ? 'Seu Pergaminho' : (canEdit ? 'Acesso do Mestre' : 'Somente Leitura')}</span>
+                                </span>
+                                <span class="font-display font-bold text-crimson-700 group-hover:translate-x-1 transition-transform flex items-center gap-1 shrink-0">
+                                    Abrir Ficha <i class="ph-bold ph-caret-right"></i>
+                                </span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            async createNewCharacter() {
+                if (!this.currentUser) return;
+                const newChar = {
+                    id: 'char_' + Date.now(),
+                    ownerId: this.currentUser.uid,
+                    ownerName: this.currentUser.name,
+                    campaignId: 'camp_valdris',
+                    inspiration: false,
+                    meta: {
+                        name: 'Novo Aventureiro',
+                        race: 'Humano',
+                        class: 'Guerreiro',
+                        level: 1,
+                        background: 'Forasteiro',
+                        alignment: 'Neutro',
+                        xp: 0,
+                        avatarUrl: this.currentUser.photoURL || ''
+                    },
+                    attributes: { str: 15, dex: 14, con: 13, int: 10, wis: 12, cha: 8 },
+                    savingThrows: { str: true, dex: false, con: true, int: false, wis: false, cha: false },
+                    skills: {
+                        athletics: 1, acrobatics: 0, sleightOfHand: 0, stealth: 0,
+                        arcana: 0, history: 0, investigation: 0, nature: 0, religion: 0,
+                        animalHandling: 0, insight: 0, medicine: 0, perception: 1, survival: 1,
+                        deception: 0, intimidation: 0, performance: 0, persuasion: 0
+                    },
+                    combat: {
+                        ac: 16, speed: '9m', hpMax: 12, hpCurrent: 12, hpTemp: 0, hitDice: '1d10',
+                        deathSaves: { successes: 0, failures: 0 },
+                        conditions: [],
+                        resources: [{ name: 'Retomar o Fôlego', current: 1, max: 1 }]
+                    },
+                    attacks: [
+                        { name: 'Machado de Batalha', ability: 'str', bonusExtra: 0, damageDice: '1d8', damageType: 'Cortante' }
+                    ],
+                    spellcasting: {
+                        ability: 'int',
+                        slots: {
+                            1: { total: 0, used: 0 }, 2: { total: 0, used: 0 }, 3: { total: 0, used: 0 },
+                            4: { total: 0, used: 0 }, 5: { total: 0, used: 0 }, 6: { total: 0, used: 0 },
+                            7: { total: 0, used: 0 }, 8: { total: 0, used: 0 }, 9: { total: 0, used: 0 }
+                        },
+                        spells: []
+                    },
+                    inventory: {
+                        coins: { cp: 0, sp: 0, ep: 0, gp: 15, pp: 0 },
+                        items: [
+                            { name: 'Cota de Escamas', qty: 1, weight: 22.5, equipped: true, attuned: false },
+                            { name: 'Rações de Viagem (5 dias)', qty: 5, weight: 1.0, equipped: false, attuned: false }
+                        ]
+                    },
+                    features: [
+                        { title: 'Estilo de Luta: Defesa', source: 'Guerreiro Nv. 1', desc: '+1 na Classe de Armadura enquanto estiver usando armadura.' }
+                    ],
+                    bio: { traits: '', ideals: '', backstory: '' }
+                };
+
+                await this.db.saveCharacter(newChar);
+                this.openCharacterSheet(newChar.id);
+                this.showToast('Novo Pergaminho', 'Ficha criada e sincronizada no Firestore!', 'success');
+            }
+
+            deleteCurrentCharacter() {
+                if (!this.currentChar || !this.canEditCharacter(this.currentChar)) return;
+                this.openCustomModal('Queimar Pergaminho', `
+                    <p class="text-base text-ink-900">Tem certeza que deseja remover definitivamente <strong>${this.currentChar.meta.name}</strong> da companhia?</p>
+                `, async () => {
+                    await this.db.deleteCharacter(this.currentChar.id);
+                    this.closeCustomModal();
+                    this.navigate('characters');
+                    this.showToast('Ficha Queimada', 'O pergaminho foi removido da nuvem.', 'info');
+                });
+            }
+
+            // ==================== FICHA DE PERSONAGEM ====================
+            openCharacterSheet(charId) {
+                this.currentChar = this.db.getCharacterById(charId);
+                if (!this.currentChar) return;
+
+                this.navigate('sheet');
+                const canEdit = this.canEditCharacter(this.currentChar);
+
+                const statusText = document.getElementById('save-status-text');
+                const delBtn = document.getElementById('btn-delete-char');
+                if (canEdit) {
+                    statusText.textContent = 'Sincronizado na Nuvem';
+                    delBtn.classList.remove('hidden');
+                } else {
+                    statusText.textContent = 'Modo Consulta (Aliado)';
+                    delBtn.classList.add('hidden');
+                }
+
+                this.updateInspirationUI();
+
+                // Cabeçalho & Retrato
+                const avatarImg = document.getElementById('sheet-avatar-img');
+                const avatarInitial = document.getElementById('sheet-avatar');
+                if (this.currentChar.meta.avatarUrl) {
+                    avatarImg.src = this.currentChar.meta.avatarUrl;
+                    avatarImg.classList.remove('hidden');
+                    avatarInitial.classList.add('hidden');
+                } else {
+                    avatarImg.classList.add('hidden');
+                    avatarInitial.classList.remove('hidden');
+                    avatarInitial.textContent = this.currentChar.meta.name.charAt(0).toUpperCase();
+                }
+
+                document.getElementById('header-level-badge').textContent = this.currentChar.meta.level;
+                document.getElementById('input-name').value = this.currentChar.meta.name;
+                document.getElementById('input-race').value = this.currentChar.meta.race;
+                document.getElementById('input-class').value = this.currentChar.meta.class;
+                document.getElementById('input-level').value = this.currentChar.meta.level;
+                document.getElementById('input-background').value = this.currentChar.meta.background;
+                document.getElementById('input-alignment').value = this.currentChar.meta.alignment;
+                document.getElementById('input-xp').value = this.currentChar.meta.xp;
+
+                // Combate
+                const profBonus = this.getProficiencyBonus(this.currentChar.meta.level);
+                const dexMod = this.getModifier(this.currentChar.attributes.dex);
+                document.getElementById('stat-prof-bonus').textContent = `+${profBonus}`;
+                document.getElementById('stat-ac').value = this.currentChar.combat.ac;
+                document.getElementById('stat-initiative').textContent = this.formatMod(dexMod);
+                document.getElementById('stat-speed').value = this.currentChar.combat.speed;
+                document.getElementById('stat-hitdice').value = this.currentChar.combat.hitDice;
+
+                this.renderHP();
+                this.renderAttributesAndSkills();
+                this.renderDeathSaves();
+                this.renderConditions();
+                this.renderAttacksAndResources();
+                this.renderSpellcasting();
+                this.renderInventory();
+                this.renderFeaturesAndBio();
+
+                document.querySelectorAll('#view-sheet input:not(#hp-quick-amount), #view-sheet textarea, #view-sheet select').forEach(el => {
+                    el.disabled = !canEdit;
+                });
+            }
+
+            async uploadCharacterPortrait(input) {
+                const file = input.files?.[0];
+                if (!file || !this.currentChar || !this.canEditCharacter(this.currentChar)) return;
+
+                try {
+                    const url = await this.db.uploadImage(file, `characters/${this.currentChar.id}/portrait_${Date.now()}.jpg`);
+                    this.currentChar.meta.avatarUrl = url;
+                    await this.db.saveCharacter(this.currentChar);
+                    this.triggerSaveFeedback();
+
+                    const avatarImg = document.getElementById('sheet-avatar-img');
+                    const avatarInitial = document.getElementById('sheet-avatar');
+                    avatarImg.src = url;
+                    avatarImg.classList.remove('hidden');
+                    avatarInitial.classList.add('hidden');
+
+                    this.showToast('Retrato Atualizado', 'A imagem do personagem foi gravada na ficha!', 'success');
+                } catch (err) {
+                    this.showToast('Erro na Imagem', 'Não foi possível atualizar o retrato.', 'info');
+                }
+            }
+
+            toggleInspiration() {
+                if (!this.currentChar || !this.canEditCharacter(this.currentChar)) return;
+                this.currentChar.inspiration = !this.currentChar.inspiration;
+                this.db.saveCharacter(this.currentChar);
+                this.triggerSaveFeedback();
+                this.updateInspirationUI();
+            }
+
+            updateInspirationUI() {
+                const btn = document.getElementById('btn-inspiration');
+                if (this.currentChar?.inspiration) {
+                    btn.className = 'h-11 px-3.5 rounded-lg border font-display text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all bg-brass-500/20 border-brass-400 text-brass-400 shadow shadow-brass-500/20 active:scale-95 shrink-0';
+                } else {
+                    btn.className = 'h-11 px-3.5 rounded-lg border font-display text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all bg-tavern-950 border-brass-600/40 text-parchment-300/50 active:scale-95 shrink-0';
+                }
+            }
+
+            updateField(path, value) {
+                if (!this.currentChar || !this.canEditCharacter(this.currentChar)) return;
+                const keys = path.split('.');
+                let obj = this.currentChar;
+                for (let i = 0; i < keys.length - 1; i++) obj = obj[keys[i]];
+                obj[keys[keys.length - 1]] = value;
+                this.db.saveCharacter(this.currentChar);
+                this.triggerSaveFeedback();
+
+                if (path === 'meta.name') document.getElementById('sheet-avatar').textContent = (value || '?').charAt(0).toUpperCase();
+                if (path.startsWith('combat.hp')) this.renderHP();
+                if (path === 'spellcasting.ability') this.renderSpellcasting();
+            }
+
+            updateLevel(newLevel) {
+                const lvl = Math.min(20, Math.max(1, parseInt(newLevel) || 1));
+                this.currentChar.meta.level = lvl;
+                this.db.saveCharacter(this.currentChar);
+                this.triggerSaveFeedback();
+                document.getElementById('header-level-badge').textContent = lvl;
+                document.getElementById('stat-prof-bonus').textContent = `+${this.getProficiencyBonus(lvl)}`;
+                this.renderAttributesAndSkills();
+                this.renderAttacksAndResources();
+                this.renderSpellcasting();
+            }
+
+            renderHP() {
+                const { hpCurrent, hpMax, hpTemp } = this.currentChar.combat;
+                document.getElementById('hp-current').value = hpCurrent;
+                document.getElementById('hp-max').value = hpMax;
+                document.getElementById('hp-temp').value = hpTemp || 0;
+
+                const pct = Math.min(100, Math.max(0, (hpCurrent / (hpMax || 1)) * 100));
+                const bar = document.getElementById('hp-bar');
+                bar.style.width = `${pct}%`;
+
+                if (pct <= 25) {
+                    bar.className = 'bg-crimson-600 h-full rounded-full transition-all duration-300 animate-pulse';
+                } else if (pct <= 50) {
+                    bar.className = 'bg-amber-600 h-full rounded-full transition-all duration-300';
+                } else {
+                    bar.className = 'bg-emerald-700 h-full rounded-full transition-all duration-300';
+                }
+            }
+
+            adjustHP(delta) {
+                if (!this.canEditCharacter(this.currentChar)) return;
+                let curr = this.currentChar.combat.hpCurrent;
+                let temp = this.currentChar.combat.hpTemp || 0;
+
+                if (delta < 0) {
+                    let dmg = Math.abs(delta);
+                    if (temp > 0) {
+                        const absorbed = Math.min(temp, dmg);
+                        temp -= absorbed;
+                        dmg -= absorbed;
+                    }
+                    curr = Math.max(0, curr - dmg);
+                } else {
+                    curr = Math.min(this.currentChar.combat.hpMax, curr + delta);
+                }
+
+                this.currentChar.combat.hpCurrent = curr;
+                this.currentChar.combat.hpTemp = temp;
+                this.db.saveCharacter(this.currentChar);
+                this.triggerSaveFeedback();
+                this.renderHP();
+            }
+
+            applyQuickHP(mode) {
+                if (!this.canEditCharacter(this.currentChar)) return;
+                const input = document.getElementById('hp-quick-amount');
+                const val = parseInt(input.value);
+                if (!val || val <= 0) return;
+
+                if (mode === 'damage') {
+                    const hadTemp = this.currentChar.combat.hpTemp || 0;
+                    this.adjustHP(-val);
+                    const absorbed = Math.min(hadTemp, val);
+                    this.showToast(
+                        'Dano Aplicado',
+                        absorbed > 0
+                            ? `<strong>${val} de dano</strong> (${absorbed} absorvido por PV Temp).`
+                            : `<strong>${val} de dano</strong> sofrido.`,
+                        'info'
+                    );
+                } else {
+                    this.adjustHP(val);
+                    this.showToast('Cura Recebida', `Restaurou <strong>+${val} PV</strong>.`, 'success');
+                }
+                input.value = '';
+            }
+
+            renderAttributesAndSkills() {
+                const attrs = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
+                const profBonus = this.getProficiencyBonus(this.currentChar.meta.level);
+                const canEdit = this.canEditCharacter(this.currentChar);
+
+                document.getElementById('attributes-container').innerHTML = attrs.map(attr => {
+                    const score = this.currentChar.attributes[attr];
+                    const mod = this.getModifier(score);
+                    return `
+                        <div class="vellum-box rounded-xl p-2.5 flex flex-col items-center justify-between border-2 border-ink-700/50 hover:border-crimson-600 transition-all text-center">
+                            <span class="font-display text-[10px] uppercase tracking-wider font-bold text-ink-800 w-full truncate">${this.ATTR_LABELS[attr]}</span>
+                            <button type="button" onclick="app.rollCheck('Teste de ${this.ATTR_LABELS[attr]}', ${mod})" class="w-full h-11 my-1 font-display text-2xl font-bold text-ink-900 hover:text-crimson-600 active:scale-95 transition-all cursor-pointer tabular-nums flex items-center justify-center" title="Rolar Teste de ${this.ATTR_LABELS[attr]}">
+                                ${this.formatMod(mod)}
+                            </button>
+                            <div class="w-14 h-9 bg-parchment-50 border-2 border-ink-700/60 rounded-full flex items-center justify-center shadow-inner">
+                                <input type="number" min="1" max="30" value="${score}" ${!canEdit ? 'disabled' : ''}
+                                    onchange="app.updateAttribute('${attr}', this.value)"
+                                    class="w-full h-full text-center bg-transparent font-display text-xs font-bold text-crimson-700 tabular-nums">
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                document.getElementById('saving-throws-list').innerHTML = attrs.map(attr => {
+                    const isProf = this.currentChar.savingThrows[attr];
+                    const mod = this.getModifier(this.currentChar.attributes[attr]) + (isProf ? profBonus : 0);
+                    return `
+                        <div class="grid grid-cols-[36px_1fr_auto] items-center gap-2 bg-parchment-50/90 px-2 py-1 rounded-xl border border-ink-600/30 min-h-[46px]">
+                            <button type="button" onclick="app.toggleSavingThrow('${attr}')" class="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-parchment-200 active:scale-95" aria-label="Proficiência em ${this.ATTR_LABELS[attr]}">
+                                <span class="w-4 h-4 rounded-full border-2 block ${isProf ? 'bg-crimson-600 border-crimson-700' : 'border-ink-600 bg-parchment-100'} transition-all"></span>
+                            </button>
+                            <button type="button" onclick="app.toggleSavingThrow('${attr}')" class="text-sm font-semibold text-ink-900 text-left truncate">
+                                ${this.ATTR_LABELS[attr]}
+                            </button>
+                            <button type="button" onclick="app.rollCheck('Salvaguarda de ${this.ATTR_LABELS[attr]}', ${mod})" class="h-10 min-w-[48px] px-2.5 rounded-lg font-display text-xs font-bold ${isProf ? 'text-crimson-700 bg-crimson-600/10 border border-crimson-600/30' : 'text-ink-800 bg-parchment-200/70 border border-ink-600/20'} hover:border-crimson-600 active:scale-95 tabular-nums flex items-center justify-center">
+                                ${this.formatMod(mod)}
+                            </button>
+                        </div>
+                    `;
+                }).join('');
+
+                let passivePerception = 10;
+                document.getElementById('skills-list').innerHTML = this.SKILLS_DEF.map(skill => {
+                    const profLevel = this.currentChar.skills[skill.key] || 0;
+                    const baseMod = this.getModifier(this.currentChar.attributes[skill.attr]);
+                    const totalMod = baseMod + (profLevel * profBonus);
+
+                    if (skill.key === 'perception') passivePerception = 10 + totalMod;
+
+                    const icon = profLevel === 2 ? '★' : (profLevel === 1 ? '●' : '○');
+                    const badgeColor = profLevel === 2 ? 'text-brass-600' : (profLevel === 1 ? 'text-crimson-600' : 'text-ink-600/60');
+
+                    return `
+                        <div class="grid grid-cols-[36px_1fr_auto] items-center gap-1.5 px-1.5 py-0.5 rounded-xl hover:bg-parchment-200/80 transition-colors border-b border-ink-600/10 min-h-[46px]">
+                            <button type="button" onclick="app.cycleSkillProficiency('${skill.key}')" class="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-parchment-300/60 active:scale-95 font-bold text-sm ${badgeColor}" title="Alternar Proficiência / Especialização">
+                                ${icon}
+                            </button>
+                            <button type="button" onclick="app.cycleSkillProficiency('${skill.key}')" class="flex items-center gap-1.5 min-w-0 text-left h-10">
+                                <span class="text-sm font-semibold text-ink-900 truncate">${skill.name}</span>
+                                <span class="font-display text-[10px] uppercase text-ink-600 shrink-0">(${skill.attr})</span>
+                            </button>
+                            <button type="button" onclick="app.rollCheck('Perícia: ${skill.name}', ${totalMod})" class="h-10 min-w-[48px] px-2.5 rounded-lg bg-parchment-50 border border-ink-600/40 font-display text-xs font-bold ${profLevel > 0 ? 'text-crimson-700' : 'text-ink-800'} hover:border-crimson-600 active:scale-95 tabular-nums flex items-center justify-center">
+                                ${this.formatMod(totalMod)}
+                            </button>
+                        </div>
+                    `;
+                }).join('');
+
+                document.getElementById('passive-perception').textContent = passivePerception;
+                document.getElementById('stat-initiative').textContent = this.formatMod(this.getModifier(this.currentChar.attributes.dex));
+            }
+
+            updateAttribute(attr, val) {
+                if (!this.canEditCharacter(this.currentChar)) return;
+                this.currentChar.attributes[attr] = Math.min(30, Math.max(1, parseInt(val) || 10));
+                this.db.saveCharacter(this.currentChar);
+                this.triggerSaveFeedback();
+                this.renderAttributesAndSkills();
+                this.renderAttacksAndResources();
+                this.renderSpellcasting();
+                this.renderInventory();
+            }
+
+            toggleSavingThrow(attr) {
+                if (!this.canEditCharacter(this.currentChar)) return;
+                this.currentChar.savingThrows[attr] = !this.currentChar.savingThrows[attr];
+                this.db.saveCharacter(this.currentChar);
+                this.triggerSaveFeedback();
+                this.renderAttributesAndSkills();
+            }
+
+            cycleSkillProficiency(skillKey) {
+                if (!this.canEditCharacter(this.currentChar)) return;
+                const curr = this.currentChar.skills[skillKey] || 0;
+                this.currentChar.skills[skillKey] = (curr + 1) % 3;
+                this.db.saveCharacter(this.currentChar);
+                this.triggerSaveFeedback();
+                this.renderAttributesAndSkills();
+            }
+
+            renderDeathSaves() {
+                const { successes, failures } = this.currentChar.combat.deathSaves;
+                const renderDots = (count, type, colorClass) => [1, 2, 3].map(i => `
+                    <button type="button" onclick="app.toggleDeathSave('${type}', ${i})" class="w-7 h-7 rounded-full border-2 flex items-center justify-center active:scale-90 transition-transform ${i <= count ? colorClass : 'border-ink-600 bg-parchment-50'}" aria-label="${type} ${i}"></button>
+                `).join('');
+                document.getElementById('death-successes').innerHTML = renderDots(successes, 'successes', 'bg-emerald-700 border-emerald-900');
+                document.getElementById('death-failures').innerHTML = renderDots(failures, 'failures', 'bg-crimson-600 border-crimson-800');
+            }
+
+            toggleDeathSave(type, index) {
+                if (!this.canEditCharacter(this.currentChar)) return;
+                const curr = this.currentChar.combat.deathSaves[type];
+                this.currentChar.combat.deathSaves[type] = curr === index ? index - 1 : index;
+                this.db.saveCharacter(this.currentChar);
+                this.triggerSaveFeedback();
+                this.renderDeathSaves();
+            }
+
+            resetDeathSaves() {
+                if (!this.canEditCharacter(this.currentChar)) return;
+                this.currentChar.combat.deathSaves = { successes: 0, failures: 0 };
+                this.db.saveCharacter(this.currentChar);
+                this.triggerSaveFeedback();
+                this.renderDeathSaves();
+            }
+
+            renderConditions() {
+                const active = this.currentChar.combat.conditions || [];
+                document.getElementById('conditions-container').innerHTML = this.CONDITIONS_LIST.map(cond => {
+                    const isActive = active.includes(cond);
+                    return `
+                        <button type="button" onclick="app.toggleCondition('${cond}')" class="h-9 px-3 rounded-lg font-display text-[11px] font-bold border transition-all active:scale-95 ${
+                            isActive
+                                ? 'bg-crimson-600 border-crimson-800 text-parchment-50 shadow-sm'
+                                : 'bg-parchment-50/85 border-ink-600/40 text-ink-700 hover:border-crimson-600'
+                        }">
+                            ${cond}
+                        </button>
+                    `;
+                }).join('');
+            }
+
+            toggleCondition(cond) {
+                if (!this.canEditCharacter(this.currentChar)) return;
+                const list = this.currentChar.combat.conditions || [];
+                this.currentChar.combat.conditions = list.includes(cond) ? list.filter(c => c !== cond) : [...list, cond];
+                this.db.saveCharacter(this.currentChar);
+                this.triggerSaveFeedback();
+                this.renderConditions();
+            }
+
+            // ==================== ABAS DA FICHA ====================
+            switchSheetTab(tabName) {
+                ['actions', 'spells', 'inventory', 'features'].forEach(t => {
+                    document.getElementById(`sheet-tab-${t}`).classList.add('hidden');
+                    const btn = document.getElementById(`tab-btn-${t}`);
+                    btn.className = 'sheet-tab-btn h-12 flex-1 px-4 font-display text-xs font-bold uppercase tracking-wider border-b-2 border-transparent text-ink-700 hover:text-ink-900 flex items-center justify-center gap-1.5 whitespace-nowrap active:scale-95 transition-transform';
+                });
+
+                document.getElementById(`sheet-tab-${tabName}`).classList.remove('hidden');
+                const activeBtn = document.getElementById(`tab-btn-${tabName}`);
+                activeBtn.className = 'sheet-tab-btn h-12 flex-1 px-4 font-display text-xs font-bold uppercase tracking-wider border-b-2 border-crimson-600 bg-parchment-50/90 text-crimson-700 flex items-center justify-center gap-1.5 whitespace-nowrap active:scale-95 transition-transform';
+            }
+
+            renderAttacksAndResources() {
+                const profBonus = this.getProficiencyBonus(this.currentChar.meta.level);
+                const attacks = this.currentChar.attacks || [];
+
+                document.getElementById('attacks-list').innerHTML = attacks.map((atk, idx) => {
+                    const attrMod = this.getModifier(this.currentChar.attributes[atk.ability]);
+                    const toHit = attrMod + profBonus + (atk.bonusExtra || 0);
+                    const dmgBonus = attrMod + (atk.bonusExtra || 0);
+                    const dmgFormula = `${atk.damageDice}${dmgBonus !== 0 ? (dmgBonus > 0 ? `+${dmgBonus}` : dmgBonus) : ''}`;
+
+                    return `
+                        <div class="bg-parchment-50/95 border border-ink-600/40 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+                            <div class="min-w-0 flex-1">
+                                <p class="font-display font-bold text-sm text-ink-900 truncate">${atk.name}</p>
+                                <p class="text-xs text-ink-600 italic truncate">Atributo: ${atk.ability.toUpperCase()} • Dano ${atk.damageType}</p>
+                            </div>
+                            <div class="flex items-center gap-2 shrink-0">
+                                <button type="button" onclick="app.rollCheck('Ataque: ${atk.name}', ${toHit})" class="flex-1 sm:flex-initial h-11 px-3 rounded-xl bg-tavern-900 hover:bg-tavern-800 border border-brass-500 text-brass-400 font-display text-xs font-bold flex items-center justify-center gap-1.5 shadow active:scale-95 whitespace-nowrap">
+                                    <i class="ph-fill ph-dice-twenty-faces-twenty text-sm"></i> ${this.formatMod(toHit)}
+                                </button>
+                                <button type="button" onclick="app.rollDamage('${atk.name}', '${atk.damageDice}', ${dmgBonus}, '${atk.damageType}')" class="flex-1 sm:flex-initial h-11 px-3 rounded-xl bg-crimson-600 hover:bg-crimson-700 border border-crimson-800 text-parchment-50 font-display text-xs font-bold flex items-center justify-center gap-1.5 shadow active:scale-95 whitespace-nowrap">
+                                    <i class="ph-fill ph-sword text-sm"></i> ${dmgFormula}
+                                </button>
+                                <button type="button" onclick="app.removeAttack(${idx})" class="w-10 h-11 rounded-xl hover:bg-crimson-600/10 text-ink-600 hover:text-crimson-600 flex items-center justify-center shrink-0 active:scale-95" aria-label="Remover ataque">
+                                    <i class="ph-bold ph-trash text-base"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                const resources = this.currentChar.combat.resources || [];
+                document.getElementById('resources-list').innerHTML = resources.map((res, idx) => `
+                    <div class="bg-parchment-50/95 border border-ink-600/40 rounded-xl p-3 flex items-center justify-between gap-2 min-w-0">
+                        <span class="text-sm font-bold text-ink-900 truncate">${res.name}</span>
+                        <div class="flex items-center gap-1.5 shrink-0">
+                            <button type="button" onclick="app.adjustResource(${idx}, -1)" class="w-9 h-9 rounded-lg bg-parchment-300 hover:bg-parchment-400 text-ink-900 font-bold text-sm flex items-center justify-center active:scale-95">-</button>
+                            <span class="font-display text-xs font-bold text-crimson-700 min-w-[44px] text-center tabular-nums">${res.current}/${res.max}</span>
+                            <button type="button" onclick="app.adjustResource(${idx}, 1)" class="w-9 h-9 rounded-lg bg-parchment-300 hover:bg-parchment-400 text-ink-900 font-bold text-sm flex items-center justify-center active:scale-95">+</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            removeAttack(idx) {
+                if (!this.canEditCharacter(this.currentChar)) return;
+                this.currentChar.attacks.splice(idx, 1);
+                this.db.saveCharacter(this.currentChar);
+                this.triggerSaveFeedback();
+                this.renderAttacksAndResources();
+            }
+
+            adjustResource(idx, delta) {
+                if (!this.canEditCharacter(this.currentChar)) return;
+                const res = this.currentChar.combat.resources[idx];
+                res.current = Math.min(res.max, Math.max(0, res.current + delta));
+                this.db.saveCharacter(this.currentChar);
+                this.triggerSaveFeedback();
+                this.renderAttacksAndResources();
+            }
+
+            addAttackPrompt() {
+                if (!this.canEditCharacter(this.currentChar)) return;
+                this.openCustomModal('Forjar Novo Ataque', `
+                    <div>
+                        <label class="font-display text-xs font-bold uppercase text-ink-800">Nome da Arma / Magia</label>
+                        <input id="modal-atk-name" type="text" placeholder="Ex: Arco Longo Élfico" class="w-full h-11 mt-1 bg-parchment-50 border border-ink-600 rounded-lg px-3 text-ink-900">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="font-display text-xs font-bold uppercase text-ink-800">Atributo</label>
+                            <select id="modal-atk-attr" class="w-full h-11 mt-1 bg-parchment-50 border border-ink-600 rounded-lg px-3 text-ink-900">
+                                <option value="str">Força (FOR)</option>
+                                <option value="dex">Destreza (DES)</option>
+                                <option value="int">Inteligência (INT)</option>
+                                <option value="wis">Sabedoria (SAB)</option>
+                                <option value="cha">Carisma (CAR)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="font-display text-xs font-bold uppercase text-ink-800">Dado de Dano</label>
+                            <input id="modal-atk-dice" type="text" value="1d8" class="w-full h-11 mt-1 bg-parchment-50 border border-ink-600 rounded-lg px-3 text-ink-900">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="font-display text-xs font-bold uppercase text-ink-800">Tipo de Dano</label>
+                        <input id="modal-atk-type" type="text" value="Perfurante" class="w-full h-11 mt-1 bg-parchment-50 border border-ink-600 rounded-lg px-3 text-ink-900">
+                    </div>
+                `, () => {
+                    const name = document.getElementById('modal-atk-name').value || 'Ataque Desarmado';
+                    const ability = document.getElementById('modal-atk-attr').value;
+                    const damageDice = document.getElementById('modal-atk-dice').value || '1d6';
+                    const damageType = document.getElementById('modal-atk-type').value || 'Contundente';
+                    this.currentChar.attacks.push({ name, ability, bonusExtra: 0, damageDice, damageType });
+                    this.db.saveCharacter(this.currentChar);
+                    this.triggerSaveFeedback();
+                    this.renderAttacksAndResources();
+                    this.closeCustomModal();
+                });
+            }
+
+            renderSpellcasting() {
+                const sc = this.currentChar.spellcasting;
+                const profBonus = this.getProficiencyBonus(this.currentChar.meta.level);
+                const spellMod = this.getModifier(this.currentChar.attributes[sc.ability]);
+
+                document.getElementById('spell-ability-select').value = sc.ability;
+                document.getElementById('spell-save-dc').textContent = 8 + profBonus + spellMod;
+                document.getElementById('spell-attack-bonus').textContent = this.formatMod(profBonus + spellMod);
+
+                const levels = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+                document.getElementById('spell-slots-grid').innerHTML = levels.map(lvl => {
+                    const slot = sc.slots[lvl] || { total: 0, used: 0 };
+                    const remaining = Math.max(0, slot.total - slot.used);
+                    let pips = '';
+                    for (let i = 1; i <= slot.total; i++) {
+                        const isAvailable = i <= remaining;
+                        pips += `<button type="button" onclick="app.toggleSpellSlot(${lvl}, ${i})" class="w-6 h-6 rounded-full border-2 active:scale-90 transition-transform ${isAvailable ? 'bg-crimson-600 border-brass-500 shadow-sm' : 'bg-parchment-200 border-ink-600/50'}" aria-label="Espaço ${i}"></button>`;
+                    }
+
+                    return `
+                        <div class="bg-parchment-50/95 border border-ink-600/40 rounded-xl p-2.5 flex flex-col justify-between gap-2 min-w-0">
+                            <div class="flex items-center justify-between gap-1 text-xs">
+                                <span class="font-display font-bold text-ink-900 truncate">${lvl}º Círculo</span>
+                                <div class="flex items-center gap-1 shrink-0">
+                                    <span class="text-[10px] text-ink-600">Máx:</span>
+                                    <input type="number" min="0" max="4" value="${slot.total}" onchange="app.updateSlotTotal(${lvl}, this.value)" class="w-9 h-8 text-center bg-parchment-200 border border-ink-600/40 rounded font-display text-xs text-crimson-700 font-bold tabular-nums">
+                                </div>
+                            </div>
+                            <div class="flex flex-wrap gap-1.5 min-h-[26px] items-center">
+                                ${slot.total > 0 ? pips : '<span class="text-xs text-ink-600/60 italic">—</span>'}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                const spells = sc.spells || [];
+                document.getElementById('spells-list').innerHTML = spells.length === 0
+                    ? '<p class="text-sm text-ink-600 italic">Nenhuma magia inscrita neste grimório.</p>'
+                    : spells.map((sp, idx) => `
+                        <div class="bg-parchment-50/95 border border-ink-600/40 rounded-xl p-3.5">
+                            <div class="flex items-center justify-between gap-2">
+                                <div class="flex flex-wrap items-center gap-2 min-w-0">
+                                    <span class="px-2 py-0.5 rounded bg-tavern-900 text-brass-400 font-display text-[10px] font-bold uppercase shrink-0">
+                                        ${sp.level === 0 ? 'Truque' : `${sp.level}º Círculo`}
+                                    </span>
+                                    <h5 class="font-display font-bold text-sm text-ink-900 truncate">${sp.name}</h5>
+                                    ${sp.concentration ? '<span class="px-1.5 py-0.5 rounded bg-crimson-600 text-parchment-50 font-display text-[10px] font-bold shrink-0" title="Requer Concentração">C</span>' : ''}
+                                </div>
+                                <div class="flex items-center gap-1.5 shrink-0">
+                                    <span class="text-xs font-semibold text-ink-600 italic hidden sm:inline">${sp.school}</span>
+                                    <button type="button" onclick="app.removeSpell(${idx})" class="w-9 h-9 rounded-lg hover:bg-crimson-600/10 flex items-center justify-center text-ink-600 hover:text-crimson-600 active:scale-95" aria-label="Remover magia">
+                                        <i class="ph-bold ph-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <p class="text-sm text-ink-800 mt-1.5 leading-relaxed">${sp.desc}</p>
+                        </div>
+                    `).join('');
+            }
+
+            addSpellPrompt() {
+                if (!this.canEditCharacter(this.currentChar)) return;
+                this.openCustomModal('Inscrever Magia no Grimório', `
+                    <div>
+                        <label class="font-display text-xs font-bold uppercase text-ink-800">Nome da Magia</label>
+                        <input id="modal-sp-name" type="text" placeholder="Ex: Escudo Arcano" class="w-full h-11 mt-1 bg-parchment-50 border border-ink-600 rounded-lg px-3 text-ink-900">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="font-display text-xs font-bold uppercase text-ink-800">Círculo (0 = Truque)</label>
+                            <input id="modal-sp-lvl" type="number" min="0" max="9" value="1" class="w-full h-11 mt-1 bg-parchment-50 border border-ink-600 rounded-lg px-3 text-ink-900">
+                        </div>
+                        <div>
+                            <label class="font-display text-xs font-bold uppercase text-ink-800">Escola</label>
+                            <input id="modal-sp-school" type="text" value="Evocação" class="w-full h-11 mt-1 bg-parchment-50 border border-ink-600 rounded-lg px-3 text-ink-900">
+                        </div>
+                    </div>
+                    <label class="flex items-center gap-2 min-h-[44px] cursor-pointer">
+                        <input id="modal-sp-conc" type="checkbox" class="w-5 h-5 accent-crimson-600">
+                        <span class="text-sm font-semibold text-ink-900">Requer Concentração</span>
+                    </label>
+                    <div>
+                        <label class="font-display text-xs font-bold uppercase text-ink-800">Efeito & Descrição</label>
+                        <textarea id="modal-sp-desc" rows="3" placeholder="Descreva alcance, duração e dano..." class="w-full mt-1 bg-parchment-50 border border-ink-600 rounded-lg p-2.5 text-ink-900"></textarea>
+                    </div>
+                `, () => {
+                    const name = document.getElementById('modal-sp-name').value || 'Magia Arcana';
+                    const level = parseInt(document.getElementById('modal-sp-lvl').value) || 0;
+                    const school = document.getElementById('modal-sp-school').value || 'Universal';
+                    const concentration = document.getElementById('modal-sp-conc').checked;
+                    const desc = document.getElementById('modal-sp-desc').value || 'Conjuração arcana.';
+                    this.currentChar.spellcasting.spells.push({ name, level, school, concentration, desc });
+                    this.db.saveCharacter(this.currentChar);
+                    this.triggerSaveFeedback();
+                    this.renderSpellcasting();
+                    this.closeCustomModal();
+                });
+            }
+
+            removeSpell(idx) {
+                if (!this.canEditCharacter(this.currentChar)) return;
+                this.currentChar.spellcasting.spells.splice(idx, 1);
+                this.db.saveCharacter(this.currentChar);
+                this.triggerSaveFeedback();
+                this.renderSpellcasting();
+            }
+
+            updateSlotTotal(lvl, val) {
+                if (!this.canEditCharacter(this.currentChar)) return;
+                const total = Math.min(4, Math.max(0, parseInt(val) || 0));
+                if (!this.currentChar.spellcasting.slots[lvl]) this.currentChar.spellcasting.slots[lvl] = { total: 0, used: 0 };
+                this.currentChar.spellcasting.slots[lvl].total = total;
+                this.currentChar.spellcasting.slots[lvl].used = Math.min(this.currentChar.spellcasting.slots[lvl].used, total);
+                this.db.saveCharacter(this.currentChar);
+                this.triggerSaveFeedback();
+                this.renderSpellcasting();
+            }
+
+            toggleSpellSlot(lvl, pipIndex) {
+                if (!this.canEditCharacter(this.currentChar)) return;
+                const slot = this.currentChar.spellcasting.slots[lvl];
+                const remaining = slot.total - slot.used;
+                slot.used = pipIndex <= remaining ? slot.used + 1 : Math.max(0, slot.used - 1);
+                this.db.saveCharacter(this.currentChar);
+                this.triggerSaveFeedback();
+                this.renderSpellcasting();
+            }
+
+            shortRest() {
+                if (!this.canEditCharacter(this.currentChar)) return;
+                this.currentChar.combat.resources.forEach(r => r.current = r.max);
+                this.db.saveCharacter(this.currentChar);
+                this.triggerSaveFeedback();
+                this.renderAttacksAndResources();
+                this.showToast('Descanso Curto', 'Recursos de descanso curto restaurados. Role seus Dados de Vida se precisar curar!', 'info');
+            }
+
+            longRest() {
+                if (!this.canEditCharacter(this.currentChar)) return;
+                this.currentChar.combat.hpCurrent = this.currentChar.combat.hpMax;
+                Object.keys(this.currentChar.spellcasting.slots).forEach(lvl => {
+                    this.currentChar.spellcasting.slots[lvl].used = 0;
+                });
+                this.currentChar.combat.resources.forEach(r => r.current = r.max);
+                this.db.saveCharacter(this.currentChar);
+                this.triggerSaveFeedback();
+                this.renderHP();
+                this.renderSpellcasting();
+                this.renderAttacksAndResources();
+                this.showToast('Descanso Longo', 'Pontos de Vida, Espaços de Magia e Habilidades totalmente restaurados!', 'success');
+            }
+
+            renderInventory() {
+                const inv = this.currentChar.inventory;
+                document.getElementById('coin-cp').value = inv.coins.cp;
+                document.getElementById('coin-sp').value = inv.coins.sp;
+                document.getElementById('coin-ep').value = inv.coins.ep;
+                document.getElementById('coin-gp').value = inv.coins.gp;
+                document.getElementById('coin-pp').value = inv.coins.pp;
+
+                let totalWeight = 0;
+                document.getElementById('inventory-list').innerHTML = inv.items.map((item, idx) => {
+                    totalWeight += (item.weight * item.qty);
+                    return `
+                        <div class="bg-parchment-50/95 border border-ink-600/40 rounded-xl p-2.5 flex items-center justify-between gap-2.5">
+                            <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                                <button type="button" onclick="app.toggleEquipItem(${idx})" class="w-10 h-10 rounded-xl border-2 flex items-center justify-center text-base shrink-0 active:scale-95 ${item.equipped ? 'bg-crimson-600 border-crimson-800 text-parchment-50' : 'border-ink-600/50 text-ink-600/40'}" title="Equipar / Desequipar">
+                                    <i class="ph-bold ph-shield-check"></i>
+                                </button>
+                                <div class="min-w-0">
+                                    <p class="text-sm font-bold text-ink-900 truncate">${item.name} <span class="text-ink-600 font-normal">×${item.qty}</span></p>
+                                    <p class="text-xs text-ink-600 truncate">${(item.weight * item.qty).toFixed(1)} kg ${item.attuned ? '• <span class="text-crimson-700 font-bold">Sintonizado</span>' : ''}</p>
+                                </div>
+                            </div>
+                            <button type="button" onclick="app.removeItem(${idx})" class="w-10 h-10 rounded-lg hover:bg-crimson-600/10 flex items-center justify-center text-ink-600 hover:text-crimson-600 shrink-0 active:scale-95" aria-label="Remover item">
+                                <i class="ph-bold ph-trash text-base"></i>
+                            </button>
+                        </div>
+                    `;
+                }).join('');
+
+                const maxCapacity = this.currentChar.attributes.str * 7.5;
+                const pct = Math.min(100, (totalWeight / maxCapacity) * 100);
+                document.getElementById('weight-display').textContent = `${totalWeight.toFixed(1)} / ${maxCapacity.toFixed(1)} kg`;
+                const wBar = document.getElementById('weight-bar');
+                wBar.style.width = `${pct}%`;
+                wBar.className = pct > 100 ? 'bg-red-700 h-full' : 'bg-crimson-600 h-full';
+            }
+
+            toggleEquipItem(idx) {
+                if (!this.canEditCharacter(this.currentChar)) return;
+                this.currentChar.inventory.items[idx].equipped = !this.currentChar.inventory.items[idx].equipped;
+                this.db.saveCharacter(this.currentChar);
+                this.triggerSaveFeedback();
+                this.renderInventory();
+            }
+
+            removeItem(idx) {
+                if (!this.canEditCharacter(this.currentChar)) return;
+                this.currentChar.inventory.items.splice(idx, 1);
+                this.db.saveCharacter(this.currentChar);
+                this.triggerSaveFeedback();
+                this.renderInventory();
+            }
+
+            addItemPrompt() {
+                if (!this.canEditCharacter(this.currentChar)) return;
+                this.openCustomModal('Guardar Item na Mochila', `
+                    <div>
+                        <label class="font-display text-xs font-bold uppercase text-ink-800">Nome do Item</label>
+                        <input id="modal-item-name" type="text" placeholder="Ex: Corda de Seda (15m)" class="w-full h-11 mt-1 bg-parchment-50 border border-ink-600 rounded-lg px-3 text-ink-900">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="font-display text-xs font-bold uppercase text-ink-800">Quantidade</label>
+                            <input id="modal-item-qty" type="number" value="1" min="1" class="w-full h-11 mt-1 bg-parchment-50 border border-ink-600 rounded-lg px-3 text-ink-900">
+                        </div>
+                        <div>
+                            <label class="font-display text-xs font-bold uppercase text-ink-800">Peso Unitário (kg)</label>
+                            <input id="modal-item-weight" type="number" step="0.1" value="1.0" class="w-full h-11 mt-1 bg-parchment-50 border border-ink-600 rounded-lg px-3 text-ink-900">
+                        </div>
+                    </div>
+                `, () => {
+                    const name = document.getElementById('modal-item-name').value || 'Item Misterioso';
+                    const qty = parseInt(document.getElementById('modal-item-qty').value) || 1;
+                    const weight = parseFloat(document.getElementById('modal-item-weight').value) || 0;
+                    this.currentChar.inventory.items.push({ name, qty, weight, equipped: false, attuned: false });
+                    this.db.saveCharacter(this.currentChar);
+                    this.triggerSaveFeedback();
+                    this.renderInventory();
+                    this.closeCustomModal();
+                });
+            }
+
+            renderFeaturesAndBio() {
+                const features = this.currentChar.features || [];
+                document.getElementById('features-list').innerHTML = features.map(f => `
+                    <div class="bg-parchment-50/95 border border-ink-600/40 rounded-xl p-3.5">
+                        <div class="flex items-center justify-between gap-2">
+                            <h5 class="font-display font-bold text-xs uppercase text-crimson-700 truncate">${f.title}</h5>
+                            <span class="text-xs font-semibold text-ink-600 italic shrink-0">${f.source}</span>
+                        </div>
+                        <p class="text-sm text-ink-800 mt-1 leading-relaxed">${f.desc}</p>
+                    </div>
+                `).join('');
+
+                document.getElementById('bio-traits').value = this.currentChar.bio.traits || '';
+                document.getElementById('bio-ideals').value = this.currentChar.bio.ideals || '';
+                document.getElementById('bio-backstory').value = this.currentChar.bio.backstory || '';
+            }
+
+            // ==================== LIVRO DA COMUNIDADE ====================
+            filterCompendium(category) {
+                this.compendiumFilter = category;
+                document.querySelectorAll('.comp-filter-btn').forEach(btn => {
+                    if (btn.dataset.cat === category) {
+                        btn.className = 'comp-filter-btn h-11 px-3.5 rounded-xl font-display text-xs font-bold uppercase bg-crimson-600 text-parchment-50 border border-brass-500 shrink-0 active:scale-95';
+                    } else {
+                        btn.className = 'comp-filter-btn h-11 px-3.5 rounded-xl font-display text-xs font-bold uppercase bg-parchment-200 text-ink-800 hover:bg-parchment-300 border border-ink-600/40 shrink-0 active:scale-95';
+                    }
+                });
+                this.renderCompendium();
+            }
+
+            renderCompendium() {
+                const search = (document.getElementById('compendium-search')?.value || '').toLowerCase();
+                const entries = this.db.getCompendium().filter(item => {
+                    const matchCat = this.compendiumFilter === 'all' || item.category === this.compendiumFilter;
+                    const matchText = item.title.toLowerCase().includes(search) || item.description.toLowerCase().includes(search);
+                    return matchCat && matchText;
+                });
+
+                const catBadge = {
+                    spell: { label: 'Magia', color: 'bg-crimson-600 text-parchment-50' },
+                    race: { label: 'Raça', color: 'bg-emerald-800 text-parchment-50' },
+                    class: { label: 'Classe', color: 'bg-tavern-900 text-brass-400' },
+                    homebrew: { label: 'Regra da Casa', color: 'bg-amber-700 text-parchment-50' }
+                };
+
+                document.getElementById('compendium-grid').innerHTML = entries.map(entry => {
+                    const badge = catBadge[entry.category] || catBadge.spell;
+                    return `
+                        <div class="vellum-box rounded-xl p-4 sm:p-5 flex flex-col justify-between border-2 border-ink-700/30">
+                            <div>
+                                <div class="flex items-center justify-between gap-2 mb-2">
+                                    <span class="px-2.5 py-0.5 rounded font-display text-[10px] font-bold uppercase tracking-wider ${badge.color} shrink-0">
+                                        ${badge.label}
+                                    </span>
+                                    <span class="text-xs font-semibold text-ink-600 italic truncate">${entry.subtitle}</span>
+                                </div>
+                                <h3 class="font-display font-bold text-lg text-ink-900 border-b border-crimson-600/40 pb-1">${entry.title}</h3>
+                                <p class="text-sm text-ink-800 mt-2.5 leading-relaxed">${entry.description}</p>
+                            </div>
+                            <div class="mt-4 pt-2.5 border-t border-ink-600/20 flex flex-wrap gap-1.5">
+                                ${(entry.tags || []).map(t => `<span class="font-display text-[10px] font-bold px-2 py-0.5 rounded bg-parchment-200 text-ink-800 border border-ink-600/30">${t}</span>`).join('')}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            async seedInitialCompendiumIfEmpty(force = false) {
+                const defaults = this.db.getDefaultCompendium();
+                for (const item of defaults) {
+                    await this.db.addCompendiumEntry(item);
+                }
+                if (force) {
+                    this.openFirebaseInspector();
+                    this.showToast('SRD Sincronizado', 'Verbetes oficiais gravados no Cloud Firestore!', 'success');
+                }
+            }
+
+            openNewCompendiumModal() {
+                this.openCustomModal('Inscrever no Livro da Comunidade', `
+                    <div>
+                        <label class="font-display text-xs font-bold uppercase text-ink-800">Categoria</label>
+                        <select id="comp-new-cat" class="w-full h-11 mt-1 bg-parchment-50 border border-ink-600 rounded-lg px-3 text-ink-900">
+                            <option value="homebrew">Regra da Casa (Homebrew)</option>
+                            <option value="spell">Magia</option>
+                            <option value="race">Raça / Espécie</option>
+                            <option value="class">Classe / Subclasse</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="font-display text-xs font-bold uppercase text-ink-800">Título do Verbete</label>
+                        <input id="comp-new-title" type="text" placeholder="Ex: Escudo Torre de Mithral" class="w-full h-11 mt-1 bg-parchment-50 border border-ink-600 rounded-lg px-3 text-ink-900">
+                    </div>
+                    <div>
+                        <label class="font-display text-xs font-bold uppercase text-ink-800">Subtítulo / Classificação</label>
+                        <input id="comp-new-sub" type="text" placeholder="Ex: Item Mágico • Raro" class="w-full h-11 mt-1 bg-parchment-50 border border-ink-600 rounded-lg px-3 text-ink-900">
+                    </div>
+                    <div>
+                        <label class="font-display text-xs font-bold uppercase text-ink-800">Descrição & Regras</label>
+                        <textarea id="comp-new-desc" rows="3" placeholder="Descreva os efeitos mecânicos..." class="w-full mt-1 bg-parchment-50 border border-ink-600 rounded-lg p-2.5 text-ink-900"></textarea>
+                    </div>
+                `, async () => {
+                    const entry = {
+                        id: 'comp_' + Date.now(),
+                        category: document.getElementById('comp-new-cat').value,
+                        title: document.getElementById('comp-new-title').value || 'Nova Regra',
+                        subtitle: document.getElementById('comp-new-sub').value || 'Comunidade',
+                        tags: ['Inscrito pelo Mestre'],
+                        description: document.getElementById('comp-new-desc').value || 'Sem descrição.'
+                    };
+                    await this.db.addCompendiumEntry(entry);
+                    this.renderCompendium();
+                    this.closeCustomModal();
+                    this.showToast('Tomo Atualizado', `"${entry.title}" foi registrado no Firestore!`, 'success');
+                });
+            }
+
+            // ==================== ROLADOR DE DADOS + VANTAGEM/DESVANTAGEM + HISTÓRICO ====================
+            setRollMode(mode) {
+                this.rollMode = mode;
+                const btns = {
+                    normal: { el: document.getElementById('roll-mode-normal'), active: 'h-9 px-2.5 rounded font-display text-[11px] font-bold uppercase bg-brass-600 text-tavern-950 transition-all active:scale-95 whitespace-nowrap', idle: 'h-9 px-2.5 rounded font-display text-[11px] font-bold uppercase text-parchment-300 hover:bg-tavern-800 transition-all active:scale-95 whitespace-nowrap' },
+                    adv: { el: document.getElementById('roll-mode-adv'), active: 'h-9 px-2.5 rounded font-display text-[11px] font-bold uppercase bg-emerald-700 text-parchment-50 transition-all active:scale-95 whitespace-nowrap', idle: 'h-9 px-2.5 rounded font-display text-[11px] font-bold uppercase text-emerald-400 hover:bg-emerald-950/60 transition-all active:scale-95 whitespace-nowrap' },
+                    dis: { el: document.getElementById('roll-mode-dis'), active: 'h-9 px-2.5 rounded font-display text-[11px] font-bold uppercase bg-crimson-700 text-parchment-50 transition-all active:scale-95 whitespace-nowrap', idle: 'h-9 px-2.5 rounded font-display text-[11px] font-bold uppercase text-red-400 hover:bg-red-950/60 transition-all active:scale-95 whitespace-nowrap' }
+                };
+
+                Object.keys(btns).forEach(k => {
+                    btns[k].el.className = k === mode ? btns[k].active : btns[k].idle;
+                });
+            }
+
+            rollD20WithMode() {
+                const r1 = Math.floor(Math.random() * 20) + 1;
+                if (this.rollMode === 'normal') {
+                    return { chosen: r1, detail: `d20 (${r1})`, modeTag: '' };
+                }
+                const r2 = Math.floor(Math.random() * 20) + 1;
+                if (this.rollMode === 'adv') {
+                    const chosen = Math.max(r1, r2);
+                    return { chosen, detail: `2d20 Vantagem [${r1}, ${r2}] → <strong>${chosen}</strong>`, modeTag: 'Vantagem' };
+                }
+                const chosen = Math.min(r1, r2);
+                return { chosen, detail: `2d20 Desvantagem [${r1}, ${r2}] → <strong>${chosen}</strong>`, modeTag: 'Desvantagem' };
+            }
+
+            rollPolyhedral(sides) {
+                if (sides === 20) {
+                    const { chosen, detail, modeTag } = this.rollD20WithMode();
+                    let extra = '';
+                    let status = 'normal';
+                    if (chosen === 20) { extra = '<span class="text-emerald-400 font-display font-bold ml-1">★ CRÍTICO!</span>'; status = 'crit'; }
+                    if (chosen === 1) { extra = '<span class="text-red-400 font-display font-bold ml-1">☠ FALHA!</span>'; status = 'fumble'; }
+                    const msg = `${detail} = <strong class="font-display text-xl text-brass-400">${chosen}</strong> ${extra}`;
+                    this.recordRoll(`Rolagem Livre (d20${modeTag ? ` • ${modeTag}` : ''})`, msg, status);
+                    this.showToast(`Rolagem Livre (d20)`, msg, 'dice');
+                    return;
+                }
+
+                const res = Math.floor(Math.random() * sides) + 1;
+                const msg = `1d${sides} = <strong class="font-display text-xl text-brass-400">${res}</strong>`;
+                this.recordRoll(`Rolagem Livre (1d${sides})`, msg, 'normal');
+                this.showToast(`Rolagem Livre (1d${sides})`, msg, 'dice');
+            }
+
+            rollInitiative() {
+                const mod = this.getModifier(this.currentChar.attributes.dex);
+                this.rollCheck('Iniciativa de Combate', mod);
+            }
+
+            rollCheck(label, modifier) {
+                const { chosen, detail, modeTag } = this.rollD20WithMode();
+                const total = chosen + modifier;
+                let badge = '';
+                let status = 'normal';
+                if (chosen === 20) { badge = '<span class="text-emerald-400 font-display font-bold ml-1">(CRÍTICO!)</span>'; status = 'crit'; }
+                if (chosen === 1) { badge = '<span class="text-red-400 font-display font-bold ml-1">(FALHA!)</span>'; status = 'fumble'; }
+
+                const fullLabel = modeTag ? `${label} (${modeTag})` : label;
+                const msg = `${detail} ${this.formatMod(modifier)} = <strong class="font-display text-xl text-brass-400">${total}</strong> ${badge}`;
+                this.recordRoll(fullLabel, msg, status);
+                this.showToast(fullLabel, msg, 'dice');
+            }
+
+            rollDamage(weaponName, diceStr, bonus, dmgType) {
+                const match = diceStr.toLowerCase().match(/(\d+)d(\d+)/);
+                let diceTotal = 0;
+                let rolls = [];
+                if (match) {
+                    const count = parseInt(match[1]);
+                    const sides = parseInt(match[2]);
+                    for (let i = 0; i < count; i++) {
+                        const r = Math.floor(Math.random() * sides) + 1;
+                        rolls.push(r);
+                        diceTotal += r;
+                    }
+                }
+                const total = Math.max(1, diceTotal + bonus);
+                const msg = `[${rolls.join('+')}] ${bonus !== 0 ? this.formatMod(bonus) : ''} = <strong class="font-display text-xl text-red-400">${total}</strong> (${dmgType})`;
+                this.recordRoll(`Dano: ${weaponName}`, msg, 'damage');
+                this.showToast(`Dano: ${weaponName}`, msg, 'dice');
+            }
+
+            recordRoll(title, detailHtml, status = 'normal') {
+                const now = new Date();
+                const time = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                const actor = this.currentChar ? this.currentChar.meta.name : (this.currentUser?.name || 'Aventureiro');
+
+                this.rollHistory.unshift({ time, actor, title, detailHtml, status });
+                if (this.rollHistory.length > 15) this.rollHistory.pop();
+
+                document.getElementById('desktop-roll-count').textContent = this.rollHistory.length;
+                document.getElementById('mobile-roll-count').textContent = this.rollHistory.length;
+                this.renderRollHistory();
+            }
+
+            renderRollHistory() {
+                const listEl = document.getElementById('roll-history-list');
+                if (this.rollHistory.length === 0) {
+                    listEl.innerHTML = '<p class="text-sm text-parchment-300/60 italic text-center py-8">Nenhuma rolagem realizada nesta sessão ainda.</p>';
+                    return;
+                }
+
+                listEl.innerHTML = this.rollHistory.map(item => {
+                    const borderCol = item.status === 'crit'
+                        ? 'border-emerald-500 bg-emerald-950/20'
+                        : (item.status === 'fumble' ? 'border-crimson-600 bg-crimson-950/20' : 'border-brass-600/35 bg-tavern-950/80');
+
+                    return `
+                        <div class="rounded-xl p-3 border ${borderCol}">
+                            <div class="flex items-center justify-between text-[11px] text-parchment-300/70 mb-1">
+                                <span class="font-display font-bold text-brass-400">${item.actor}</span>
+                                <span class="tabular-nums">${item.time}</span>
+                            </div>
+                            <p class="font-display text-xs font-bold uppercase tracking-wider text-parchment-100">${item.title}</p>
+                            <p class="text-sm text-parchment-200 mt-1">${item.detailHtml}</p>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            clearRollHistory() {
+                this.rollHistory = [];
+                document.getElementById('desktop-roll-count').textContent = '0';
+                document.getElementById('mobile-roll-count').textContent = '0';
+                this.renderRollHistory();
+            }
+
+            toggleRollHistoryDrawer(forceState) {
+                const drawer = document.getElementById('roll-history-drawer');
+                const backdrop = document.getElementById('roll-history-backdrop');
+                const isClosed = drawer.classList.contains('translate-x-full');
+                const shouldOpen = typeof forceState === 'boolean' ? forceState : isClosed;
+
+                if (shouldOpen) {
+                    drawer.classList.remove('translate-x-full');
+                    backdrop.classList.remove('hidden');
+                } else {
+                    drawer.classList.add('translate-x-full');
+                    backdrop.classList.add('hidden');
+                }
+            }
+
+            showToast(title, htmlMessage, type = 'dice') {
+                const ticker = document.getElementById('last-roll-ticker');
+                if (ticker) ticker.innerHTML = `<span class="text-brass-400 font-bold not-italic shrink-0">${title}:</span> <span class="truncate">${htmlMessage}</span>`;
+
+                const container = document.getElementById('dice-toast-container');
+                while (container.children.length >= 2) {
+                    container.firstElementChild.remove();
+                }
+
+                const toast = document.createElement('div');
+                toast.className = `dice-animate pointer-events-auto bg-tavern-900/95 border-2 border-brass-500 text-parchment-100 rounded-xl p-3 shadow-2xl flex items-center gap-3`;
+                toast.innerHTML = `
+                    <div class="w-9 h-9 rounded-lg wax-seal flex items-center justify-center shrink-0 text-brass-400">
+                        <i class="ph-fill ${type === 'dice' ? 'ph-dice-twenty-faces-twenty' : 'ph-scroll'} text-xl"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="font-display text-[11px] font-bold uppercase tracking-wider text-brass-400 truncate">${title}</p>
+                        <p class="text-sm text-parchment-100 mt-0.5 leading-snug">${htmlMessage}</p>
+                    </div>
+                    <button type="button" onclick="this.parentElement.remove()" class="p-1.5 text-parchment-300/60 hover:text-white shrink-0" aria-label="Fechar">
+                        <i class="ph-bold ph-x text-xs"></i>
+                    </button>
+                `;
+
+                container.appendChild(toast);
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    toast.style.transition = 'opacity 0.25s ease';
+                    setTimeout(() => toast.remove(), 250);
+                }, 4000);
+            }
+
+            // ==================== MODAIS & INSPETOR ====================
+            openCustomModal(title, bodyHtml, onConfirm) {
+                document.getElementById('custom-modal-title').textContent = title;
+                document.getElementById('custom-modal-body').innerHTML = bodyHtml;
+                document.getElementById('custom-modal-confirm').onclick = onConfirm;
+                document.getElementById('custom-modal').classList.remove('hidden');
+            }
+
+            closeCustomModal() {
+                document.getElementById('custom-modal').classList.add('hidden');
+            }
+
+            openFirebaseInspector() {
+                const payload = {
+                    projectId: firebaseConfig.projectId,
+                    currentUser: this.currentUser,
+                    charactersCount: this.db.getCharacters().length,
+                    compendiumCount: this.db.getCompendium().length,
+                    characters: this.db.getCharacters(),
+                    compendium: this.db.getCompendium()
+                };
+                document.getElementById('firebase-json-preview').textContent = JSON.stringify(payload, null, 2);
+                document.getElementById('firebase-modal').classList.remove('hidden');
+            }
+
+            closeFirebaseInspector() {
+                document.getElementById('firebase-modal').classList.add('hidden');
+            }
+
+            copyJsonToClipboard() {
+                const text = document.getElementById('firebase-json-preview').textContent;
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                this.showToast('JSON Copiado', 'Estrutura Firestore copiada para a área de transferência!', 'success');
+            }
+        }
+
+        window.app = new GrimoireApp();
+    </script>
+</body>
+</html>
