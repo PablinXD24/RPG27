@@ -599,13 +599,14 @@
           </div>
         </div>
 
-        <!-- ABAS INTERNAS DA FICHA: COMBATE, MAGIAS, INVENTÁRIO E HISTÓRIA -->
+        <!-- ABAS INTERNAS DA FICHA: COMBATE, MAGIAS, INVENTÁRIO, HISTÓRIA E ANIMAÇÃO -->
         <div class="parchment-page rounded-xl p-4 sm:p-6">
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 border-b border-[#b89b6a] pb-3 mb-4">
-            <button onclick="app.switchSubTab('combat')" id="subTab-combat" class="subtab-btn min-h-[42px] px-3 py-2 rounded-lg font-heading text-xs font-bold uppercase tracking-wider bg-[#8b1e1e] text-[#f4ead5] transition">⚔️ Ataques & Poderes</button>
-            <button onclick="app.switchSubTab('spells')" id="subTab-spells" class="subtab-btn min-h-[42px] px-3 py-2 rounded-lg font-heading text-xs font-bold uppercase tracking-wider bg-[#e6d5b8] text-[#2b1d0e] transition">✨ Grimório & Magias</button>
-            <button onclick="app.switchSubTab('inventory')" id="subTab-inventory" class="subtab-btn min-h-[42px] px-3 py-2 rounded-lg font-heading text-xs font-bold uppercase tracking-wider bg-[#e6d5b8] text-[#2b1d0e] transition">🎒 Inventário & Ouro</button>
-            <button onclick="app.switchSubTab('bio')" id="subTab-bio" class="subtab-btn min-h-[42px] px-3 py-2 rounded-lg font-heading text-xs font-bold uppercase tracking-wider bg-[#e6d5b8] text-[#2b1d0e] transition">📖 Crônica & Traços</button>
+          <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 border-b border-[#b89b6a] pb-3 mb-4">
+            <button onclick="app.switchSubTab('combat')" id="subTab-combat" class="subtab-btn min-h-[42px] px-3 py-2 rounded-lg font-heading text-[11px] font-bold uppercase tracking-wider bg-[#8b1e1e] text-[#f4ead5] transition">⚔️ Ataques & Poderes</button>
+            <button onclick="app.switchSubTab('spells')" id="subTab-spells" class="subtab-btn min-h-[42px] px-3 py-2 rounded-lg font-heading text-[11px] font-bold uppercase tracking-wider bg-[#e6d5b8] text-[#2b1d0e] transition">✨ Grimório & Magias</button>
+            <button onclick="app.switchSubTab('inventory')" id="subTab-inventory" class="subtab-btn min-h-[42px] px-3 py-2 rounded-lg font-heading text-[11px] font-bold uppercase tracking-wider bg-[#e6d5b8] text-[#2b1d0e] transition">🎒 Inventário & Ouro</button>
+            <button onclick="app.switchSubTab('bio')" id="subTab-bio" class="subtab-btn min-h-[42px] px-3 py-2 rounded-lg font-heading text-[11px] font-bold uppercase tracking-wider bg-[#e6d5b8] text-[#2b1d0e] transition">📖 Crônica & Traços</button>
+            <button onclick="app.switchSubTab('anim')" id="subTab-anim" class="subtab-btn min-h-[42px] px-3 py-2 rounded-lg font-heading text-[11px] font-bold uppercase tracking-wider bg-[#e6d5b8] text-[#2b1d0e] transition">🌬️ Animado</button>
           </div>
 
           <!-- SUB-ABA 1: ATAQUES E CARACTERÍSTICAS -->
@@ -697,7 +698,7 @@
           </div>
 
           <!-- SUB-ABA 4: HISTÓRIA E PERSONALIDADE -->
-          <div id="panel-bio" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div id="panel-bio" class="hidden grid-cols-1 md:grid-cols-2 gap-4">
             <div class="parchment-inset p-3.5 rounded-lg">
               <label class="block text-xs font-heading uppercase font-bold text-[#8b1e1e] mb-1.5">Traços de Personalidade</label>
               <textarea id="bioTraits" rows="3" oninput="app.updateBio('traits', this.value)" class="w-full bg-transparent text-sm outline-none leading-relaxed"></textarea>
@@ -718,6 +719,14 @@
               <label class="block text-xs font-heading uppercase font-bold text-[#8b1e1e] mb-1.5">Crônica & Antecedentes do Personagem</label>
               <textarea id="bioBackstory" rows="5" oninput="app.updateBio('backstory', this.value)" class="w-full bg-transparent text-sm outline-none leading-relaxed"></textarea>
             </div>
+          </div>
+
+          <!-- SUB-ABA 5: ANIMAÇÃO RESPIRAÇÃO -->
+          <div id="panel-anim" class="hidden flex-col items-center justify-center space-y-3">
+            <div class="w-full max-w-[450px] mx-auto bg-[#120c09] rounded-2xl p-2 border-2 border-[#8b5a2b] shadow-[0_0_20px_rgba(0,0,0,0.8)_inset]">
+              <canvas id="animatedCharCanvas" width="450" height="450" class="w-full h-auto object-contain rounded-xl"></canvas>
+            </div>
+            <p class="text-[10px] text-[#5c4328] font-heading uppercase text-center font-bold tracking-widest">Simulação Orgânica 2D — O personagem ganha vida</p>
           </div>
         </div>
 
@@ -1111,11 +1120,22 @@
         this.dragStartX = 0;
         this.dragStartY = 0;
 
+        // Estado do Motor de Animação (Simulação Orgânica)
+        this.animTime = 0;
+        this.animLastTime = 0;
+        this.animActiveImage = null;
+        this.animGuides = null;
+        this.animLastCharId = null;
+        this.animLastAvatar = null;
+
         if (this.isProjectorMode) {
           this.initProjectorView();
         }
 
         this.initFirebaseAuthListener();
+
+        // Inicia o motor de animação no background
+        requestAnimationFrame((n) => this.renderAnimFrame(n));
       }
 
       // ---------------------------------------------------------
@@ -1230,7 +1250,6 @@
         });
       }
 
-      // Otimiza mapas mantendo a proporção original (sem cortar bordas táticas)
       compressMapImageToDataUrl(file, maxDimension = 1440, quality = 0.82) {
         return new Promise((resolve, reject) => {
           const reader = new FileReader();
@@ -1264,8 +1283,164 @@
       }
 
       // ---------------------------------------------------------
-      // FLUXO DE AUTENTICAÇÃO (LOGIN, CADASTRO E GOOGLE)
+      // FLUXO DE AUTENTICAÇÃO E MOTOR DE ANIMAÇÃO 2D
       // ---------------------------------------------------------
+
+      // MOTOR DE ANIMAÇÃO RESPIRAÇÃO
+      loadAnimationImage(src) {
+        const img = new Image();
+        img.crossOrigin = "Anonymous";
+        img.onload = () => {
+          const c = document.createElement('canvas');
+          c.width = img.width;
+          c.height = img.height;
+          const ctx = c.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+          this.animActiveImage = c;
+          this.autoFitGuidesAnim(c);
+        };
+        img.src = src;
+      }
+
+      autoFitGuidesAnim(srcCanvas) {
+        const w = srcCanvas.width;
+        const h = srcCanvas.height;
+        const imgData = srcCanvas.getContext('2d').getImageData(0, 0, w, h).data;
+        let minY = h, maxY = 0, found = false;
+        for (let y = 0; y < h; y++) {
+          for (let x = 0; x < w; x++) {
+            if (imgData[(y * w + x) * 4 + 3] > 30) {
+              if (y < minY) minY = y;
+              if (y > maxY) maxY = y;
+              found = true;
+            }
+          }
+        }
+        if (!found) return;
+        const top = minY / h;
+        const charH = (maxY - minY) / h;
+        this.animGuides = {
+          neckY: Math.min(0.85, top + charH * 0.28),
+          chestY: Math.min(0.88, top + charH * 0.40),
+          waistY: Math.min(0.92, top + charH * 0.60)
+        };
+      }
+
+      computeBreathSignalAnim(t) {
+        const freq = 0.36; // Calmo
+        const phase = ((t * freq) % 1 + 1) % 1;
+        const headPhase = (((t * freq) - 0.055) % 1 + 1) % 1;
+        const evalCurve = (p) => {
+          if (p < 0.42) return 0.5 - 0.5 * Math.cos(Math.PI * (p / 0.42));
+          else if (p < 0.50) return 1.0;
+          else if (p < 0.92) return 0.5 + 0.5 * Math.cos(Math.PI * ((p - 0.50) / 0.42));
+          return 0.0;
+        };
+        return { chest: evalCurve(phase), head: evalCurve(headPhase) };
+      }
+
+      renderAnimFrame(now) {
+        if (!this.animLastTime) this.animLastTime = now;
+        const dt = Math.min((now - this.animLastTime) / 1000, 0.1);
+        this.animLastTime = now;
+        this.animTime = (this.animTime || 0) + dt;
+
+        requestAnimationFrame((n) => this.renderAnimFrame(n));
+
+        const canvas = document.getElementById('animatedCharCanvas');
+        // Só tenta renderizar se o canvas estiver inserido e minimamente visível (poupa recursos)
+        if (!canvas || !canvas.offsetParent) return;
+
+        const ctx = canvas.getContext('2d');
+        const width = canvas.width;
+        const height = canvas.height;
+        ctx.clearRect(0, 0, width, height);
+
+        // Desenha o Pódio Clássico estilo D&D
+        const podiumScreenY = height * 0.85;
+        const grad = ctx.createLinearGradient(0, height * 0.5, 0, height);
+        grad.addColorStop(0, 'rgba(0,0,0,0)');
+        grad.addColorStop(1, 'rgba(15, 23, 42, 0.6)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, width, height);
+
+        ctx.fillStyle = '#1e293b';
+        ctx.beginPath();
+        ctx.ellipse(width / 2, podiumScreenY, 140, 20, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#c59b27';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        ctx.beginPath();
+        ctx.ellipse(width / 2, podiumScreenY, 125, 15, 0, 0, Math.PI * 2);
+        ctx.stroke();
+
+        if (!this.animActiveImage || !this.animGuides) return;
+
+        const srcW = this.animActiveImage.width;
+        const srcH = this.animActiveImage.height;
+        const scale = 0.86;
+        const fitScale = Math.min(width / srcW, height / srcH) * scale;
+        const drawW = srcW * fitScale;
+        const drawH = srcH * fitScale;
+        const offsetX = (width - drawW) * 0.5;
+
+        const anchorY = 0.92; // Os pés/base da imagem sempre em 92% da própria altura
+        const offsetY = podiumScreenY - (drawH * anchorY);
+
+        const sig = this.computeBreathSignalAnim(this.animTime);
+
+        // Parâmetros de respiração normais/calmos
+        const chestExpandX = 0.026 * sig.chest;
+        const shoulderLiftPx = 7.5 * sig.chest;
+        const headLiftPx = 6.2 * sig.head;
+
+        const neckY = this.animGuides.neckY;
+        const chestY = Math.max(neckY + 0.03, this.animGuides.chestY);
+        const waistY = Math.max(chestY + 0.04, this.animGuides.waistY);
+
+        const slices = 64;
+        const evalSliceTransform = (ny) => {
+          if (ny <= neckY) return { dy: -headLiftPx, sx: 1.0 };
+          if (ny <= chestY) {
+            const smooth = 0.5 - 0.5 * Math.cos(Math.PI * ((ny - neckY) / (chestY - neckY)));
+            return { dy: -(headLiftPx * (1 - smooth) + shoulderLiftPx * smooth), sx: 1.0 + chestExpandX * smooth };
+          }
+          if (ny <= waistY) {
+            const smooth = 0.5 + 0.5 * Math.cos(Math.PI * ((ny - chestY) / (waistY - chestY)));
+            return { dy: -shoulderLiftPx * smooth, sx: 1.0 + chestExpandX * smooth };
+          }
+          if (ny <= anchorY) {
+            const tail = Math.pow(1 - ((ny - waistY) / (anchorY - waistY)), 2) * 0.12;
+            return { dy: -shoulderLiftPx * tail, sx: 1.0 };
+          }
+          return { dy: 0, sx: 1.0 };
+        };
+
+        const centerX = offsetX + drawW * 0.5;
+
+        for (let i = 0; i < slices; i++) {
+          const ny0 = i / slices;
+          const ny1 = (i + 1) / slices;
+          const t0 = evalSliceTransform(ny0);
+          const t1 = evalSliceTransform(ny1);
+
+          const sy0 = ny0 * srcH;
+          const sh = (ny1 * srcH) - sy0;
+          const dstY0 = offsetY + ny0 * drawH + t0.dy;
+          const dstY1 = offsetY + ny1 * drawH + t1.dy;
+          const dstH = Math.max(0.5, (dstY1 - dstY0) + 0.6);
+          const avgSx = (t0.sx + t1.sx) * 0.5;
+
+          ctx.save();
+          ctx.translate(centerX, dstY0);
+          ctx.scale(avgSx, 1.0);
+          ctx.drawImage(this.animActiveImage, 0, sy0, srcW, sh, -drawW * 0.5, 0, drawW, dstH);
+          ctx.restore();
+        }
+      }
+
       setAuthMode(mode) {
         this.authMode = mode;
         const isReg = mode === 'register';
@@ -1829,12 +2004,25 @@
       }
 
       switchSubTab(tab) {
-        ['combat', 'spells', 'inventory', 'bio'].forEach(t => {
-          document.getElementById(`panel-${t}`).classList.toggle('hidden', t !== tab);
+        ['combat', 'spells', 'inventory', 'bio', 'anim'].forEach(t => {
+          const panel = document.getElementById(`panel-${t}`);
+          if (panel) {
+            if (t === tab) {
+              panel.classList.remove('hidden');
+              if (t === 'anim') panel.classList.add('flex');
+              if (t === 'bio') panel.style.display = 'grid';
+            } else {
+              panel.classList.add('hidden');
+              if (t === 'anim') panel.classList.remove('flex');
+              if (t === 'bio') panel.style.display = '';
+            }
+          }
           const btn = document.getElementById(`subTab-${t}`);
-          btn.className = t === tab
-            ? 'subtab-btn min-h-[42px] px-3 py-2 rounded-lg font-heading text-xs font-bold uppercase tracking-wider bg-[#8b1e1e] text-[#f4ead5] transition'
-            : 'subtab-btn min-h-[42px] px-3 py-2 rounded-lg font-heading text-xs font-bold uppercase tracking-wider bg-[#e6d5b8] text-[#2b1d0e] transition';
+          if (btn) {
+            btn.className = t === tab
+              ? 'subtab-btn min-h-[42px] px-3 py-2 rounded-lg font-heading text-[11px] font-bold uppercase tracking-wider bg-[#8b1e1e] text-[#f4ead5] transition'
+              : 'subtab-btn min-h-[42px] px-3 py-2 rounded-lg font-heading text-[11px] font-bold uppercase tracking-wider bg-[#e6d5b8] text-[#2b1d0e] transition';
+          }
         });
       }
 
@@ -2305,7 +2493,16 @@
         const ownerDisplayName = ownerRecord?.name || char.ownerName || 'Integrante';
         const ownerAvatarUrl = ownerRecord?.photoURL || '';
 
-        document.getElementById('charAvatarImg').src = char.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(char.name)}`;
+        const currentAvatarUrl = char.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(char.name)}`;
+        document.getElementById('charAvatarImg').src = currentAvatarUrl;
+        
+        // Atualiza a imagem da animação orgânica
+        if (this.animLastCharId !== char.id || this.animLastAvatar !== currentAvatarUrl) {
+          this.animLastCharId = char.id;
+          this.animLastAvatar = currentAvatarUrl;
+          this.loadAnimationImage(currentAvatarUrl);
+        }
+
         document.getElementById('ownerTagName').textContent = `Jogador: ${ownerDisplayName}`;
         const ownerTagAvatar = document.getElementById('ownerTagAvatar');
         if (ownerAvatarUrl) {
