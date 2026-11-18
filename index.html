@@ -162,7 +162,6 @@
 
   <!-- ========================================================= -->
   <!-- TELA CINEMATOGRÁFICA DE ABERTURA DE CAPÍTULO              -->
-  <!-- Exibida com antecedência ao abrir o site ou trocar cap.   -->
   <!-- ========================================================= -->
   <div id="chapterIntroOverlay" class="fixed inset-0 z-[140] hidden bg-[#090604] text-[#f4ead5] flex flex-col items-center justify-center p-5 sm:p-10 overflow-y-auto select-none">
     <div id="chapterIntroBgImage" class="absolute inset-0 bg-cover bg-center opacity-20 scale-105 blur-[3px] pointer-events-none transition-all duration-700"></div>
@@ -624,32 +623,84 @@
             </div>
           </div>
 
+          <!-- IDENTIDADE DO PERSONAGEM COM CATÁLOGO COMPLETO D&D + OPÇÃO PERSONALIZADA -->
           <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            <div class="parchment-inset p-2.5 rounded-lg">
-              <label class="block text-[10px] font-heading uppercase tracking-wider text-[#5c4328] mb-0.5">Classe & Arquétipo</label>
-              <input id="charClassInput" type="text" oninput="app.updateField('class', this.value)" class="w-full bg-transparent font-bold text-sm text-[#2b1d0e] outline-none" />
+            <!-- CLASSE & ARQUÉTIPO (ABRE SELETOR COMPLETO D&D + PERSONALIZADO) -->
+            <div class="parchment-inset p-2.5 rounded-lg relative group">
+              <div class="flex items-center justify-between gap-1 mb-0.5">
+                <label class="block text-[10px] font-heading uppercase tracking-wider text-[#5c4328]">Classe & Arquétipo</label>
+                <button type="button" onclick="app.openDndOptionPicker('class')" class="text-[11px] font-bold text-[#8b1e1e] hover:underline shrink-0 cursor-pointer" title="Abrir lista completa de Classes e Subclasses D&D 5e">
+                  ▾ Lista
+                </button>
+              </div>
+              <input id="charClassInput" type="text" list="dndClassesDatalist"
+                onclick="app.openDndOptionPicker('class')"
+                oninput="app.updateField('class', this.value)"
+                placeholder="Escolha ou digite..."
+                class="w-full bg-transparent font-bold text-sm text-[#2b1d0e] outline-none cursor-pointer focus:cursor-text" />
             </div>
+
             <div class="parchment-inset p-2.5 rounded-lg">
               <label class="block text-[10px] font-heading uppercase tracking-wider text-[#5c4328] mb-0.5">Nível (1–20)</label>
               <input id="charLevelInput" type="number" min="1" max="20" oninput="app.updateLevel(this.value)" class="w-full bg-transparent font-mono-num font-bold text-sm text-[#8b1e1e] outline-none" />
             </div>
-            <div class="parchment-inset p-2.5 rounded-lg">
-              <label class="block text-[10px] font-heading uppercase tracking-wider text-[#5c4328] mb-0.5">Raça / Espécie</label>
-              <input id="charRaceInput" type="text" oninput="app.updateField('race', this.value)" class="w-full bg-transparent font-bold text-sm text-[#2b1d0e] outline-none" />
+
+            <!-- RAÇA / ESPÉCIE (ABRE SELETOR COMPLETO D&D + PERSONALIZADO) -->
+            <div class="parchment-inset p-2.5 rounded-lg relative group">
+              <div class="flex items-center justify-between gap-1 mb-0.5">
+                <label class="block text-[10px] font-heading uppercase tracking-wider text-[#5c4328]">Raça / Espécie</label>
+                <button type="button" onclick="app.openDndOptionPicker('race')" class="text-[11px] font-bold text-[#8b1e1e] hover:underline shrink-0 cursor-pointer" title="Abrir lista completa de Raças D&D 5e">
+                  ▾ Lista
+                </button>
+              </div>
+              <input id="charRaceInput" type="text" list="dndRacesDatalist"
+                onclick="app.openDndOptionPicker('race')"
+                oninput="app.updateField('race', this.value)"
+                placeholder="Escolha ou digite..."
+                class="w-full bg-transparent font-bold text-sm text-[#2b1d0e] outline-none cursor-pointer focus:cursor-text" />
             </div>
-            <div class="parchment-inset p-2.5 rounded-lg">
-              <label class="block text-[10px] font-heading uppercase tracking-wider text-[#5c4328] mb-0.5">Antecedente</label>
-              <input id="charBgInput" type="text" oninput="app.updateField('background', this.value)" class="w-full bg-transparent font-bold text-sm text-[#2b1d0e] outline-none" />
+
+            <!-- ANTECEDENTE (ABRE SELETOR COMPLETO D&D + PERSONALIZADO) -->
+            <div class="parchment-inset p-2.5 rounded-lg relative group">
+              <div class="flex items-center justify-between gap-1 mb-0.5">
+                <label class="block text-[10px] font-heading uppercase tracking-wider text-[#5c4328]">Antecedente</label>
+                <button type="button" onclick="app.openDndOptionPicker('background')" class="text-[11px] font-bold text-[#8b1e1e] hover:underline shrink-0 cursor-pointer" title="Abrir lista completa de Antecedentes D&D 5e">
+                  ▾ Lista
+                </button>
+              </div>
+              <input id="charBgInput" type="text" list="dndBackgroundsDatalist"
+                onclick="app.openDndOptionPicker('background')"
+                oninput="app.updateField('background', this.value)"
+                placeholder="Escolha ou digite..."
+                class="w-full bg-transparent font-bold text-sm text-[#2b1d0e] outline-none cursor-pointer focus:cursor-text" />
             </div>
-            <div class="parchment-inset p-2.5 rounded-lg">
-              <label class="block text-[10px] font-heading uppercase tracking-wider text-[#5c4328] mb-0.5">Tendência</label>
-              <input id="charAlignInput" type="text" oninput="app.updateField('alignment', this.value)" class="w-full bg-transparent font-bold text-sm text-[#2b1d0e] outline-none" />
+
+            <!-- TENDÊNCIA (ABRE SELETOR COMPLETO D&D + PERSONALIZADO) -->
+            <div class="parchment-inset p-2.5 rounded-lg relative group">
+              <div class="flex items-center justify-between gap-1 mb-0.5">
+                <label class="block text-[10px] font-heading uppercase tracking-wider text-[#5c4328]">Tendência</label>
+                <button type="button" onclick="app.openDndOptionPicker('alignment')" class="text-[11px] font-bold text-[#8b1e1e] hover:underline shrink-0 cursor-pointer" title="Abrir lista completa de Tendências D&D 5e">
+                  ▾ Lista
+                </button>
+              </div>
+              <input id="charAlignInput" type="text" list="dndAlignmentsDatalist"
+                onclick="app.openDndOptionPicker('alignment')"
+                oninput="app.updateField('alignment', this.value)"
+                placeholder="Escolha ou digite..."
+                class="w-full bg-transparent font-bold text-sm text-[#2b1d0e] outline-none cursor-pointer focus:cursor-text" />
             </div>
+
             <div class="parchment-inset p-2.5 rounded-lg">
               <label class="block text-[10px] font-heading uppercase tracking-wider text-[#5c4328] mb-0.5">Experiência (XP)</label>
               <input id="charXpInput" type="number" min="0" oninput="app.updateField('xp', parseInt(this.value)||0)" class="w-full bg-transparent font-mono-num font-bold text-sm text-[#2b1d0e] outline-none" />
             </div>
           </div>
+
+          <!-- Datalists nativos de apoio rápido -->
+          <datalist id="dndClassesDatalist"></datalist>
+          <datalist id="dndRacesDatalist"></datalist>
+          <datalist id="dndBackgroundsDatalist"></datalist>
+          <datalist id="dndAlignmentsDatalist"></datalist>
         </div>
 
         <!-- FAIXA DE COMBATE -->
@@ -985,6 +1036,41 @@
     </nav>
 
     <!-- ========================================================= -->
+    <!-- MODAL CATÁLOGO OFICIAL D&D 5E + OPÇÃO PERSONALIZADA       -->
+    <!-- ========================================================= -->
+    <div id="dndOptionPickerModal" class="fixed inset-0 bg-black/85 z-[60] hidden items-center justify-center p-3 sm:p-5">
+      <div class="leather-panel rounded-2xl max-w-2xl w-full max-h-[88vh] flex flex-col border-2 border-[#e5c158] text-[#f4ead5] shadow-2xl overflow-hidden">
+        <!-- Cabeçalho -->
+        <div class="p-4 sm:p-5 border-b border-[#c59b27]/35 flex items-center justify-between gap-3 bg-black/35">
+          <div>
+            <span class="text-[10px] font-heading uppercase tracking-[0.2em] text-[#e5c158]">Compêndio Oficial D&D 5e + Custom</span>
+            <h3 id="dndPickerTitle" class="font-display text-lg sm:text-xl font-black text-[#f4ead5]">Escolher Classe & Arquétipo</h3>
+          </div>
+          <button onclick="app.closeDndOptionPicker()" class="w-10 h-10 rounded-lg bg-black/50 hover:bg-[#8b1e1e] text-[#f4ead5] flex items-center justify-center transition cursor-pointer">✕</button>
+        </div>
+
+        <!-- Campo de Busca + Adicionar Opção Personalizada -->
+        <div class="p-4 bg-[#120c09]/90 border-b border-[#c59b27]/25 space-y-3">
+          <div class="flex flex-col sm:flex-row gap-2">
+            <input id="dndPickerSearchInput" type="text" oninput="app.renderDndOptionPickerList()"
+              placeholder="Pesquisar opção oficial D&D ou digitar sua própria..."
+              class="flex-1 h-11 rounded-xl bg-black/55 border border-[#c59b27]/50 px-3.5 text-sm text-[#f4ead5] outline-none focus:border-[#e5c158]" />
+            <button type="button" onclick="app.applyCustomDndOption()"
+              class="h-11 px-4 rounded-xl bg-[#8b1e1e] hover:bg-[#a62424] border border-[#e5c158] text-[#f4ead5] font-heading text-xs font-bold uppercase tracking-wider shrink-0 cursor-pointer transition">
+              + Usar Texto Digitado
+            </button>
+          </div>
+          <p id="dndPickerHint" class="text-[11px] text-[#d6c29f]/85">
+            Selecione uma das opções oficiais de Dungeons & Dragons 5e abaixo ou digite sua própria opção personalizada no campo acima.
+          </p>
+        </div>
+
+        <!-- Lista de Opções -->
+        <div id="dndPickerListContainer" class="p-4 overflow-y-auto flex-1 space-y-3"></div>
+      </div>
+    </div>
+
+    <!-- ========================================================= -->
     <!-- MODAL EDITOR DE CAPÍTULO (EXCLUSIVO PARA O MESTRE / DM)   -->
     <!-- ========================================================= -->
     <div id="chapterEditorModal" class="fixed inset-0 bg-black/85 z-50 hidden items-center justify-center p-3 sm:p-5">
@@ -1254,6 +1340,136 @@
     const auth = getAuth(firebaseApp);
     const db = getDatabase(firebaseApp);
 
+    // =========================================================
+    // CATÁLOGO COMPLETO OFICIAL DE D&D 5E (CLASSES, ARQUÉTIPOS,
+    // RAÇAS/ESPÉCIES, ANTECEDENTES E TENDÊNCIAS) + CUSTOM
+    // =========================================================
+    const DND_CATALOG = {
+      class: {
+        title: "Classes & Arquétipos Oficiais (D&D 5e)",
+        field: "class",
+        inputId: "charClassInput",
+        hint: "Clique em uma Classe base ou em qualquer Subclasse/Arquétipo oficial de D&D 5e, ou digite sua própria classe customizada.",
+        groups: [
+          {
+            group: "Artífice (Artificer)",
+            items: ["Artífice", "Artífice (Alquimista)", "Artífice (Armeiro)", "Artífice (Artilheiro)", "Artífice (Ferreiro de Batalha)"]
+          },
+          {
+            group: "Bárbaro (Barbarian)",
+            items: ["Bárbaro", "Bárbaro (Caminho do Furioso / Berserker)", "Bárbaro (Caminho do Guerreiro Totêmico)", "Bárbaro (Caminho do Guardião Ancestral)", "Bárbaro (Caminho do Arauto da Tempestade)", "Bárbaro (Caminho do Fanático)", "Bárbaro (Caminho da Fera)", "Bárbaro (Caminho da Magia Selvagem)", "Bárbaro (Caminho do Gigante)"]
+          },
+          {
+            group: "Bardo (Bard)",
+            items: ["Bardo", "Bardo (Colégio do Conhecimento)", "Bardo (Colégio da Bravura)", "Bardo (Colégio do Glamour)", "Bardo (Colégio das Espadas)", "Bardo (Colégio dos Sussurros)", "Bardo (Colégio da Criação)", "Bardo (Colégio da Eloquência)", "Bardo (Colégio dos Espíritos)"]
+          },
+          {
+            group: "Bruxo (Warlock)",
+            items: ["Bruxo", "Bruxo (A Arquifada)", "Bruxo (O Corruptor)", "Bruxo (O Grande Antigo)", "Bruxo (O Celestial)", "Bruxo (A Lâmina Maldita / Hexblade)", "Bruxo (O Gênio)", "Bruxo (O Insondável)", "Bruxo (O Morto-Vivo)"]
+          },
+          {
+            group: "Clérigo (Cleric)",
+            items: ["Clérigo", "Clérigo (Domínio da Vida)", "Clérigo (Domínio da Luz)", "Clérigo (Domínio da Guerra)", "Clérigo (Domínio do Conhecimento)", "Clérigo (Domínio da Natureza)", "Clérigo (Domínio da Tempestade)", "Clérigo (Domínio da Enganação)", "Clérigo (Domínio da Morte)", "Clérigo (Domínio da Forja)", "Clérigo (Domínio da Sepultura)", "Clérigo (Domínio da Ordem)", "Clérigo (Domínio da Paz)", "Clérigo (Domínio do Crepúsculo)", "Clérigo (Domínio Arcano)"]
+          },
+          {
+            group: "Druida (Druid)",
+            items: ["Druida", "Druida (Círculo da Terra)", "Druida (Círculo da Lua)", "Druida (Círculo dos Sonhos)", "Druida (Círculo do Pastor)", "Druida (Círculo dos Esporos)", "Druida (Círculo das Estrelas)", "Druida (Círculo do Fogo Selvagem)"]
+          },
+          {
+            group: "Feiticeiro (Sorcerer)",
+            items: ["Feiticeiro", "Feiticeiro (Linhagem Dracônica)", "Feiticeiro (Magia Selvagem)", "Feiticeiro (Alma Favorecida)", "Feiticeiro (Feitiçaria das Sombras)", "Feiticeiro (Feitiçaria da Tempestade)", "Feiticeiro (Mente Aberrante)", "Feiticeiro (Alma Mecânica)", "Feiticeiro (Feitiçaria Lunar)"]
+          },
+          {
+            group: "Guerreiro (Fighter)",
+            items: ["Guerreiro", "Guerreiro (Campeão)", "Guerreiro (Mestre de Batalha)", "Guerreiro (Cavaleiro Arcano)", "Guerreiro (Arqueiro Arcano)", "Guerreiro (Cavaleiro)", "Guerreiro (Samurai)", "Guerreiro (Eco Cavaleiro)", "Guerreiro (Guerreiro Psiônico)", "Guerreiro (Cavaleiro Rúnico)"]
+          },
+          {
+            group: "Ladino (Rogue)",
+            items: ["Ladino", "Ladino (Ladrão)", "Ladino (Assassino)", "Ladino (Trapaceiro Arcano)", "Ladino (Inquisitivo)", "Ladino (Mentor)", "Ladino (Batedor)", "Ladino (Espadachim / Swashbuckler)", "Ladino (Fantasma)", "Ladino (Lâmina Anímica)"]
+          },
+          {
+            group: "Mago (Wizard)",
+            items: ["Mago", "Mago (Escola de Abjuração)", "Mago (Escola de Adivinhação)", "Mago (Escola de Conjuração)", "Mago (Escola de Encantamento)", "Mago (Escola de Evocação)", "Mago (Escola de Ilusão)", "Mago (Escola de Necromancia)", "Mago (Escola de Transmutação)", "Mago (Canto da Lâmina / Bladesinger)", "Mago (Magia de Guerra)", "Mago (Cronurgia)", "Mago (Graviturgia)", "Mago (Ordem dos Escribas)"]
+          },
+          {
+            group: "Monge (Monk)",
+            items: ["Monge", "Monge (Caminho da Mão Aberta)", "Monge (Caminho da Sombra)", "Monge (Caminho dos Quatro Elementos)", "Monge (Caminho do Mestre Bêbado)", "Monge (Caminho do Kensei)", "Monge (Caminho da Alma Solar)", "Monge (Caminho da Misericórdia)", "Monge (Caminho do Eu Astral)", "Monge (Caminho do Dragão Ascendente)"]
+          },
+          {
+            group: "Paladino (Paladin)",
+            items: ["Paladino", "Paladino (Juramento da Devoção)", "Paladino (Juramento dos Anciões)", "Paladino (Juramento da Vingança)", "Paladino (Juramento da Conquista)", "Paladino (Juramento da Redenção)", "Paladino (Juramento da Coroa)", "Paladino (Juramento da Glória)", "Paladino (Juramento dos Vigilantes)", "Paladino (Algoz / Oathbreaker)"]
+          },
+          {
+            group: "Patrulheiro (Ranger)",
+            items: ["Patrulheiro", "Patrulheiro (Caçador)", "Patrulheiro (Mestre das Feras)", "Patrulheiro (Perseguidor Obscuro / Gloom Stalker)", "Patrulheiro (Andarilho do Horizonte)", "Patrulheiro (Exterminador de Monstros)", "Patrulheiro (Andarilho Feérico)", "Patrulheiro (Guardião do Enxame)", "Patrulheiro (Guardião Dracônico)"]
+          },
+          {
+            group: "Blood Hunter (Caçador de Sangue)",
+            items: ["Blood Hunter", "Blood Hunter (Ordem do Caçador Fantasma)", "Blood Hunter (Ordem do Licantropo)", "Blood Hunter (Ordem do Mutante)", "Blood Hunter (Ordem da Alma Profana)"]
+          }
+        ]
+      },
+      race: {
+        title: "Raças & Espécies Oficiais (D&D 5e)",
+        field: "race",
+        inputId: "charRaceInput",
+        hint: "Selecione entre todas as raças e linhagens oficiais de D&D 5e ou adicione uma raça personalizada.",
+        groups: [
+          {
+            group: "Raças Básicas (Livro do Jogador)",
+            items: ["Humano", "Humano (Variante)", "Anão", "Anão da Colina", "Anão da Montanha", "Elfo", "Alto Elfo", "Elfo da Floresta", "Elfo Negro (Drow)", "Halfling", "Halfling Pés-Leves", "Halfling Robusto", "Draconato", "Gnomo", "Gnomo da Floresta", "Gnomo das Rochas", "Meio-Elfo", "Meio-Orc", "Tiefling"]
+          },
+          {
+            group: "Raças Exóticas & Multiverso",
+            items: ["Aasimar", "Aasimar Protetor", "Aasimar Flagelo", "Aasimar Caído", "Eladrin", "Shadar-kai", "Elfo do Mar", "Duergar", "Svirfneblin (Gnomo das Profundezas)", "Firbolg", "Genasi do Ar", "Genasi da Terra", "Genasi do Fogo", "Genasi da Água", "Goliath", "Kenku", "Kobold", "Povo-Lagarto (Lizardfolk)", "Tabaxi", "Tritão", "Bugbear", "Goblin", "Hobgoblin", "Orc", "Yuan-ti"]
+          },
+          {
+            group: "Cenários Específicos (Eberron, Ravnica, Feywild, Spelljammer)",
+            items: ["Forjado Bélico (Warforged)", "Metamorfo (Changeling)", "Kalashtar", "Transmorfo (Shifter)", "Centauro", "Minotauro", "Loxodon", "Híbrido Simic", "Vedalken", "Fada (Fairy)", "Harengon (Povo-Lebre)", "Sátiro", "Leonino", "Owlin", "Tortle (Tartaruga)", "Aarakocra", "Githyanki", "Githzerai", "Autognomo", "Plasmóide", "Thri-kreen", "Hadozee", "Dhampir", "Hexblood", "Reborn (Renascido)", "Linhagem Personalizada"]
+          }
+        ]
+      },
+      background: {
+        title: "Antecedentes Oficiais (D&D 5e)",
+        field: "background",
+        inputId: "charBgInput",
+        hint: "Escolha a origem do seu personagem antes da vida de aventuras ou crie um antecedente próprio.",
+        groups: [
+          {
+            group: "Antecedentes Clássicos",
+            items: ["Acólito", "Artesão de Guilda", "Artista", "Charlatão", "Criminoso", "Eremita", "Forasteiro", "Herói do Povo", "Marinheiro", "Nobre", "Órfão", "Sábio", "Soldado"]
+          },
+          {
+            group: "Antecedentes Expandidos & Cenários",
+            items: ["Agente de Facção", "Antropólogo", "Arqueólogo", "Assombrado (Haunted One)", "Cavaleiro", "Caçador de Recompensas Urbano", "Cortesão", "Emissário", "Erudito Enclausurado", "Espião", "Gladiador", "Guarda da Cidade", "Investigador", "Mercador de Guilda", "Mercenário Veterano", "Nobre Cavaleiro", "Peregrino", "Pirata", "Viajante Distante", "Zelote"]
+          }
+        ]
+      },
+      alignment: {
+        title: "Tendências / Alinhamentos (D&D 5e)",
+        field: "alignment",
+        inputId: "charAlignInput",
+        hint: "Escolha a bússola moral e ética do personagem ou digite uma tendência customizada.",
+        groups: [
+          {
+            group: "Os 9 Alinhamentos Clássicos",
+            items: [
+              "Leal e Bom",
+              "Neutro e Bom",
+              "Caótico e Bom",
+              "Leal e Neutro",
+              "Neutro (Verdadeiro)",
+              "Caótico e Neutro",
+              "Leal e Mau",
+              "Neutro e Mau",
+              "Caótico e Mau",
+              "Sem Tendência"
+            ]
+          }
+        ]
+      }
+    };
+
     function buildStarterCharacter(ownerId, ownerName, charId) {
       return {
         id: charId,
@@ -1261,7 +1477,7 @@
         ownerName: ownerName,
         name: "Kaelen Voss",
         avatarUrl: "https://api.dicebear.com/7.x/adventurer/svg?seed=KaelenVoss",
-        class: "Mago (Evocação)",
+        class: "Mago (Escola de Evocação)",
         level: 5,
         race: "Alto Elfo",
         background: "Sábio",
@@ -1414,6 +1630,7 @@
         this.currentSubTab = this.savedUiState.subTab || 'combat';
         this.rollMode = this.savedUiState.rollMode || 'norm';
         this.rollHistory = [];
+        this.activeDndPickerType = null;
 
         this.isMusicEnabled = this.savedUiState.isMusicEnabled !== undefined ? this.savedUiState.isMusicEnabled : true;
         this.hasPlayedIntroVoice = false;
@@ -1445,6 +1662,8 @@
         this.animLastAvatar = null;
         this.currentBgScenarioSrc = '';
 
+        this.populateDndDatalists();
+
         if (this.rollMode !== 'norm') {
           this.setRollMode(this.rollMode, false);
         }
@@ -1460,6 +1679,122 @@
         this.initResponsiveAnimListeners();
 
         requestAnimationFrame((n) => this.renderAnimFrame(n));
+      }
+
+      // ---------------------------------------------------------
+      // CATÁLOGO OFICIAL D&D 5E + SELETOR INTERATIVO CUSTOMIZÁVEL
+      // ---------------------------------------------------------
+      populateDndDatalists() {
+        const fillList = (id, groups) => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          const allItems = groups.flatMap(g => g.items);
+          el.innerHTML = allItems.map(item => `<option value="${item}"></option>`).join('');
+        };
+        fillList('dndClassesDatalist', DND_CATALOG.class.groups);
+        fillList('dndRacesDatalist', DND_CATALOG.race.groups);
+        fillList('dndBackgroundsDatalist', DND_CATALOG.background.groups);
+        fillList('dndAlignmentsDatalist', DND_CATALOG.alignment.groups);
+      }
+
+      openDndOptionPicker(type) {
+        const char = this.getActiveChar();
+        if (!char || !this.canEditChar(char)) return;
+        const catalog = DND_CATALOG[type];
+        if (!catalog) return;
+
+        this.activeDndPickerType = type;
+        document.getElementById('dndPickerTitle').textContent = catalog.title;
+        document.getElementById('dndPickerHint').textContent = catalog.hint;
+
+        const searchInput = document.getElementById('dndPickerSearchInput');
+        searchInput.value = '';
+        this.renderDndOptionPickerList();
+
+        const modal = document.getElementById('dndOptionPickerModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        setTimeout(() => searchInput.focus(), 60);
+      }
+
+      closeDndOptionPicker() {
+        const modal = document.getElementById('dndOptionPickerModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        this.activeDndPickerType = null;
+      }
+
+      selectDndOption(value) {
+        if (!this.activeDndPickerType) return;
+        const catalog = DND_CATALOG[this.activeDndPickerType];
+        const char = this.getActiveChar();
+        if (!catalog || !char || !this.canEditChar(char)) return;
+
+        const inputEl = document.getElementById(catalog.inputId);
+        if (inputEl) inputEl.value = value;
+        this.updateField(catalog.field, value);
+        this.closeDndOptionPicker();
+      }
+
+      applyCustomDndOption() {
+        const val = document.getElementById('dndPickerSearchInput').value.trim();
+        if (!val) return;
+        this.selectDndOption(val);
+      }
+
+      renderDndOptionPickerList() {
+        if (!this.activeDndPickerType) return;
+        const catalog = DND_CATALOG[this.activeDndPickerType];
+        const char = this.getActiveChar();
+        const currentVal = (char?.[catalog.field] || '').toLowerCase();
+        const query = document.getElementById('dndPickerSearchInput').value.trim().toLowerCase();
+        const container = document.getElementById('dndPickerListContainer');
+
+        let html = '';
+        let totalMatches = 0;
+
+        catalog.groups.forEach(group => {
+          const filtered = group.items.filter(item =>
+            !query || item.toLowerCase().includes(query) || group.group.toLowerCase().includes(query)
+          );
+          if (!filtered.length) return;
+          totalMatches += filtered.length;
+
+          html += `
+            <div class="rounded-xl bg-black/35 border border-[#c59b27]/30 p-3 space-y-2">
+              <h4 class="font-heading text-xs font-bold uppercase tracking-wider text-[#e5c158] border-b border-[#c59b27]/20 pb-1">
+                ${group.group}
+              </h4>
+              <div class="flex flex-wrap gap-1.5">
+                ${filtered.map(item => {
+                  const isSelected = item.toLowerCase() === currentVal;
+                  const safeItem = item.replace(/'/g, "\\'");
+                  return `
+                    <button type="button" onclick="app.selectDndOption('${safeItem}')"
+                      class="px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${isSelected ? 'bg-[#8b1e1e] border border-[#e5c158] text-[#f4ead5] shadow' : 'bg-[#241710] hover:bg-[#3b261b] border border-[#c59b27]/35 text-[#f4ead5]'}">
+                      ${isSelected ? '✓ ' : ''}${item}
+                    </button>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+          `;
+        });
+
+        if (totalMatches === 0) {
+          const typedRaw = document.getElementById('dndPickerSearchInput').value.trim();
+          html = `
+            <div class="text-center py-8 px-4 rounded-xl bg-black/35 border border-dashed border-[#c59b27]/40 space-y-3">
+              <p class="text-sm text-[#d6c29f]">Nenhuma opção padrão encontrada para "<strong>${typedRaw}</strong>".</p>
+              <button type="button" onclick="app.applyCustomDndOption()"
+                class="h-10 px-5 rounded-xl bg-[#8b1e1e] hover:bg-[#a62424] border border-[#e5c158] text-[#f4ead5] font-heading text-xs font-bold uppercase tracking-wider cursor-pointer">
+                ✨ Adicionar "${typedRaw}" como Opção Personalizada
+              </button>
+            </div>
+          `;
+        }
+
+        container.innerHTML = html;
       }
 
       // ---------------------------------------------------------
@@ -2007,6 +2342,10 @@
         window.addEventListener('resize', handleResize);
         window.addEventListener('keydown', (e) => {
           if (e.key === 'Escape') {
+            if (this.activeDndPickerType) {
+              this.closeDndOptionPicker();
+              return;
+            }
             if (this.isAnimPopOpen) this.closeAnimatedPop();
             if (!document.getElementById('chapterIntroOverlay').classList.contains('hidden')) {
               this.dismissChapterIntro();
@@ -2630,6 +2969,7 @@
       async logoutUser() {
         if (this.isAnimPopOpen) this.closeAnimatedPop(false);
         this.dismissChapterIntro();
+        this.closeDndOptionPicker();
         const keepMusic = this.isMusicEnabled;
         localStorage.removeItem(SESSION_STATE_KEY);
         this.savedUiState = { isMusicEnabled: keepMusic };
@@ -3149,7 +3489,7 @@
       normalizeSkillBonus(rawVal) {
         const num = parseInt(rawVal) || 0;
         if (num <= 0) return 0;
-        if (num === 1) return 2; // Compatibilidade com fichas antigas marcadas como 1
+        if (num === 1) return 2;
         return Math.min(6, Math.max(2, num));
       }
 
@@ -3734,6 +4074,11 @@
         document.getElementById('charAlignInput').value = char.alignment || '';
         document.getElementById('charXpInput').value = char.xp || 0;
 
+        document.getElementById('charClassInput').disabled = !editable;
+        document.getElementById('charRaceInput').disabled = !editable;
+        document.getElementById('charBgInput').disabled = !editable;
+        document.getElementById('charAlignInput').disabled = !editable;
+
         const inspBtn = document.getElementById('inspirationBtn');
         document.getElementById('inspirationIcon').textContent = char.inspiration ? '★' : '☆';
         inspBtn.className = char.inspiration
@@ -3757,7 +4102,6 @@
           <button onclick="app.setDeathSave('failures', ${i})" class="w-5 h-5 rounded-full border border-[#8b1e1e] ${ds.failures >= i ? 'bg-[#8b1e1e]' : 'bg-transparent'}"></button>
         `).join('');
 
-        // Percepção Passiva e Carga sem modificador derivado de atributo
         const percSkillBonus = this.normalizeSkillBonus(char.skills?.perception || 0);
         const passivePerc = 10 + percSkillBonus;
         document.getElementById('passivePerceptionDisplay').textContent = passivePerc;
@@ -3766,160 +4110,134 @@
         const maxCarry = Math.round((char.attributes.str || 10) * 7.5);
         document.getElementById('carryWeightDisplay').textContent = `${totalWeight.toFixed(1)} / ${maxCarry} kg`;
 
-        // CARDS DOS 7 ATRIBUTOS (SEM MODIFICADORES +1 / -3)
         document.getElementById('attributesGrid').innerHTML = ATTRIBUTES_META.map(attr => {
-          const score = char.attributes[attr.key] ?? 10;
+          const score = char.attributes?.[attr.key] ?? 10;
           const isLuck = attr.key === 'luck';
           return `
-            <div class="parchment-page rounded-xl p-3 text-center flex flex-col items-center justify-between ${isLuck ? 'ring-2 ring-[#c59b27]' : ''}">
-              <span class="font-heading text-xs font-bold uppercase tracking-wider ${isLuck ? 'text-[#8b1e1e]' : 'text-[#2b1d0e]'}">
-                ${isLuck ? '🍀 ' + attr.label : attr.label}
-              </span>
-              <div class="my-2 w-16 h-14 rounded-xl parchment-inset border border-[#8b5a2b]/60 flex items-center justify-center shadow-inner">
-                <input type="number" min="1" max="30" value="${score}" ${!editable ? 'disabled' : ''}
-                  onchange="app.updateAttribute('${attr.key}', this.value)"
-                  class="w-full text-center font-display text-2xl font-black ${isLuck ? 'text-amber-800' : 'text-[#8b1e1e]'} bg-transparent outline-none" />
-              </div>
-              <button onclick="app.rollD20Check('Teste de ${attr.label}', 0, '${attr.short}: ${score}')"
-                class="w-full h-7 rounded-full border border-[#8b5a2b] bg-[#f4ead5] hover:bg-[#8b1e1e] hover:text-[#f4ead5] active:scale-95 flex items-center justify-center font-heading text-[10px] font-bold uppercase tracking-wider text-[#2b1d0e] transition cursor-pointer"
-                title="Rolar 1d20 para ${attr.label}">
-                🎲 Rolar ${attr.short}
+            <div class="parchment-page rounded-xl p-3 text-center flex flex-col items-center justify-between border ${isLuck ? 'border-[#c59b27] ring-1 ring-[#c59b27]/40' : 'border-[#8b5a2b]/60'}">
+              <span class="font-heading text-[11px] font-bold uppercase tracking-wider ${isLuck ? 'text-[#8b1e1e]' : 'text-[#5c4328]'}">${isLuck ? '🍀 ' : ''}${attr.label}</span>
+              <input type="number" min="1" max="30" value="${score}" ${editable ? '' : 'disabled'} onchange="app.updateAttribute('${attr.key}', this.value)"
+                class="w-full text-center font-display text-3xl font-black text-[#2b1d0e] bg-transparent outline-none my-2" />
+              <button onclick="app.rollD20Check('Teste de ${attr.label}', 0, 'Valor ${score}')"
+                class="w-full py-1.5 rounded-lg bg-[#2b1d0e] hover:bg-[#8b1e1e] active:scale-95 text-[#e5c158] font-heading text-[10px] font-bold uppercase tracking-wider transition cursor-pointer">
+                🎲 Rolar d20
               </button>
             </div>
           `;
         }).join('');
 
-        // SALVAGUARDAS (INCLUINDO SORTE, SEM MODIFICADOR DE ATRIBUTO)
         document.getElementById('savingThrowsList').innerHTML = ATTRIBUTES_META.map(attr => {
-          const isProf = char.savingThrows?.[attr.key];
+          const isProf = !!char.savingThrows?.[attr.key];
           const total = isProf ? profBonus : 0;
           return `
-            <div class="grid grid-cols-[36px_1fr_auto] items-center gap-2 py-1 px-1.5 rounded hover:bg-[#e6d5b8]/60">
-              <button onclick="app.toggleSaveProf('${attr.key}')" class="w-8 h-8 rounded-full flex items-center justify-center text-base font-bold ${isProf ? 'text-[#8b1e1e]' : 'text-[#5c4328]/50'}">
-                ${isProf ? '●' : '○'}
-              </button>
-              <span class="text-sm font-semibold text-[#2b1d0e] truncate">${attr.label}</span>
-              <button onclick="app.rollD20Check('Salvaguarda de ${attr.label}', ${total})"
-                class="h-8 min-w-[44px] px-2 rounded parchment-inset hover:border-[#8b1e1e] font-mono-num text-xs font-bold text-[#2b1d0e] text-center">
+            <div class="flex items-center justify-between py-1.5 px-2 rounded hover:bg-[#e6d5b8]/60 gap-2">
+              <div class="flex items-center gap-2 min-w-0">
+                <button onclick="app.toggleSaveProf('${attr.key}')" class="w-5 h-5 rounded-full border-2 border-[#8b1e1e] flex items-center justify-center text-[10px] shrink-0 ${isProf ? 'bg-[#8b1e1e] text-[#f4ead5]' : 'bg-transparent'}">
+                  ${isProf ? '●' : ''}
+                </button>
+                <span class="text-sm font-semibold text-[#2b1d0e] truncate">${attr.label}</span>
+              </div>
+              <button onclick="app.rollD20Check('Salvaguarda de ${attr.label}', ${total})" class="min-w-[44px] h-8 font-mono-num text-xs font-bold px-2.5 rounded bg-[#e6d5b8] hover:bg-[#8b1e1e] hover:text-white transition shrink-0">
                 ${this.formatMod(total)}
               </button>
             </div>
           `;
         }).join('');
-
         document.getElementById('proficienciesText').value = char.otherProficiencies || '';
 
-        // PERÍCIAS COM BÔNUS DE PROFICIÊNCIA CONFIGURÁVEL DE +2 ATÉ +6
         document.getElementById('skillsList').innerHTML = SKILLS_META.map(sk => {
-          const skillBonus = this.normalizeSkillBonus(char.skills?.[sk.key] || 0);
-          const isProf = skillBonus > 0;
+          const bonusVal = this.normalizeSkillBonus(char.skills?.[sk.key] || 0);
+          const isProficient = bonusVal > 0;
           return `
-            <div class="grid grid-cols-[1fr_auto_auto] items-center gap-1.5 py-1 px-1.5 rounded hover:bg-[#e6d5b8]/60">
-              <div class="min-w-0 flex items-center gap-1.5">
-                <span class="text-xs font-bold ${isProf ? 'text-[#8b1e1e]' : 'text-[#5c4328]/40'}">${isProf ? '●' : '○'}</span>
-                <span class="text-sm font-semibold text-[#2b1d0e] truncate block">${sk.label} <span class="text-[10px] uppercase text-[#5c4328]">(${sk.attr})</span></span>
+            <div class="flex items-center justify-between py-1 px-2 rounded hover:bg-[#e6d5b8]/60 gap-1.5">
+              <div class="flex items-center gap-1.5 min-w-0 flex-1">
+                <select ${editable ? '' : 'disabled'} onchange="app.setSkillProfBonus('${sk.key}', this.value)"
+                  title="Bônus de Proficiência da Perícia (0 ou +2 até +6)"
+                  class="h-7 px-1 rounded border text-[11px] font-mono-num font-bold outline-none shrink-0 cursor-pointer ${isProficient ? 'bg-[#8b1e1e] border-[#e5c158] text-[#f4ead5]' : 'bg-[#e6d5b8] border-[#8b5a2b]/60 text-[#5c4328]'}">
+                  <option value="0" ${bonusVal === 0 ? 'selected' : ''}>0</option>
+                  <option value="2" ${bonusVal === 2 ? 'selected' : ''}>+2</option>
+                  <option value="3" ${bonusVal === 3 ? 'selected' : ''}>+3</option>
+                  <option value="4" ${bonusVal === 4 ? 'selected' : ''}>+4</option>
+                  <option value="5" ${bonusVal === 5 ? 'selected' : ''}>+5</option>
+                  <option value="6" ${bonusVal === 6 ? 'selected' : ''}>+6</option>
+                </select>
+                <span class="text-xs font-semibold text-[#2b1d0e] truncate">${sk.label} <span class="text-[10px] text-[#5c4328] uppercase">(${sk.attr})</span></span>
               </div>
-
-              <select ${!editable ? 'disabled' : ''} onchange="app.setSkillProfBonus('${sk.key}', this.value)"
-                aria-label="Bônus de proficiência de ${sk.label}"
-                title="Bônus de Proficiência (0 ou +2 até +6)"
-                class="h-8 px-1.5 rounded bg-[#f4ead5] border border-[#b89b6a] font-mono-num text-xs font-bold ${isProf ? 'text-[#8b1e1e] border-[#8b1e1e]' : 'text-[#5c4328]'} outline-none cursor-pointer">
-                <option value="0" ${skillBonus === 0 ? 'selected' : ''}>0</option>
-                <option value="2" ${skillBonus === 2 ? 'selected' : ''}>+2</option>
-                <option value="3" ${skillBonus === 3 ? 'selected' : ''}>+3</option>
-                <option value="4" ${skillBonus === 4 ? 'selected' : ''}>+4</option>
-                <option value="5" ${skillBonus === 5 ? 'selected' : ''}>+5</option>
-                <option value="6" ${skillBonus === 6 ? 'selected' : ''}>+6</option>
-              </select>
-
-              <button onclick="app.rollD20Check('Perícia: ${sk.label}', ${skillBonus})"
-                class="h-8 min-w-[42px] px-2 rounded parchment-inset hover:border-[#8b1e1e] font-mono-num text-xs font-bold text-[#2b1d0e] text-center shrink-0 cursor-pointer"
-                title="Rolar 1d20 + ${skillBonus}">
-                🎲
+              <button onclick="app.rollD20Check('Perícia: ${sk.label}', ${bonusVal})" class="min-w-[44px] h-8 font-mono-num text-xs font-bold px-2 rounded bg-[#e6d5b8] hover:bg-[#8b1e1e] hover:text-white transition shrink-0" title="Rolar ${sk.label} (1d20 ${this.formatMod(bonusVal)})">
+                ${this.formatMod(bonusVal)}
               </button>
             </div>
           `;
         }).join('');
 
-        // ATAQUES (SEM MODIFICADOR DERIVADO DE ATRIBUTO)
         document.getElementById('attacksList').innerHTML = (char.attacks || []).map((atk, idx) => {
-          const hitBonus = profBonus;
           return `
-            <div class="parchment-inset rounded-lg p-3 grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center">
-              <input type="text" value="${atk.name}" ${!editable ? 'disabled' : ''} oninput="app.updateAttack(${idx}, 'name', this.value)"
-                class="sm:col-span-4 h-9 bg-[#f4ead5] border border-[#b89b6a] rounded px-2.5 font-bold text-sm text-[#2b1d0e]" />
-              <select ${!editable ? 'disabled' : ''} onchange="app.updateAttack(${idx}, 'ability', this.value)"
-                class="sm:col-span-2 h-9 bg-[#f4ead5] border border-[#b89b6a] rounded px-2 text-xs font-heading font-bold">
-                ${ATTRIBUTES_META.map(a => `<option value="${a.key}" ${atk.ability === a.key ? 'selected' : ''}>${a.short}</option>`).join('')}
-              </select>
-              <input type="text" value="${atk.damage}" ${!editable ? 'disabled' : ''} oninput="app.updateAttack(${idx}, 'damage', this.value)"
-                class="sm:col-span-2 h-9 bg-[#f4ead5] border border-[#b89b6a] rounded px-2 font-mono-num text-xs text-center font-bold" />
-              <div class="sm:col-span-4 flex items-center justify-end gap-1.5">
-                <button onclick="app.rollAttack(${idx})" class="flex-1 sm:flex-initial h-9 px-3 rounded bg-[#8b1e1e] hover:bg-[#a62424] text-[#f4ead5] font-mono-num text-xs font-bold">
-                  Acerto ${this.formatMod(hitBonus)}
+            <div class="parchment-inset p-3 rounded-lg flex flex-col sm:flex-row sm:items-center gap-2.5 justify-between">
+              <div class="grid grid-cols-1 sm:grid-cols-4 gap-2 flex-1 min-w-0">
+                <input type="text" value="${atk.name}" ${editable ? '' : 'disabled'} onchange="app.updateAttack(${idx}, 'name', this.value)" class="sm:col-span-2 bg-[#f4ead5] border border-[#b89b6a] rounded px-2.5 h-9 text-sm font-bold text-[#2b1d0e]" />
+                <input type="text" value="${atk.damage}" ${editable ? '' : 'disabled'} onchange="app.updateAttack(${idx}, 'damage', this.value)" class="bg-[#f4ead5] border border-[#b89b6a] rounded px-2.5 h-9 font-mono-num text-sm text-[#2b1d0e]" placeholder="1d8+3" />
+                <input type="text" value="${atk.type}" ${editable ? '' : 'disabled'} onchange="app.updateAttack(${idx}, 'type', this.value)" class="bg-[#f4ead5] border border-[#b89b6a] rounded px-2.5 h-9 text-xs text-[#5c4328]" placeholder="Tipo Dano" />
+              </div>
+              <div class="flex items-center gap-1.5 justify-end shrink-0">
+                <button onclick="app.rollAttack(${idx})" class="h-9 px-3 rounded-lg bg-[#8b1e1e] hover:bg-[#a62424] text-[#f4ead5] font-mono-num text-xs font-bold">
+                  🎯 ${this.formatMod(profBonus)}
                 </button>
-                <button onclick="app.rollDamage(${idx})" class="flex-1 sm:flex-initial h-9 px-3 rounded bg-[#2b1d0e] hover:bg-[#3d2914] text-[#e5c158] font-mono-num text-xs font-bold">
-                  Dano
+                <button onclick="app.rollDamage(${idx})" class="h-9 px-3 rounded-lg bg-[#2b1d0e] hover:bg-[#3d2914] text-[#e5c158] font-mono-num text-xs font-bold">
+                  💥 Dano
                 </button>
-                ${editable ? `<button onclick="app.removeAttack(${idx})" class="h-9 w-9 flex items-center justify-center text-[#8b1e1e] hover:bg-[#8b1e1e]/10 rounded shrink-0">✕</button>` : ''}
+                ${editable ? `<button onclick="app.removeAttack(${idx})" class="h-9 w-9 rounded-lg text-[#8b1e1e] hover:bg-red-900/20 flex items-center justify-center">✕</button>` : ''}
               </div>
             </div>
           `;
         }).join('');
 
         document.getElementById('featuresList').innerHTML = (char.features || []).map((feat, idx) => `
-          <div class="parchment-inset rounded-lg p-3 space-y-1.5">
+          <div class="parchment-inset p-3.5 rounded-lg space-y-2 relative">
             <div class="flex items-center justify-between gap-2">
-              <input type="text" value="${feat.name}" ${!editable ? 'disabled' : ''} oninput="app.updateFeature(${idx}, 'name', this.value)"
-                class="font-heading font-bold text-sm text-[#8b1e1e] bg-transparent outline-none flex-1 min-w-0" />
-              ${editable ? `<button onclick="app.removeFeature(${idx})" class="text-xs text-[#8b1e1e] shrink-0">✕</button>` : ''}
+              <input type="text" value="${feat.name}" ${editable ? '' : 'disabled'} onchange="app.updateFeature(${idx}, 'name', this.value)" class="font-heading font-bold text-sm text-[#8b1e1e] bg-transparent outline-none flex-1 min-w-0" />
+              ${editable ? `<button onclick="app.removeFeature(${idx})" class="w-8 h-8 rounded text-xs text-[#8b1e1e] shrink-0">✕</button>` : ''}
             </div>
-            <input type="text" value="${feat.source}" ${!editable ? 'disabled' : ''} oninput="app.updateFeature(${idx}, 'source', this.value)"
-              class="text-[11px] font-heading uppercase text-[#5c4328] bg-transparent outline-none w-full" />
-            <textarea rows="2" ${!editable ? 'disabled' : ''} oninput="app.updateFeature(${idx}, 'desc', this.value)"
-              class="w-full bg-transparent text-sm text-[#2b1d0e] outline-none leading-snug">${feat.desc}</textarea>
+            <input type="text" value="${feat.source}" ${editable ? '' : 'disabled'} onchange="app.updateFeature(${idx}, 'source', this.value)" class="text-[11px] font-heading uppercase text-[#5c4328] bg-transparent outline-none w-full" />
+            <textarea rows="3" ${editable ? '' : 'disabled'} onchange="app.updateFeature(${idx}, 'desc', this.value)" class="w-full bg-transparent text-xs text-[#2b1d0e] outline-none leading-relaxed">${feat.desc}</textarea>
           </div>
         `).join('');
 
         const sc = char.spellcasting || { ability: 'int', slots: {}, spells: [] };
-        const spellAbility = sc.ability || 'int';
-        document.getElementById('spellAbilitySelect').value = spellAbility;
-        document.getElementById('spellSaveDcDisplay').textContent = 8 + profBonus;
+        document.getElementById('spellAbilitySelect').value = sc.ability || 'int';
+        const spellDc = 8 + profBonus;
+        document.getElementById('spellSaveDcDisplay').textContent = spellDc;
         document.getElementById('spellAttackDisplay').textContent = this.formatMod(profBonus);
 
         document.getElementById('spellSlotsGrid').innerHTML = [1, 2, 3, 4, 5, 6, 7, 8, 9].map(lvl => {
-          const slot = sc.slots?.[lvl] || { total: 0, used: 0 };
+          const sl = sc.slots?.[lvl] || { total: 0, used: 0 };
           return `
-            <div class="parchment-inset rounded-lg p-2 text-center">
-              <span class="block text-[10px] font-heading font-bold text-[#8b1e1e] mb-1">${lvl}º Círc.</span>
+            <div class="parchment-inset p-2 rounded-lg text-center">
+              <span class="block text-[10px] font-heading font-bold text-[#8b1e1e] mb-1">${lvl}º Círculo</span>
               <div class="flex items-center justify-center gap-1 text-xs font-mono-num">
-                <input type="number" min="0" max="9" value="${slot.used}" ${!editable ? 'disabled' : ''} onchange="app.updateSlot(${lvl}, 'used', this.value)" class="w-8 h-7 text-center bg-[#f4ead5] border border-[#b89b6a] rounded text-[#8b1e1e] font-bold" />
+                <input type="number" min="0" max="9" value="${sl.used}" ${editable ? '' : 'disabled'} onchange="app.updateSlot(${lvl}, 'used', this.value)" class="w-9 h-8 text-center bg-[#f4ead5] rounded border border-[#b89b6a] text-[#8b1e1e] font-bold" title="Usados" />
                 <span>/</span>
-                <input type="number" min="0" max="9" value="${slot.total}" ${!editable ? 'disabled' : ''} onchange="app.updateSlot(${lvl}, 'total', this.value)" class="w-8 h-7 text-center bg-[#f4ead5] border border-[#b89b6a] rounded text-[#2b1d0e] font-bold" />
+                <input type="number" min="0" max="9" value="${sl.total}" ${editable ? '' : 'disabled'} onchange="app.updateSlot(${lvl}, 'total', this.value)" class="w-9 h-8 text-center bg-[#f4ead5] rounded border border-[#b89b6a] font-bold" title="Totais" />
               </div>
             </div>
           `;
         }).join('');
 
         document.getElementById('spellsList').innerHTML = (sc.spells || []).map((sp, idx) => `
-          <div class="parchment-inset rounded-lg p-3 space-y-1.5">
+          <div class="parchment-inset p-3.5 rounded-lg space-y-2">
             <div class="flex flex-wrap items-center justify-between gap-2">
               <div class="flex items-center gap-2 flex-1 min-w-0">
-                <input type="number" min="0" max="9" value="${sp.level}" ${!editable ? 'disabled' : ''} onchange="app.updateSpell(${idx}, 'level', parseInt(this.value)||0)"
-                  class="w-11 h-8 text-center font-mono-num font-bold text-xs bg-[#2b1d0e] text-[#e5c158] rounded shrink-0" title="Círculo (0 = Truque)" />
-                <input type="text" value="${sp.name}" ${!editable ? 'disabled' : ''} oninput="app.updateSpell(${idx}, 'name', this.value)"
-                  class="font-heading font-bold text-sm text-[#2b1d0e] bg-transparent outline-none flex-1 min-w-0" />
+                <input type="checkbox" ${sp.prepared ? 'checked' : ''} ${editable ? '' : 'disabled'} onchange="app.updateSpell(${idx}, 'prepared', this.checked)" class="w-4 h-4 accent-[#8b1e1e] shrink-0" title="Magia Preparada" />
+                <input type="text" value="${sp.name}" ${editable ? '' : 'disabled'} onchange="app.updateSpell(${idx}, 'name', this.value)" class="font-bold text-sm text-[#2b1d0e] bg-transparent outline-none flex-1 min-w-0" />
               </div>
-              <div class="flex items-center gap-2 shrink-0">
-                <label class="flex items-center gap-1 text-xs font-semibold text-[#5c4328] cursor-pointer">
-                  <input type="checkbox" ${sp.prepared ? 'checked' : ''} ${!editable ? 'disabled' : ''} onchange="app.updateSpell(${idx}, 'prepared', this.checked)" />
-                  Preparada
-                </label>
-                ${editable ? `<button onclick="app.removeSpell(${idx})" class="text-xs text-[#8b1e1e] px-1">✕</button>` : ''}
+              <div class="flex items-center gap-1.5 shrink-0">
+                <select ${editable ? '' : 'disabled'} onchange="app.updateSpell(${idx}, 'level', parseInt(this.value))" class="h-8 text-xs bg-[#f4ead5] border border-[#b89b6a] rounded px-1.5 font-mono-num">
+                  ${[0,1,2,3,4,5,6,7,8,9].map(l => `<option value="${l}" ${sp.level === l ? 'selected' : ''}>${l === 0 ? 'Truque' : l + 'º C.'}</option>`).join('')}
+                </select>
+                <button onclick="app.rollD20Check('Conjurar: ${sp.name}', ${profBonus})" class="h-8 px-2.5 rounded bg-[#8b1e1e] text-[#f4ead5] text-xs font-heading font-bold">✨ Conjurar</button>
+                ${editable ? `<button onclick="app.removeSpell(${idx})" class="w-8 h-8 rounded text-xs text-[#8b1e1e]">✕</button>` : ''}
               </div>
             </div>
-            <textarea rows="2" ${!editable ? 'disabled' : ''} oninput="app.updateSpell(${idx}, 'desc', this.value)"
-              class="w-full bg-transparent text-sm text-[#2b1d0e] outline-none leading-snug">${sp.desc}</textarea>
+            <textarea rows="2" ${editable ? '' : 'disabled'} onchange="app.updateSpell(${idx}, 'desc', this.value)" class="w-full bg-transparent text-xs text-[#5c4328] outline-none leading-relaxed">${sp.desc}</textarea>
           </div>
         `).join('');
 
@@ -3929,30 +4247,27 @@
         });
 
         document.getElementById('inventoryList').innerHTML = (char.inventory || []).map((item, idx) => `
-          <div class="parchment-inset rounded-lg p-3 grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
-            <input type="text" value="${item.name}" ${!editable ? 'disabled' : ''} oninput="app.updateItem(${idx}, 'name', this.value)"
-              class="sm:col-span-5 h-9 bg-[#f4ead5] border border-[#b89b6a] rounded px-2.5 text-sm font-bold text-[#2b1d0e]" />
-            <div class="sm:col-span-3 flex items-center gap-1.5 text-xs">
-              <span class="text-[#5c4328]">Qtd:</span>
-              <input type="number" min="1" value="${item.qty}" ${!editable ? 'disabled' : ''} onchange="app.updateItem(${idx}, 'qty', parseInt(this.value)||1)" class="w-12 h-9 text-center font-mono-num bg-[#f4ead5] border border-[#b89b6a] rounded" />
-              <span class="text-[#5c4328]">kg:</span>
-              <input type="number" step="0.1" value="${item.weight}" ${!editable ? 'disabled' : ''} onchange="app.updateItem(${idx}, 'weight', parseFloat(this.value)||0)" class="w-14 h-9 text-center font-mono-num bg-[#f4ead5] border border-[#b89b6a] rounded" />
+          <div class="parchment-inset p-3 rounded-lg flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2 flex-1 min-w-[200px]">
+              <input type="checkbox" ${item.equipped ? 'checked' : ''} ${editable ? '' : 'disabled'} onchange="app.updateItem(${idx}, 'equipped', this.checked)" class="w-4 h-4 accent-[#8b1e1e] shrink-0" title="Equipado" />
+              <input type="text" value="${item.name}" ${editable ? '' : 'disabled'} onchange="app.updateItem(${idx}, 'name', this.value)" class="font-bold text-sm text-[#2b1d0e] bg-transparent outline-none flex-1 min-w-0" />
             </div>
-            <div class="sm:col-span-4 flex items-center justify-end gap-3 text-xs">
-              <label class="flex items-center gap-1 cursor-pointer">
-                <input type="checkbox" ${item.equipped ? 'checked' : ''} ${!editable ? 'disabled' : ''} onchange="app.updateItem(${idx}, 'equipped', this.checked)" />
-                Equip.
+            <div class="flex items-center gap-2 text-xs shrink-0">
+              <label class="flex items-center gap-1">Qtd:
+                <input type="number" min="1" value="${item.qty}" ${editable ? '' : 'disabled'} onchange="app.updateItem(${idx}, 'qty', parseInt(this.value)||1)" class="w-12 h-8 text-center bg-[#f4ead5] border border-[#b89b6a] rounded font-mono-num" />
               </label>
-              <label class="flex items-center gap-1 cursor-pointer">
-                <input type="checkbox" ${item.attuned ? 'checked' : ''} ${!editable ? 'disabled' : ''} onchange="app.updateItem(${idx}, 'attuned', this.checked)" />
-                Sinton.
+              <label class="flex items-center gap-1">Kg:
+                <input type="number" step="0.1" min="0" value="${item.weight}" ${editable ? '' : 'disabled'} onchange="app.updateItem(${idx}, 'weight', parseFloat(this.value)||0)" class="w-14 h-8 text-center bg-[#f4ead5] border border-[#b89b6a] rounded font-mono-num" />
               </label>
-              ${editable ? `<button onclick="app.removeItem(${idx})" class="text-[#8b1e1e] font-bold px-1">✕</button>` : ''}
+              <button onclick="app.updateItem(${idx}, 'attuned', ${!item.attuned})" class="h-8 px-2 rounded border ${item.attuned ? 'bg-[#8b1e1e] text-[#f4ead5] border-[#e5c158]' : 'bg-[#f4ead5] text-[#5c4328] border-[#b89b6a]'} font-heading text-[10px] font-bold uppercase" title="Sintonização Mágica">
+                ${item.attuned ? '✦ Sinton.' : 'Sintonizar'}
+              </button>
+              ${editable ? `<button onclick="app.removeItem(${idx})" class="w-8 h-8 rounded text-[#8b1e1e]">✕</button>` : ''}
             </div>
           </div>
         `).join('');
 
-        const bio = char.bio || { traits: '', ideals: '', bonds: '', flaws: '', backstory: '' };
+        const bio = char.bio || {};
         document.getElementById('bioTraits').value = bio.traits || '';
         document.getElementById('bioIdeals').value = bio.ideals || '';
         document.getElementById('bioBonds').value = bio.bonds || '';
@@ -3961,29 +4276,28 @@
       }
 
       renderCharacterList() {
-        const list = document.getElementById('characterList');
-        list.innerHTML = this.characters.map(c => {
-          const active = c.id === this.activeCharId;
+        const container = document.getElementById('characterList');
+        container.innerHTML = this.characters.map(c => {
+          const isActive = c.id === this.activeCharId;
           const isMine = this.currentUser && c.ownerId === this.currentUser.uid;
           const ownerRecord = this.usersMap[c.ownerId];
-          const ownerName = ownerRecord?.name || c.ownerName || 'Integrante';
-          const ownerPhoto = ownerRecord?.photoURL || '';
-          const charAvatar = c.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(c.name)}`;
+          const ownerName = ownerRecord?.name || c.ownerName || 'Jogador';
+          const charPortrait = c.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(c.name)}`;
 
           return `
-            <button onclick="app.selectCharacter('${c.id}')"
-              class="w-full text-left p-2.5 rounded-lg border transition flex items-center gap-2.5 ${active ? 'bg-[#8b1e1e] border-[#e5c158] text-[#f4ead5] shadow' : 'bg-black/35 border-[#c59b27]/25 text-[#d6c29f] hover:border-[#c59b27]/60'}">
-              <img src="${charAvatar}" alt="${c.name}" class="w-10 h-10 rounded-full object-contain border border-[#e5c158]/70 shrink-0 bg-[#241710]" />
+            <button onclick="app.selectCharacter('${c.id}')" class="w-full text-left p-2.5 rounded-lg border transition flex items-center gap-2.5 ${isActive ? 'bg-[#8b1e1e] border-[#e5c158] text-[#f4ead5] shadow-md' : 'bg-black/35 border-[#c59b27]/25 text-[#d6c29f] hover:border-[#c59b27]/60'}">
+              <img src="${charPortrait}" alt="${c.name}" class="w-10 h-10 rounded-lg object-contain border border-[#e5c158]/60 bg-[#e6d5b8] shrink-0" />
               <div class="min-w-0 flex-1">
                 <div class="flex items-center justify-between gap-1">
                   <span class="font-heading font-bold text-sm truncate">${c.name}</span>
-                  <span class="text-[10px] font-mono-num px-1.5 py-0.5 rounded bg-black/40 shrink-0">Nv ${c.level}</span>
+                  ${isMine ? '<span class="text-[9px] uppercase font-heading px-1.5 py-0.5 rounded bg-black/40 text-[#e5c158] shrink-0">Sua</span>' : ''}
                 </div>
-                <div class="text-xs opacity-85 truncate mt-0.5">${c.race} • ${c.class}</div>
-                <div class="flex items-center gap-1.5 text-[10px] font-mono-num opacity-85 mt-1 truncate">
-                  ${ownerPhoto ? `<img src="${ownerPhoto}" alt="" class="w-3.5 h-3.5 rounded-full object-cover shrink-0" />` : ''}
-                  <span class="truncate">${isMine ? '⭐ Seu Herói' : ownerName}</span>
-                </div>
+                <div class="text-xs opacity-85 truncate">${c.race} • ${c.class} (Nv ${c.level})</div>
+                <div class="text-[10px] opacity-75 mt-0.5 truncate">Jogador: ${ownerName}</div>
+              </div>
+              <div class="text-right font-mono-num text-xs shrink-0">
+                <div class="font-bold text-emerald-300">${c.hp?.current ?? 0}/${c.hp?.max ?? 0}</div>
+                <div class="text-[10px] opacity-75">CA ${c.ac ?? 10}</div>
               </div>
             </button>
           `;
@@ -3994,19 +4308,27 @@
         const search = document.getElementById('compendiumSearch').value.toLowerCase();
         const cat = document.getElementById('compendiumCategory').value;
         const filtered = this.compendium.filter(item => {
-          const matchCat = cat === 'all' || item.category === cat;
-          const matchTxt = item.title.toLowerCase().includes(search) || item.description.toLowerCase().includes(search);
-          return matchCat && matchTxt;
+          const matchesCat = cat === 'all' || item.category === cat;
+          const matchesText = item.title.toLowerCase().includes(search) || item.description.toLowerCase().includes(search);
+          return matchesCat && matchesText;
         });
 
-        document.getElementById('compendiumGrid').innerHTML = filtered.map(item => `
-          <article class="parchment-page rounded-xl p-5 space-y-2">
-            <div class="flex items-center justify-between gap-2">
-              <span class="text-[10px] font-heading uppercase font-bold tracking-widest px-2.5 py-0.5 rounded bg-[#8b1e1e] text-[#f4ead5] shrink-0">${item.category}</span>
+        const grid = document.getElementById('compendiumGrid');
+        if (!filtered.length) {
+          grid.innerHTML = `<div class="col-span-full parchment-page rounded-xl p-8 text-center text-[#5c4328]">Nenhuma entrada encontrada no Tomo da Comunidade para esta busca.</div>`;
+          return;
+        }
+        grid.innerHTML = filtered.map(entry => `
+          <article class="parchment-page rounded-xl p-5 flex flex-col justify-between gap-2">
+            <div>
+              <div class="flex items-center justify-between gap-2 mb-1">
+                <span class="text-[10px] font-heading uppercase tracking-widest font-bold px-2 py-0.5 rounded bg-[#8b1e1e] text-[#f4ead5]">${entry.category}</span>
+                ${entry.author ? `<span class="text-[10px] text-[#5c4328] italic">Por ${entry.author}</span>` : ''}
+              </div>
+              <h3 class="font-display text-lg font-black text-[#2b1d0e] mt-1">${entry.title}</h3>
+              <hr class="dnd-divider my-2" />
+              <p class="text-sm text-[#2b1d0e] leading-relaxed">${entry.description}</p>
             </div>
-            <h3 class="font-heading text-lg font-bold text-[#2b1d0e]">${item.title}</h3>
-            <hr class="dnd-divider" />
-            <p class="text-sm text-[#2b1d0e] leading-relaxed">${item.description}</p>
           </article>
         `).join('');
       }
