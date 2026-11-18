@@ -107,6 +107,31 @@
     }
     .animate-roll { animation: popRoll 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
 
+    /* Animações da Tela de Abertura de Capítulo */
+    @keyframes chapterReveal {
+      0% { opacity: 0; transform: translateY(22px) scale(0.97); filter: blur(4px); }
+      100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+    }
+    @keyframes chapterDividerGrow {
+      0% { transform: scaleX(0); opacity: 0; }
+      100% { transform: scaleX(1); opacity: 1; }
+    }
+    @keyframes emberFloat {
+      0%, 100% { transform: translateY(0) scale(1); opacity: 0.35; }
+      50% { transform: translateY(-14px) scale(1.15); opacity: 0.75; }
+    }
+    .animate-chapter-reveal {
+      animation: chapterReveal 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .animate-chapter-divider {
+      animation: chapterDividerGrow 1s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;
+      transform-origin: center;
+      opacity: 0;
+    }
+    .animate-ember {
+      animation: emberFloat 4s ease-in-out infinite;
+    }
+
     .safe-bottom {
       padding-bottom: env(safe-area-inset-bottom, 0px);
     }
@@ -136,6 +161,76 @@
   </div>
 
   <!-- ========================================================= -->
+  <!-- TELA CINEMATOGRÁFICA DE ABERTURA DE CAPÍTULO              -->
+  <!-- Exibida com antecedência ao abrir o site ou trocar cap.   -->
+  <!-- ========================================================= -->
+  <div id="chapterIntroOverlay" class="fixed inset-0 z-[140] hidden bg-[#090604] text-[#f4ead5] flex flex-col items-center justify-center p-5 sm:p-10 overflow-y-auto select-none">
+    <!-- Fundo Atmosférico (usa o mapa do capítulo como fundo desfocado se existir) -->
+    <div id="chapterIntroBgImage" class="absolute inset-0 bg-cover bg-center opacity-20 scale-105 blur-[3px] pointer-events-none transition-all duration-700"></div>
+    <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(139,30,30,0.22)_0%,rgba(9,6,4,0.95)_75%)] pointer-events-none"></div>
+
+    <!-- Partículas / Brasas sutis -->
+    <div class="absolute top-1/4 left-1/4 w-2 h-2 rounded-full bg-[#e5c158]/40 animate-ember pointer-events-none"></div>
+    <div class="absolute bottom-1/3 right-1/4 w-2.5 h-2.5 rounded-full bg-[#8b1e1e]/60 animate-ember pointer-events-none" style="animation-delay: 1.4s"></div>
+    <div class="absolute top-1/3 right-1/3 w-1.5 h-1.5 rounded-full bg-[#e5c158]/50 animate-ember pointer-events-none" style="animation-delay: 2.3s"></div>
+
+    <!-- Moldura Central da Crônica -->
+    <div class="relative z-10 max-w-3xl w-full text-center space-y-5 my-auto py-6 animate-chapter-reveal">
+      <!-- Selo D20 & Número do Capítulo -->
+      <div class="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-black/60 border border-[#c59b27]/60 shadow-lg">
+        <span class="w-2 h-2 rounded-full bg-[#e5c158] animate-pulse"></span>
+        <span id="splashChapterNumber" class="font-heading text-xs sm:text-sm font-bold uppercase tracking-[0.28em] text-[#e5c158]">Capítulo I</span>
+        <span id="splashChapterStatusBadge" class="text-[10px] font-heading uppercase px-2 py-0.5 rounded bg-[#8b1e1e] text-[#f4ead5]">Em Andamento</span>
+      </div>
+
+      <!-- Título Épico do Capítulo -->
+      <h1 id="splashChapterTitle" class="font-display text-3xl sm:text-5xl md:text-6xl font-black text-[#f4ead5] tracking-wide leading-tight drop-shadow-[0_4px_18px_rgba(0,0,0,0.9)]">
+        As Sombras de Valdris
+      </h1>
+
+      <hr class="dnd-divider max-w-md mx-auto animate-chapter-divider" />
+
+      <!-- Prólogo / Descrição do Mestre -->
+      <p id="splashChapterDesc" class="text-base sm:text-xl text-[#e6d5b8] italic leading-relaxed max-w-2xl mx-auto px-2">
+        Os heróis se reúnem diante dos portões antigos enquanto os tambores ecoam nas profundezas...
+      </p>
+
+      <!-- Cards de Contexto Rápido do Capítulo (Local/Mapa + Último Grande Acontecimento) -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-left max-w-2xl mx-auto pt-2">
+        <div class="leather-panel rounded-xl p-4 border border-[#c59b27]/45">
+          <div class="flex items-center gap-2 text-[11px] font-heading uppercase tracking-wider text-[#e5c158] font-bold mb-1">
+            <span>🗺️</span>
+            <span>Cenário / Mapa Atual</span>
+          </div>
+          <p id="splashChapterMapName" class="text-sm font-bold text-[#f4ead5] truncate">Nenhum mapa vinculado</p>
+          <p id="splashChapterObjective" class="text-xs text-[#d6c29f]/85 mt-1 line-clamp-2">Objetivo: Explorar a região e sobreviver.</p>
+        </div>
+
+        <div class="leather-panel rounded-xl p-4 border border-[#c59b27]/45">
+          <div class="flex items-center gap-2 text-[11px] font-heading uppercase tracking-wider text-[#e5c158] font-bold mb-1">
+            <span>⚔️</span>
+            <span>Maiores Acontecimentos</span>
+          </div>
+          <p id="splashChapterHighlights" class="text-xs text-[#f4ead5]/90 leading-relaxed line-clamp-3">
+            A jornada está prestes a começar...
+          </p>
+        </div>
+      </div>
+
+      <!-- Botões de Ação da Tela de Abertura -->
+      <div class="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
+        <button onclick="app.dismissChapterIntro()" class="w-full sm:w-auto h-12 px-8 rounded-xl bg-gradient-to-r from-[#8b1e1e] to-[#691414] hover:from-[#a62424] hover:to-[#7a1818] border-2 border-[#e5c158] text-[#f4ead5] font-heading font-bold text-sm uppercase tracking-[0.18em] shadow-[0_0_25px_rgba(139,30,30,0.75)] transition transform hover:scale-[1.02] active:scale-95 cursor-pointer">
+          ⚔️ Entrar na Sessão
+        </button>
+
+        <button onclick="app.dismissChapterIntro(); app.switchView('chapters');" class="w-full sm:w-auto h-12 px-5 rounded-xl bg-black/60 hover:bg-black/80 border border-[#c59b27]/50 text-[#e5c158] font-heading font-bold text-xs uppercase tracking-wider transition cursor-pointer">
+          📖 Ver Crônica Completa
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
   <!-- MODO PROJETOR DEDICADO (?projector=1)                     -->
   <!-- Exibe APENAS o mapa ativo em tela limpa para segunda tela -->
   <!-- ========================================================= -->
@@ -160,7 +255,7 @@
           <span class="font-display text-3xl text-[#e5c158]">D20</span>
         </div>
         <h2 class="font-display text-xl text-[#e5c158] tracking-wider">Tela do Projetor Conectada</h2>
-        <p class="text-sm text-[#d6c29f]/75 mt-2">Selecione um mapa na Central de Mapas do Mestre e clique em <strong>Projetar</strong>. Esta tela exibirá exclusivamente o mapa enquanto o Mestre gerencia a mesa.</p>
+        <p class="text-sm text-[#d6c29f]/75 mt-2">Selecione um mapa na Central de Mapas do Mestre ou ative um Capítulo com mapa vinculado.</p>
       </div>
     </div>
   </div>
@@ -170,13 +265,10 @@
   <!-- Responsivo para Mobile (cenário 1) e PC (cenário padrão)  -->
   <!-- ========================================================= -->
   <div id="animatedPopOverlay" class="fixed inset-0 z-[120] hidden bg-black overflow-hidden select-none">
-    <!-- Cenário de Fundo (Vídeo do Repositório no Root) -->
     <video id="animatedBgVideo" autoplay loop muted playsinline class="absolute inset-0 w-full h-full object-cover pointer-events-none"></video>
-
-    <!-- Vinheta atmosférica sutil para integrar o herói ao cenário -->
     <div class="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/35 pointer-events-none"></div>
 
-    <!-- Barra Superior Flutuante (Seletor de Heróis + Música + Botão Fechar) -->
+    <!-- Barra Superior Flutuante -->
     <div class="absolute top-0 inset-x-0 z-30 p-3 sm:p-5 flex items-center justify-between gap-2 sm:gap-3 pointer-events-none">
       <div class="pointer-events-auto leather-panel rounded-full px-3.5 py-2 border border-[#e5c158]/60 flex items-center gap-2.5 shadow-xl max-w-[55vw] sm:max-w-md">
         <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
@@ -204,7 +296,6 @@
       <div id="animHeroSwitcherBar" class="pointer-events-auto leather-panel rounded-full px-2.5 py-1 border border-[#c59b27]/50 flex items-center gap-2 overflow-x-auto max-w-[94vw] shadow-2xl"></div>
     </div>
 
-    <!-- Canvas Transparente em Tela Cheia onde o Personagem Respira sem cortes -->
     <canvas id="animatedCharCanvas" class="absolute inset-0 w-full h-full z-20 pointer-events-none"></canvas>
   </div>
 
@@ -212,7 +303,6 @@
   <!-- TELA DE AUTENTICAÇÃO / PORTAL DE ACESSO (FIREBASE AUTH)   -->
   <!-- ========================================================= -->
   <div id="authScreen" class="hidden min-h-screen flex items-center justify-center p-4 relative">
-    <!-- Botão Flutuante de Controle de Música na Tela de Login -->
     <button onclick="app.toggleBgMusic()" data-music-btn class="fixed top-4 right-4 z-50 h-10 px-3.5 rounded-full leather-panel border border-[#c59b27]/60 text-[#e5c158] font-heading text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xl hover:border-[#e5c158] transition cursor-pointer" title="Ligar ou Desligar Música">
       <span data-music-icon>🔊</span>
       <span data-music-label>Música: ON</span>
@@ -229,7 +319,6 @@
 
       <hr class="dnd-divider mb-5" />
 
-      <!-- Abas Login / Cadastro -->
       <div class="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-black/50 border border-[#c59b27]/30 mb-5">
         <button id="tabLoginBtn" type="button" onclick="app.setAuthMode('login')" class="h-10 rounded-lg font-heading text-xs font-bold uppercase tracking-wider bg-[#8b1e1e] text-[#f4ead5] border border-[#e5c158]/60 transition">
           Entrar na Mesa
@@ -239,7 +328,6 @@
         </button>
       </div>
 
-      <!-- Mensagem de Erro / Status -->
       <div id="authErrorBox" class="hidden mb-4 p-3 rounded-lg bg-[#8b1e1e]/40 border border-[#e5c158]/50 text-[#f4ead5] text-xs font-semibold"></div>
 
       <form id="authForm" onsubmit="app.handleAuthSubmit(event)" class="space-y-3.5">
@@ -266,7 +354,7 @@
             <label class="block text-[11px] font-heading uppercase tracking-wider text-[#d6c29f] mb-1">Papel na Comunidade</label>
             <select id="authRoleInput" class="w-full h-11 rounded-lg bg-[#1a110b] border border-[#c59b27]/40 px-3 text-[#f4ead5] outline-none focus:border-[#e5c158]">
               <option value="player">⚔️ Jogador (Cria e gerencia suas fichas)</option>
-              <option value="dm">👑 Mestre / DM (Gerencia toda a mesa, mapas e o Livro)</option>
+              <option value="dm">👑 Mestre / DM (Gerencia toda a mesa, capítulos, mapas e o Livro)</option>
             </select>
           </div>
         </div>
@@ -316,42 +404,48 @@
             <h1 class="font-display text-base sm:text-xl font-black text-[#e5c158] tracking-wide leading-tight truncate">
               Tomo da Comunidade
             </h1>
-            <p class="text-[11px] uppercase tracking-widest text-[#d6c29f]/80 font-heading truncate">
-              D&D 5e • <span id="syncStatusLabel" class="text-emerald-400">Mesa Conectada</span>
-            </p>
+            <div class="flex items-center gap-2 text-[11px] uppercase tracking-widest text-[#d6c29f]/85 font-heading truncate">
+              <button onclick="app.switchView('chapters')" class="text-[#e5c158] hover:underline font-bold truncate cursor-pointer" title="Ver Capítulos da Campanha">
+                🚩 <span id="headerActiveChapterBadge">Capítulo I</span>
+              </button>
+              <span>•</span>
+              <span id="syncStatusLabel" class="text-emerald-400">Mesa Conectada</span>
+            </div>
           </div>
         </div>
 
-        <!-- Controles Centrais (Desktop) — Ficha do Herói | Livro da Comunidade | Personagens Animados -->
-        <div class="hidden md:flex items-center gap-2 shrink-0">
+        <!-- Controles Centrais (Desktop) -->
+        <div class="hidden md:flex items-center gap-1.5 shrink-0">
           <div class="flex bg-black/40 p-1 rounded-lg border border-[#c59b27]/30 gap-1">
-            <button id="navSheetBtn" onclick="app.switchView('sheet')" class="h-9 px-3.5 rounded-md font-heading text-xs font-bold tracking-wider uppercase transition bg-[#8b1e1e] text-[#f4ead5] border border-[#e5c158]/50">
-              Ficha do Herói
+            <button id="navSheetBtn" onclick="app.switchView('sheet')" class="h-9 px-3 rounded-md font-heading text-xs font-bold tracking-wider uppercase transition bg-[#8b1e1e] text-[#f4ead5] border border-[#e5c158]/50">
+              Ficha
             </button>
-            <button id="navCompendiumBtn" onclick="app.switchView('compendium')" class="h-9 px-3.5 rounded-md font-heading text-xs font-bold tracking-wider uppercase transition text-[#d6c29f] hover:text-white">
-              Livro da Comunidade
+            <button id="navChaptersBtn" onclick="app.switchView('chapters')" class="h-9 px-3 rounded-md font-heading text-xs font-bold tracking-wider uppercase transition text-[#d6c29f] hover:text-white flex items-center gap-1">
+              <span>🚩</span>
+              <span>Capítulos</span>
             </button>
-            <button id="navAnimBtn" onclick="app.openAnimatedPop()" class="h-9 px-3.5 rounded-md font-heading text-xs font-bold tracking-wider uppercase transition text-[#e5c158] hover:bg-[#8b1e1e]/40 border border-[#c59b27]/40 flex items-center gap-1.5 cursor-pointer">
+            <button id="navCompendiumBtn" onclick="app.switchView('compendium')" class="h-9 px-3 rounded-md font-heading text-xs font-bold tracking-wider uppercase transition text-[#d6c29f] hover:text-white">
+              Livro
+            </button>
+            <button id="navAnimBtn" onclick="app.openAnimatedPop()" class="h-9 px-3 rounded-md font-heading text-xs font-bold tracking-wider uppercase transition text-[#e5c158] hover:bg-[#8b1e1e]/40 border border-[#c59b27]/40 flex items-center gap-1 cursor-pointer">
               <span>🌬️</span>
-              <span>Personagens Animados</span>
+              <span>Animados</span>
             </button>
           </div>
 
-          <button onclick="app.toggleRollHistory()" class="h-9 px-3 rounded-lg bg-[#2b1d0e] hover:bg-[#3d2914] border border-[#c59b27]/50 text-[#e5c158] font-heading text-xs font-bold flex items-center gap-1.5 transition" title="Histórico de Rolagens">
+          <button onclick="app.toggleRollHistory()" class="h-9 px-2.5 rounded-lg bg-[#2b1d0e] hover:bg-[#3d2914] border border-[#c59b27]/50 text-[#e5c158] font-heading text-xs font-bold flex items-center gap-1 transition" title="Histórico de Rolagens">
             <span>📜</span>
-            <span>Log (<span id="rollCountBadge">0</span>)</span>
+            <span>(<span id="rollCountBadge">0</span>)</span>
           </button>
         </div>
 
         <!-- Perfil do Usuário Logado + Controle de Música + Ícone de Mapa do ADM + Sair -->
         <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          <!-- BOTÃO DE LIGAR/DESLIGAR MÚSICA (DESKTOP E MOBILE) -->
           <button onclick="app.toggleBgMusic()" data-music-btn class="h-10 px-2.5 sm:px-3 rounded-lg bg-[#2b1d0e] hover:bg-[#3d2914] border border-[#c59b27]/50 text-[#e5c158] font-heading text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition shrink-0 cursor-pointer" title="Ligar ou Desligar Música Ambiente">
             <span data-music-icon class="text-sm">🔊</span>
-            <span data-music-label class="hidden lg:inline">Música: ON</span>
+            <span data-music-label class="hidden xl:inline">Música: ON</span>
           </button>
 
-          <!-- ÍCONE DE MAPAS (EXCLUSIVO PARA MESTRE / ADM) -->
           <button id="dmMapBtn" onclick="app.openMapManagerModal()" class="hidden h-10 px-3 rounded-lg bg-gradient-to-r from-[#8b1e1e] to-[#5e1212] hover:from-[#a62424] hover:to-[#751717] border border-[#e5c158] text-[#f4ead5] font-heading text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow transition relative shrink-0 cursor-pointer" title="Central de Mapas & Projetor (Mestre)">
             <span class="text-base">🗺️</span>
             <span class="hidden sm:inline">Mapas</span>
@@ -361,7 +455,7 @@
           <button onclick="app.openUserProfileModal()" class="flex items-center gap-2 bg-black/40 hover:bg-black/60 border border-[#c59b27]/40 rounded-full pl-1 pr-2.5 py-1 transition cursor-pointer" title="Editar Perfil e Foto">
             <img id="headerUserAvatar" src="https://api.dicebear.com/7.x/adventurer/svg?seed=Aventureiro" alt="Avatar" class="w-8 h-8 rounded-full object-cover border border-[#e5c158]" />
             <div class="hidden sm:block text-left">
-              <div id="headerUserName" class="text-xs font-bold text-[#f4ead5] leading-none max-w-[110px] truncate">Jogador</div>
+              <div id="headerUserName" class="text-xs font-bold text-[#f4ead5] leading-none max-w-[100px] truncate">Jogador</div>
               <div id="headerUserRoleBadge" class="text-[10px] font-heading uppercase tracking-wider text-[#e5c158] leading-tight mt-0.5">Jogador</div>
             </div>
           </button>
@@ -391,7 +485,6 @@
             <button onclick="app.rollFreeDie(100)" class="min-w-[48px] h-9 px-2 rounded bg-[#241710] hover:bg-[#8b1e1e] active:scale-95 border border-[#c59b27]/50 text-[#f4ead5] font-mono-num text-xs font-bold transition shrink-0">d100</button>
           </div>
 
-          <!-- Seletor de Vantagem / Desvantagem -->
           <div class="flex items-center gap-1 bg-black/50 p-1 rounded-lg border border-[#c59b27]/30 shrink-0">
             <button id="modeDisBtn" onclick="app.setRollMode('dis')" class="h-8 px-2.5 rounded text-[11px] font-heading uppercase font-bold text-[#d6c29f] hover:text-white transition">Desvant.</button>
             <button id="modeNormBtn" onclick="app.setRollMode('norm')" class="h-8 px-2.5 rounded text-[11px] font-heading uppercase font-bold bg-[#c59b27] text-[#120c09] transition">Normal</button>
@@ -421,8 +514,29 @@
     <!-- ========================================================= -->
     <main id="sheetView" class="max-w-7xl mx-auto px-3 sm:px-5 pt-5 grid grid-cols-1 lg:grid-cols-12 gap-5">
 
-      <!-- COLUNA ESQUERDA: LISTA DE PERSONAGENS DA MESA + INTEGRANTES ONLINE -->
+      <!-- COLUNA ESQUERDA: CAPÍTULO ATUAL + LISTA DE PERSONAGENS + INTEGRANTES -->
       <aside id="partySidebar" class="lg:col-span-3 space-y-4 min-w-0">
+
+        <!-- CARD RESUMO DO CAPÍTULO ATUAL NA BARRA LATERAL -->
+        <div class="leather-panel rounded-xl p-4 text-[#f4ead5] border border-[#e5c158]/50">
+          <div class="flex items-center justify-between gap-2 mb-1.5">
+            <span id="sidebarChapterNum" class="text-[10px] font-heading font-bold uppercase tracking-[0.2em] text-[#e5c158]">Capítulo I</span>
+            <button onclick="app.openChapterIntroSplash()" class="text-[10px] font-heading uppercase text-[#d6c29f] hover:text-[#e5c158] underline cursor-pointer" title="Reabrir Tela de Abertura do Capítulo">
+              🎬 Tela Abertura
+            </button>
+          </div>
+          <h2 id="sidebarChapterTitle" class="font-display text-base font-black text-[#f4ead5] leading-snug">As Sombras de Valdris</h2>
+          <p id="sidebarChapterHighlights" class="text-xs text-[#d6c29f]/90 mt-1.5 line-clamp-3 leading-relaxed">
+            Aventura em curso...
+          </p>
+          <div class="mt-3 pt-2.5 border-t border-[#c59b27]/25 flex items-center justify-between gap-2">
+            <span id="sidebarChapterMapLabel" class="text-[11px] text-[#e5c158] truncate">🗺️ Sem mapa</span>
+            <button onclick="app.switchView('chapters')" class="h-7 px-2.5 rounded bg-[#8b1e1e] hover:bg-[#a62424] border border-[#e5c158]/60 text-[10px] font-heading font-bold uppercase tracking-wider shrink-0 cursor-pointer">
+              Crônica
+            </button>
+          </div>
+        </div>
+
         <!-- Integrantes da Comunidade -->
         <div class="leather-panel rounded-xl p-4 text-[#f4ead5]">
           <div class="flex items-center justify-between gap-2 mb-2.5">
@@ -479,7 +593,6 @@
       <!-- COLUNA PRINCIPAL: PÁGINA DO LIVRO (FICHA D&D 5E) -->
       <section id="characterSheetContainer" class="lg:col-span-9 space-y-5 min-w-0">
 
-        <!-- Aviso de Modo Somente Leitura (quando jogador vê ficha alheia) -->
         <div id="readOnlyBanner" class="hidden leather-panel rounded-xl px-4 py-3 border border-[#e5c158] text-[#f4ead5] flex items-center justify-between gap-2 text-xs">
           <span>👁️ Você está visualizando a ficha de outro integrante em modo <strong>Somente Leitura</strong>.</span>
           <span class="font-heading uppercase text-[#e5c158] shrink-0">Apenas Mestre edita</span>
@@ -515,7 +628,6 @@
               </div>
             </div>
 
-            <!-- Inspiração Heroica & Excluir -->
             <div class="flex items-center gap-2 self-end sm:self-center shrink-0">
               <button id="inspirationBtn" onclick="app.toggleInspiration()" class="h-11 px-3 rounded-lg border-2 border-[#8b5a2b] bg-[#e6d5b8] flex items-center gap-2 transition active:scale-95" title="Inspiração Heroica">
                 <span id="inspirationIcon" class="text-base">☆</span>
@@ -527,7 +639,6 @@
             </div>
           </div>
 
-          <!-- Grid de Identidade -->
           <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             <div class="parchment-inset p-2.5 rounded-lg">
               <label class="block text-[10px] font-heading uppercase tracking-wider text-[#5c4328] mb-0.5">Classe & Arquétipo</label>
@@ -556,7 +667,7 @@
           </div>
         </div>
 
-        <!-- FAIXA DE COMBATE: CA (ESCUDO SVG), INICIATIVA, DESLOCAMENTO E PONTOS DE VIDA -->
+        <!-- FAIXA DE COMBATE -->
         <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-stretch">
           <div class="md:col-span-5 grid grid-cols-3 gap-2.5">
             <div class="parchment-page rounded-xl p-3 flex flex-col items-center justify-between text-center">
@@ -590,7 +701,6 @@
             </div>
           </div>
 
-          <!-- Painel de Pontos de Vida (HP) + Calculadora de Dano/Cura -->
           <div class="md:col-span-7 parchment-page rounded-xl p-4 flex flex-col justify-between">
             <div class="flex items-center justify-between gap-2 mb-2">
               <span class="font-heading text-xs font-bold uppercase tracking-wider text-[#8b1e1e]">Pontos de Vida & Vitalidade</span>
@@ -674,7 +784,7 @@
           </div>
         </div>
 
-        <!-- ABAS INTERNAS DA FICHA: COMBATE, MAGIAS, INVENTÁRIO, HISTÓRIA -->
+        <!-- ABAS INTERNAS DA FICHA -->
         <div class="parchment-page rounded-xl p-4 sm:p-6">
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 border-b border-[#b89b6a] pb-3 mb-4">
             <button onclick="app.switchSubTab('combat')" id="subTab-combat" class="subtab-btn min-h-[42px] px-3 py-2 rounded-lg font-heading text-[11px] font-bold uppercase tracking-wider bg-[#8b1e1e] text-[#f4ead5] transition">⚔️ Ataques & Poderes</button>
@@ -683,7 +793,6 @@
             <button onclick="app.switchSubTab('bio')" id="subTab-bio" class="subtab-btn min-h-[42px] px-3 py-2 rounded-lg font-heading text-[11px] font-bold uppercase tracking-wider bg-[#e6d5b8] text-[#2b1d0e] transition">📖 Crônica & Traços</button>
           </div>
 
-          <!-- SUB-ABA 1: ATAQUES E CARACTERÍSTICAS -->
           <div id="panel-combat" class="space-y-5">
             <div>
               <div class="flex items-center justify-between gap-2 mb-3">
@@ -702,7 +811,6 @@
             </div>
           </div>
 
-          <!-- SUB-ABA 2: MAGIAS -->
           <div id="panel-spells" class="hidden space-y-5">
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div class="parchment-inset p-3 rounded-lg text-center">
@@ -737,7 +845,6 @@
             </div>
           </div>
 
-          <!-- SUB-ABA 3: INVENTÁRIO E MOEDAS -->
           <div id="panel-inventory" class="hidden space-y-5">
             <div class="grid grid-cols-5 gap-2">
               <div class="parchment-inset p-2 rounded-lg text-center">
@@ -771,7 +878,6 @@
             </div>
           </div>
 
-          <!-- SUB-ABA 4: HISTÓRIA E PERSONALIDADE -->
           <div id="panel-bio" class="hidden grid-cols-1 md:grid-cols-2 gap-4">
             <div class="parchment-inset p-3.5 rounded-lg">
               <label class="block text-xs font-heading uppercase font-bold text-[#8b1e1e] mb-1.5">Traços de Personalidade</label>
@@ -800,7 +906,46 @@
     </main>
 
     <!-- ========================================================= -->
-    <!-- VISÃO 2: LIVRO DA COMUNIDADE (COMPÊNDIO DE REGRAS D&D)    -->
+    <!-- VISÃO 2: CRÔNICA & CAPÍTULOS DA CAMPANHA (CONTROLE MESTRE) -->
+    <!-- ========================================================= -->
+    <main id="chaptersView" class="hidden max-w-6xl mx-auto px-3 sm:px-5 pt-5 space-y-5">
+      <!-- Cabeçalho da Seção de Capítulos -->
+      <div class="leather-panel rounded-xl p-5 sm:p-6 text-[#f4ead5] flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-[#c59b27]/50">
+        <div>
+          <div class="flex items-center gap-2 text-xs font-heading uppercase tracking-widest text-[#e5c158] font-bold">
+            <span>🚩</span>
+            <span>Linha do Tempo da Campanha</span>
+          </div>
+          <h2 class="font-display text-2xl sm:text-3xl font-black text-[#f4ead5] mt-0.5">Capítulos da Jornada</h2>
+          <p class="text-sm text-[#d6c29f] mt-1">
+            Acompanhe o capítulo atual, o mapa vinculado à sessão, os maiores acontecimentos, NPCs e objetivos do grupo.
+          </p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2 shrink-0">
+          <button onclick="app.openChapterIntroSplash()" class="h-11 px-4 rounded-xl bg-black/50 hover:bg-black/75 border border-[#c59b27]/60 text-[#e5c158] font-heading text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer transition">
+            <span>🎬</span>
+            <span>Ver Tela de Abertura</span>
+          </button>
+
+          <button id="createChapterBtn" onclick="app.openChapterEditorModal(null)" class="hidden h-11 px-4 rounded-xl bg-gradient-to-r from-[#8b1e1e] to-[#691414] hover:from-[#a62424] hover:to-[#7a1818] border border-[#e5c158] text-[#f4ead5] font-heading text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-lg cursor-pointer transition">
+            <span>+ Novo Capítulo</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Destaque do Capítulo Ativo no Momento -->
+      <div id="activeChapterHeroCard" class="parchment-page rounded-2xl p-5 sm:p-7 border-2 border-[#c59b27]"></div>
+
+      <!-- Lista de Todos os Capítulos da Campanha -->
+      <div class="space-y-3">
+        <h3 class="font-heading text-xs font-bold uppercase tracking-[0.2em] text-[#e5c158] px-1">Todos os Capítulos Registrados</h3>
+        <div id="chaptersTimelineGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+      </div>
+    </main>
+
+    <!-- ========================================================= -->
+    <!-- VISÃO 3: LIVRO DA COMUNIDADE (COMPÊNDIO DE REGRAS D&D)    -->
     <!-- ========================================================= -->
     <main id="compendiumView" class="hidden max-w-6xl mx-auto px-3 sm:px-5 pt-5 space-y-5">
       <div class="leather-panel rounded-xl p-5 sm:p-6 text-[#f4ead5] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -833,13 +978,13 @@
     <!-- ========================================================= -->
     <nav class="md:hidden fixed bottom-0 inset-x-0 z-40 leather-panel border-t-2 border-[#c59b27]/60 safe-bottom">
       <div class="grid grid-cols-5 h-16">
-        <button onclick="app.mobileNav('party')" id="mobNav-party" class="flex flex-col items-center justify-center gap-0.5 text-[#d6c29f] hover:text-[#e5c158]">
-          <span class="text-lg">🛡️</span>
-          <span class="text-[9px] font-heading uppercase font-bold">Mesa</span>
-        </button>
         <button onclick="app.mobileNav('sheet')" id="mobNav-sheet" class="flex flex-col items-center justify-center gap-0.5 text-[#e5c158] bg-[#8b1e1e]/30 border-t-2 border-[#e5c158]">
           <span class="text-lg">📜</span>
           <span class="text-[9px] font-heading uppercase font-bold">Ficha</span>
+        </button>
+        <button onclick="app.mobileNav('chapters')" id="mobNav-chapters" class="flex flex-col items-center justify-center gap-0.5 text-[#d6c29f] hover:text-[#e5c158]">
+          <span class="text-lg">🚩</span>
+          <span class="text-[9px] font-heading uppercase font-bold">Capítulos</span>
         </button>
         <button onclick="app.mobileNav('compendium')" id="mobNav-compendium" class="flex flex-col items-center justify-center gap-0.5 text-[#d6c29f] hover:text-[#e5c158]">
           <span class="text-lg">📖</span>
@@ -857,11 +1002,100 @@
     </nav>
 
     <!-- ========================================================= -->
+    <!-- MODAL EDITOR DE CAPÍTULO (EXCLUSIVO PARA O MESTRE / DM)   -->
+    <!-- ========================================================= -->
+    <div id="chapterEditorModal" class="fixed inset-0 bg-black/85 z-50 hidden items-center justify-center p-3 sm:p-5">
+      <div class="leather-panel rounded-2xl max-w-3xl w-full max-h-[92vh] flex flex-col border-2 border-[#e5c158] text-[#f4ead5] shadow-2xl overflow-hidden">
+        <div class="p-4 sm:p-5 border-b border-[#c59b27]/35 flex items-center justify-between gap-3 bg-black/35">
+          <div>
+            <span class="text-[10px] font-heading uppercase tracking-[0.2em] text-[#e5c158]">Controle do Mestre</span>
+            <h3 id="chapterEditorModalTitle" class="font-display text-lg sm:text-xl font-black text-[#f4ead5]">Forjar Novo Capítulo</h3>
+          </div>
+          <button onclick="document.getElementById('chapterEditorModal').classList.add('hidden')" class="w-10 h-10 rounded-lg bg-black/50 hover:bg-[#8b1e1e] text-[#f4ead5] flex items-center justify-center transition">✕</button>
+        </div>
+
+        <form id="chapterEditorForm" onsubmit="app.saveChapterFromModal(event)" class="p-4 sm:p-6 overflow-y-auto space-y-4 flex-1">
+          <input type="hidden" id="editChapterId" value="" />
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="block text-[11px] font-heading uppercase tracking-wider text-[#e5c158] mb-1">Número / Ato</label>
+              <input id="editChapterNumber" type="text" required placeholder="Ex: Capítulo II" class="w-full h-11 rounded-lg bg-black/45 border border-[#c59b27]/40 px-3 text-[#f4ead5] outline-none focus:border-[#e5c158]" />
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block text-[11px] font-heading uppercase tracking-wider text-[#e5c158] mb-1">Título do Capítulo</label>
+              <input id="editChapterTitle" type="text" required placeholder="Ex: O Cerco à Cidadela Subterrânea" class="w-full h-11 rounded-lg bg-black/45 border border-[#c59b27]/40 px-3 text-[#f4ead5] outline-none focus:border-[#e5c158]" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="block text-[11px] font-heading uppercase tracking-wider text-[#d6c29f] mb-1">Status do Capítulo</label>
+              <select id="editChapterStatus" class="w-full h-11 rounded-lg bg-[#1a110b] border border-[#c59b27]/40 px-3 text-[#f4ead5] outline-none focus:border-[#e5c158]">
+                <option value="active">🔥 Em Andamento (Atual)</option>
+                <option value="upcoming">⏳ Próximo / Planejado</option>
+                <option value="completed">✅ Concluído</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] font-heading uppercase tracking-wider text-[#d6c29f] mb-1">Data da Sessão</label>
+              <input id="editChapterDate" type="text" placeholder="Ex: 18/11/2026 • Sessão #04" class="w-full h-11 rounded-lg bg-black/45 border border-[#c59b27]/40 px-3 text-[#f4ead5] outline-none focus:border-[#e5c158]" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-heading uppercase tracking-wider text-[#e5c158] mb-1">🗺️ Mapa Salvo do Capítulo</label>
+              <select id="editChapterMapId" class="w-full h-11 rounded-lg bg-[#1a110b] border border-[#c59b27]/50 px-3 text-[#f4ead5] outline-none focus:border-[#e5c158]">
+                <option value="">-- Nenhum mapa vinculado --</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-heading uppercase tracking-wider text-[#e5c158] mb-1">Prólogo & Narrativa (Aparece na Tela de Abertura)</label>
+            <textarea id="editChapterDesc" rows="3" required placeholder="Descreva o clima, o cenário inicial e o gancho narrativo deste capítulo..." class="w-full rounded-lg bg-black/45 border border-[#c59b27]/40 p-3 text-sm text-[#f4ead5] outline-none focus:border-[#e5c158]"></textarea>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-heading uppercase tracking-wider text-[#e5c158] mb-1">⚔️ Maiores Acontecimentos da Rodada / Sessão</label>
+            <textarea id="editChapterHighlights" rows="3" placeholder="Ex: Kaelen derrotou o Capitão Orc com um crítico; o grupo descobriu a passagem secreta sob o altar..." class="w-full rounded-lg bg-black/45 border border-[#c59b27]/40 p-3 text-sm text-[#f4ead5] outline-none focus:border-[#e5c158]"></textarea>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="block text-[11px] font-heading uppercase tracking-wider text-[#d6c29f] mb-1">🎯 Objetivos & Missões</label>
+              <textarea id="editChapterObjectives" rows="3" placeholder="• Resgatar o ferreiro&#10;• Decifrar a runa antiga" class="w-full rounded-lg bg-black/45 border border-[#c59b27]/40 p-2.5 text-xs text-[#f4ead5] outline-none focus:border-[#e5c158]"></textarea>
+            </div>
+            <div>
+              <label class="block text-[11px] font-heading uppercase tracking-wider text-[#d6c29f] mb-1">👥 NPCs & Inimigos-Chave</label>
+              <textarea id="editChapterNpcs" rows="3" placeholder="• Lorde Vaelen (Aliado)&#10;• Malakor, o Sombrio" class="w-full rounded-lg bg-black/45 border border-[#c59b27]/40 p-2.5 text-xs text-[#f4ead5] outline-none focus:border-[#e5c158]"></textarea>
+            </div>
+            <div>
+              <label class="block text-[11px] font-heading uppercase tracking-wider text-[#d6c29f] mb-1">💎 Recompensas & Pistas</label>
+              <textarea id="editChapterLoot" rows="3" placeholder="• 450 PO + Pergaminho&#10;• Chave de Obsidiana" class="w-full rounded-lg bg-black/45 border border-[#c59b27]/40 p-2.5 text-xs text-[#f4ead5] outline-none focus:border-[#e5c158]"></textarea>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2.5 p-3 rounded-xl bg-black/35 border border-[#c59b27]/35">
+            <input id="editChapterSetAsCurrent" type="checkbox" checked class="w-4 h-4 accent-[#8b1e1e]" />
+            <label for="editChapterSetAsCurrent" class="text-xs font-semibold text-[#f4ead5] cursor-pointer">
+              Definir este capítulo como o <strong>Capítulo Atual da Mesa</strong> (e projetar seu mapa automaticamente)
+            </label>
+          </div>
+
+          <div class="flex justify-end gap-2 pt-2 border-t border-[#c59b27]/25">
+            <button type="button" onclick="document.getElementById('chapterEditorModal').classList.add('hidden')" class="h-11 px-4 rounded-xl border border-[#c59b27]/40 text-xs font-heading uppercase">Cancelar</button>
+            <button type="submit" class="h-11 px-6 rounded-xl bg-[#8b1e1e] hover:bg-[#a62424] border border-[#e5c158] text-xs font-heading font-bold uppercase tracking-wider shadow-lg cursor-pointer">
+              Salvar Capítulo
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ========================================================= -->
     <!-- MODAL CENTRAL DE MAPAS & PROJETOR (EXCLUSIVO ADM / MESTRE) -->
     <!-- ========================================================= -->
     <div id="mapManagerModal" class="fixed inset-0 bg-black/85 z-50 hidden items-center justify-center p-3 sm:p-5">
       <div class="leather-panel rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col border-2 border-[#e5c158] text-[#f4ead5] shadow-2xl overflow-hidden">
-        <!-- Cabeçalho do Modal de Mapas -->
         <div class="p-4 sm:p-5 border-b border-[#c59b27]/35 flex flex-wrap items-center justify-between gap-3 bg-black/30">
           <div class="flex items-center gap-3 min-w-0">
             <span class="text-2xl">🗺️</span>
@@ -873,16 +1107,13 @@
           <button onclick="document.getElementById('mapManagerModal').classList.add('hidden')" class="w-10 h-10 rounded-lg bg-black/50 hover:bg-[#8b1e1e] text-[#f4ead5] flex items-center justify-center transition shrink-0">✕</button>
         </div>
 
-        <!-- Barra de Ações do Projetor & Upload Múltiplo -->
         <div class="p-4 bg-[#120c09]/90 border-b border-[#c59b27]/25 flex flex-wrap items-center justify-between gap-3">
           <div class="flex flex-wrap items-center gap-2">
-            <!-- Upload Múltiplo de Mapas -->
             <label class="h-11 px-4 rounded-xl bg-[#2b1d0e] hover:bg-[#3d2914] border border-[#c59b27] text-[#e5c158] font-heading text-xs font-bold uppercase tracking-wider flex items-center gap-2 cursor-pointer transition">
               <span>📤 Adicionar Mapas (Vários)</span>
               <input id="multiMapUploadInput" type="file" accept="image/*" multiple onchange="app.handleMultiMapUpload(event)" class="hidden" />
             </label>
 
-            <!-- Toggle Grade Tática no Projetor -->
             <button id="toggleGridBtn" onclick="app.toggleProjectorGrid()" class="h-11 px-3.5 rounded-xl bg-black/50 hover:bg-black/70 border border-[#c59b27]/40 text-[#d6c29f] font-heading text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition">
               <span>#</span>
               <span id="toggleGridLabel">Grade Tática: OFF</span>
@@ -890,24 +1121,20 @@
           </div>
 
           <div class="flex flex-wrap items-center gap-2">
-            <!-- Parar Projeção (Tela Preta) -->
             <button id="stopProjectionBtn" onclick="app.clearProjectedMap()" class="hidden h-11 px-3.5 rounded-xl bg-black/60 hover:bg-red-950 border border-red-500/50 text-red-300 font-heading text-xs font-bold uppercase tracking-wider transition">
               ⏹️ Limpar Projetor
             </button>
 
-            <!-- Abrir Janela Independente do Projetor (Segunda Tela / Chromecast) -->
             <button onclick="app.launchProjectorWindow()" class="h-11 px-4 rounded-xl bg-gradient-to-r from-[#8b1e1e] to-[#691414] hover:from-[#a62424] hover:to-[#7a1818] border border-[#e5c158] text-[#f4ead5] font-heading text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-lg transition cursor-pointer">
               <span>📽️ Abrir Tela do Projetor</span>
             </button>
           </div>
         </div>
 
-        <!-- Status de Upload -->
         <div id="mapUploadProgressBanner" class="hidden px-4 py-2 bg-amber-900/50 border-b border-[#e5c158]/40 text-xs font-semibold text-[#e5c158]">
           Processando e enviando mapas...
         </div>
 
-        <!-- Galeria de Mapas Enviados -->
         <div class="p-4 sm:p-5 overflow-y-auto flex-1">
           <div id="mapsGalleryGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </div>
@@ -958,7 +1185,7 @@
             <label class="block text-[11px] font-heading uppercase text-[#d6c29f] mb-1">Papel na Comunidade</label>
             <select id="profileRoleSelect" class="w-full h-11 rounded-lg bg-[#1a110b] border border-[#c59b27]/40 px-3 text-[#f4ead5] outline-none focus:border-[#e5c158]">
               <option value="player">⚔️ Jogador (Edita apenas suas fichas)</option>
-              <option value="dm">👑 Mestre / DM (Edita toda a mesa, mapas e o Livro)</option>
+              <option value="dm">👑 Mestre / DM (Edita toda a mesa, capítulos, mapas e o Livro)</option>
             </select>
           </div>
         </div>
@@ -1117,6 +1344,24 @@
       };
     }
 
+    const DEFAULT_CHAPTERS = {
+      chap_1: {
+        id: "chap_1",
+        order: 1,
+        number: "Capítulo I",
+        title: "O Chamado nas Brumas de Valdris",
+        status: "active",
+        sessionDate: "Sessão #01",
+        mapId: "",
+        description: "Os aventureiros cruzam as antigas trilhas de pedra em direção à cidadela esquecida, onde rumores de runas despertas e ecos subterrâneos atraem mercenários e estudiosos de todo o reino.",
+        highlights: "• O grupo se reuniu na taverna da encruzilhada e aceitou o contrato do Conselho.\n• Primeiras pistas sobre os selos antigos foram encontradas.",
+        objectives: "• Investigar as ruínas centrais\n• Descobrir a origem dos tremores arcanos",
+        npcs: "• Cornelius, o Cronista\n• Guarda da Cidadela",
+        loot: "• Mapa Rúnico Parcial\n• Suprimentos de Viagem",
+        updatedAt: new Date().toISOString()
+      }
+    };
+
     const DEFAULT_COMPENDIUM = {
       comp_1: { id: "comp_1", title: "Bola de Fogo (3º Círculo)", category: "Magias", description: "Tempo: 1 ação | Alcance: 45m | Componentes: V, S, M. Um raio brilhante lampeja de seu dedo até um ponto escolhido e explode com um rugido grave. Cada criatura em uma esfera de 6m de raio deve fazer um teste de resistência de Destreza, sofrendo 8d6 de dano de fogo se falhar, ou metade se passar." },
       comp_2: { id: "comp_2", title: "Condição: Caído (Prone)", category: "Regras", description: "A única opção de movimento é rastejar (custa o dobro). A criatura tem desvantagem nas jogadas de ataque. Jogadas de ataque contra ela têm vantagem se o atacante estiver a 1,5m, ou desvantagem caso contrário." },
@@ -1175,6 +1420,9 @@
         this.characters = [];
         this.compendium = [];
         this.maps = [];
+        this.chapters = [];
+        this.activeChapterId = null;
+        this.hasShownInitialChapterSplash = false;
         this.activeMapState = { activeMapId: null, showGrid: false };
         this.activeCharId = this.savedUiState.activeCharId || null;
         this.currentView = this.savedUiState.view || 'sheet';
@@ -1192,6 +1440,8 @@
         this.unsubCompendium = null;
         this.unsubMaps = null;
         this.unsubProjector = null;
+        this.unsubChapters = null;
+        this.unsubActiveChapter = null;
         this.saveTimeout = null;
 
         // Estado de Zoom/Pan da Tela do Projetor
@@ -1202,7 +1452,7 @@
         this.dragStartX = 0;
         this.dragStartY = 0;
 
-        // Estado do Motor de Animação (Simulação Orgânica em Tela Cheia)
+        // Estado do Motor de Animação
         this.isAnimPopOpen = false;
         this.animTime = 0;
         this.animLastTime = 0;
@@ -1213,7 +1463,6 @@
         this.animLastAvatar = null;
         this.currentBgScenarioSrc = '';
 
-        // Aplica modo de rolagem salvo
         if (this.rollMode !== 'norm') {
           this.setRollMode(this.rollMode, false);
         }
@@ -1228,8 +1477,351 @@
         this.initFirebaseAuthListener();
         this.initResponsiveAnimListeners();
 
-        // Inicia o motor de animação no background
         requestAnimationFrame((n) => this.renderAnimFrame(n));
+      }
+
+      // ---------------------------------------------------------
+      // SISTEMA DE CAPÍTULOS DA CAMPANHA & TELA DE ABERTURA
+      // ---------------------------------------------------------
+      getActiveChapter() {
+        if (!this.chapters.length) return null;
+        return this.chapters.find(c => c.id === this.activeChapterId)
+          || this.chapters.find(c => c.status === 'active')
+          || this.chapters[0];
+      }
+
+      openChapterIntroSplash(chapterOverride = null) {
+        if (this.isProjectorMode) return;
+        const chap = chapterOverride || this.getActiveChapter();
+        if (!chap) return;
+
+        const linkedMap = this.maps.find(m => m.id === chap.mapId);
+        const bgEl = document.getElementById('chapterIntroBgImage');
+        if (linkedMap && linkedMap.imageUrl) {
+          bgEl.style.backgroundImage = `url("${linkedMap.imageUrl}")`;
+        } else {
+          bgEl.style.backgroundImage = 'none';
+        }
+
+        const statusLabels = {
+          active: 'Em Andamento',
+          upcoming: 'Próximo Ato',
+          completed: 'Concluído'
+        };
+
+        document.getElementById('splashChapterNumber').textContent = chap.number || 'Capítulo';
+        document.getElementById('splashChapterStatusBadge').textContent = statusLabels[chap.status] || 'Em Andamento';
+        document.getElementById('splashChapterTitle').textContent = chap.title || 'Crônica da Mesa';
+        document.getElementById('splashChapterDesc').textContent = chap.description || 'A jornada continua...';
+        document.getElementById('splashChapterMapName').textContent = linkedMap ? linkedMap.name : 'Sem mapa específico vinculado';
+        document.getElementById('splashChapterObjective').textContent = chap.objectives
+          ? chap.objectives.split('\n')[0]
+          : 'Objetivo: Seguir a trilha dos heróis.';
+        document.getElementById('splashChapterHighlights').textContent = chap.highlights || 'Nenhum acontecimento registrado ainda neste capítulo.';
+
+        const overlay = document.getElementById('chapterIntroOverlay');
+        overlay.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+      }
+
+      dismissChapterIntro() {
+        const overlay = document.getElementById('chapterIntroOverlay');
+        overlay.classList.add('hidden');
+        if (!this.isAnimPopOpen) {
+          document.body.style.overflow = '';
+        }
+      }
+
+      openChapterEditorModal(chapterId = null) {
+        if (this.userProfile?.role !== 'dm') return;
+
+        const mapSelect = document.getElementById('editChapterMapId');
+        mapSelect.innerHTML = `<option value="">-- Nenhum mapa vinculado --</option>` +
+          this.maps.map(m => `<option value="${m.id}">🗺️ ${m.name}</option>`).join('');
+
+        if (chapterId) {
+          const chap = this.chapters.find(c => c.id === chapterId);
+          if (!chap) return;
+          document.getElementById('chapterEditorModalTitle').textContent = `Editar ${chap.number || 'Capítulo'}`;
+          document.getElementById('editChapterId').value = chap.id;
+          document.getElementById('editChapterNumber').value = chap.number || '';
+          document.getElementById('editChapterTitle').value = chap.title || '';
+          document.getElementById('editChapterStatus').value = chap.status || 'active';
+          document.getElementById('editChapterDate').value = chap.sessionDate || '';
+          document.getElementById('editChapterMapId').value = chap.mapId || '';
+          document.getElementById('editChapterDesc').value = chap.description || '';
+          document.getElementById('editChapterHighlights').value = chap.highlights || '';
+          document.getElementById('editChapterObjectives').value = chap.objectives || '';
+          document.getElementById('editChapterNpcs').value = chap.npcs || '';
+          document.getElementById('editChapterLoot').value = chap.loot || '';
+          document.getElementById('editChapterSetAsCurrent').checked = chap.id === this.activeChapterId;
+        } else {
+          const nextNum = this.chapters.length + 1;
+          document.getElementById('chapterEditorModalTitle').textContent = 'Forjar Novo Capítulo';
+          document.getElementById('editChapterId').value = '';
+          document.getElementById('editChapterNumber').value = `Capítulo ${nextNum}`;
+          document.getElementById('editChapterTitle').value = '';
+          document.getElementById('editChapterStatus').value = 'active';
+          document.getElementById('editChapterDate').value = `Sessão #0${nextNum}`;
+          document.getElementById('editChapterMapId').value = this.activeMapState?.activeMapId || '';
+          document.getElementById('editChapterDesc').value = '';
+          document.getElementById('editChapterHighlights').value = '';
+          document.getElementById('editChapterObjectives').value = '';
+          document.getElementById('editChapterNpcs').value = '';
+          document.getElementById('editChapterLoot').value = '';
+          document.getElementById('editChapterSetAsCurrent').checked = true;
+        }
+
+        const modal = document.getElementById('chapterEditorModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+
+      async saveChapterFromModal(event) {
+        event.preventDefault();
+        if (this.userProfile?.role !== 'dm') return;
+
+        const existingId = document.getElementById('editChapterId').value;
+        const id = existingId || `chap_${Date.now()}`;
+        const existingChap = existingId ? this.chapters.find(c => c.id === existingId) : null;
+
+        const mapId = document.getElementById('editChapterMapId').value;
+        const setAsCurrent = document.getElementById('editChapterSetAsCurrent').checked;
+
+        const payload = {
+          id,
+          order: existingChap?.order || (this.chapters.length + 1),
+          number: document.getElementById('editChapterNumber').value.trim(),
+          title: document.getElementById('editChapterTitle').value.trim(),
+          status: document.getElementById('editChapterStatus').value,
+          sessionDate: document.getElementById('editChapterDate').value.trim(),
+          mapId: mapId,
+          description: document.getElementById('editChapterDesc').value.trim(),
+          highlights: document.getElementById('editChapterHighlights').value.trim(),
+          objectives: document.getElementById('editChapterObjectives').value.trim(),
+          npcs: document.getElementById('editChapterNpcs').value.trim(),
+          loot: document.getElementById('editChapterLoot').value.trim(),
+          updatedAt: new Date().toISOString()
+        };
+
+        try {
+          await set(ref(db, `chapters/${id}`), payload);
+
+          if (setAsCurrent) {
+            await this.activateChapter(id, mapId, false);
+          }
+
+          document.getElementById('chapterEditorModal').classList.add('hidden');
+        } catch (err) {
+          alert("Erro ao salvar capítulo: " + err.message);
+        }
+      }
+
+      async activateChapter(chapterId, overrideMapId = null, showSplash = true) {
+        if (this.userProfile?.role !== 'dm') return;
+        const chap = this.chapters.find(c => c.id === chapterId);
+        const targetMapId = overrideMapId !== null ? overrideMapId : (chap?.mapId || '');
+
+        try {
+          await update(ref(db, 'campaignState'), {
+            activeChapterId: chapterId,
+            updatedAt: new Date().toISOString()
+          });
+
+          if (chap && chap.status !== 'active') {
+            await update(ref(db, `chapters/${chapterId}`), { status: 'active' });
+          }
+
+          // Atualiza automaticamente o mapa no projetor se o capítulo tiver um mapa vinculado
+          if (targetMapId) {
+            await update(ref(db, 'projectorState'), {
+              activeMapId: targetMapId,
+              updatedAt: new Date().toISOString()
+            });
+          }
+
+          if (showSplash && chap) {
+            this.openChapterIntroSplash({ ...chap, status: 'active', mapId: targetMapId });
+          }
+        } catch (err) {
+          alert("Erro ao ativar capítulo: " + err.message);
+        }
+      }
+
+      async deleteChapter(chapterId) {
+        if (this.userProfile?.role !== 'dm') return;
+        if (!confirm("Remover este capítulo da crônica da campanha?")) return;
+        try {
+          await remove(ref(db, `chapters/${chapterId}`));
+          if (this.activeChapterId === chapterId) {
+            const remaining = this.chapters.filter(c => c.id !== chapterId);
+            const nextId = remaining.length ? remaining[0].id : null;
+            await update(ref(db, 'campaignState'), { activeChapterId: nextId });
+          }
+        } catch (err) {
+          alert("Erro ao excluir capítulo: " + err.message);
+        }
+      }
+
+      renderChaptersUI() {
+        const isDM = this.userProfile?.role === 'dm';
+        const createBtn = document.getElementById('createChapterBtn');
+        if (createBtn) createBtn.classList.toggle('hidden', !isDM);
+
+        const activeChap = this.getActiveChapter();
+        const linkedMap = activeChap ? this.maps.find(m => m.id === activeChap.mapId) : null;
+
+        // Atualiza badges no Cabeçalho e na Barra Lateral da Ficha
+        const headerBadge = document.getElementById('headerActiveChapterBadge');
+        if (headerBadge) {
+          headerBadge.textContent = activeChap ? `${activeChap.number}: ${activeChap.title}` : 'Capítulo I';
+        }
+
+        if (activeChap) {
+          document.getElementById('sidebarChapterNum').textContent = activeChap.number || 'Capítulo Atual';
+          document.getElementById('sidebarChapterTitle').textContent = activeChap.title || 'Sem Título';
+          document.getElementById('sidebarChapterHighlights').textContent = activeChap.highlights || activeChap.description || '';
+          document.getElementById('sidebarChapterMapLabel').textContent = linkedMap ? `🗺️ ${linkedMap.name}` : '🗺️ Sem mapa vinculado';
+        }
+
+        // Renderiza o Card Principal do Capítulo Atual na Aba de Capítulos
+        const heroCard = document.getElementById('activeChapterHeroCard');
+        if (heroCard) {
+          if (!activeChap) {
+            heroCard.innerHTML = `<p class="text-sm text-[#5c4328]">Nenhum capítulo ativo no momento.</p>`;
+          } else {
+            heroCard.innerHTML = `
+              <div class="flex flex-col lg:flex-row gap-6 justify-between">
+                <div class="space-y-3 flex-1 min-w-0">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span class="px-3 py-1 rounded-full bg-[#8b1e1e] text-[#f4ead5] font-heading text-xs font-bold uppercase tracking-widest">
+                      🔥 Capítulo Atual • ${activeChap.number || 'Ato'}
+                    </span>
+                    ${activeChap.sessionDate ? `<span class="text-xs font-mono-num px-2.5 py-1 rounded bg-[#e6d5b8] border border-[#b89b6a] text-[#5c4328]">${activeChap.sessionDate}</span>` : ''}
+                  </div>
+
+                  <h3 class="font-display text-2xl sm:text-3xl font-black text-[#2b1d0e] leading-tight">${activeChap.title}</h3>
+                  <p class="text-base text-[#2b1d0e]/90 italic leading-relaxed">${activeChap.description || ''}</p>
+
+                  <hr class="dnd-divider" />
+
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5 pt-1">
+                    <div class="parchment-inset rounded-xl p-3.5">
+                      <h4 class="font-heading text-xs font-bold uppercase tracking-wider text-[#8b1e1e] mb-1.5">⚔️ Maiores Acontecimentos da Rodada</h4>
+                      <div class="text-sm text-[#2b1d0e] whitespace-pre-line leading-relaxed">${activeChap.highlights || 'Nenhum acontecimento registrado ainda.'}</div>
+                    </div>
+
+                    <div class="parchment-inset rounded-xl p-3.5">
+                      <h4 class="font-heading text-xs font-bold uppercase tracking-wider text-[#8b1e1e] mb-1.5">🎯 Objetivos & Missões Ativas</h4>
+                      <div class="text-sm text-[#2b1d0e] whitespace-pre-line leading-relaxed">${activeChap.objectives || 'Explorar e sobreviver.'}</div>
+                    </div>
+
+                    <div class="parchment-inset rounded-xl p-3.5">
+                      <h4 class="font-heading text-xs font-bold uppercase tracking-wider text-[#8b1e1e] mb-1.5">👥 NPCs & Inimigos-Chave</h4>
+                      <div class="text-sm text-[#2b1d0e] whitespace-pre-line leading-relaxed">${activeChap.npcs || 'Nenhum NPC destacado.'}</div>
+                    </div>
+
+                    <div class="parchment-inset rounded-xl p-3.5">
+                      <h4 class="font-heading text-xs font-bold uppercase tracking-wider text-[#8b1e1e] mb-1.5">💎 Recompensas & Pistas</h4>
+                      <div class="text-sm text-[#2b1d0e] whitespace-pre-line leading-relaxed">${activeChap.loot || 'Nenhuma pista registrada.'}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Painel Lateral do Mapa Salvo no Capítulo -->
+                <div class="lg:w-72 shrink-0 flex flex-col justify-between parchment-inset rounded-xl p-3.5 space-y-3">
+                  <div>
+                    <span class="block text-[10px] font-heading uppercase font-bold tracking-wider text-[#8b1e1e] mb-2">🗺️ Mapa Salvo do Capítulo</span>
+                    ${linkedMap ? `
+                      <div class="rounded-lg overflow-hidden border border-[#8b5a2b] bg-black aspect-video mb-2">
+                        <img src="${linkedMap.imageUrl}" alt="${linkedMap.name}" class="w-full h-full object-cover" />
+                      </div>
+                      <p class="font-heading font-bold text-sm text-[#2b1d0e] truncate">${linkedMap.name}</p>
+                    ` : `
+                      <div class="rounded-lg border border-dashed border-[#8b5a2b]/60 p-6 text-center text-xs text-[#5c4328]">
+                        Nenhum mapa vinculado a este capítulo.
+                      </div>
+                    `}
+                  </div>
+
+                  <div class="space-y-2">
+                    ${isDM && linkedMap ? `
+                      <button onclick="app.projectMap('${linkedMap.id}')" class="w-full h-10 px-3 rounded-lg bg-[#8b1e1e] hover:bg-[#a62424] text-[#f4ead5] font-heading text-xs font-bold uppercase tracking-wider transition cursor-pointer">
+                        📽️ Projetar Mapa Agora
+                      </button>
+                    ` : ''}
+                    ${isDM ? `
+                      <button onclick="app.openChapterEditorModal('${activeChap.id}')" class="w-full h-10 px-3 rounded-lg bg-[#2b1d0e] hover:bg-[#3d2914] text-[#e5c158] font-heading text-xs font-bold uppercase tracking-wider transition cursor-pointer">
+                        ✏️ Editar Capítulo & Acontecimentos
+                      </button>
+                    ` : ''}
+                  </div>
+                </div>
+              </div>
+            `;
+          }
+        }
+
+        // Renderiza a Lista de Todos os Capítulos
+        const grid = document.getElementById('chaptersTimelineGrid');
+        if (grid) {
+          const sorted = [...this.chapters].sort((a, b) => (a.order || 0) - (b.order || 0));
+          const statusMap = {
+            active: { label: '🔥 Em Andamento', cls: 'bg-[#8b1e1e] text-[#f4ead5]' },
+            upcoming: { label: '⏳ Planejado', cls: 'bg-amber-800 text-[#f4ead5]' },
+            completed: { label: '✅ Concluído', cls: 'bg-emerald-800 text-[#f4ead5]' }
+          };
+
+          grid.innerHTML = sorted.map(chap => {
+            const isCurrent = activeChap && chap.id === activeChap.id;
+            const st = statusMap[chap.status] || statusMap.active;
+            const cMap = this.maps.find(m => m.id === chap.mapId);
+
+            return `
+              <article class="parchment-page rounded-xl p-5 flex flex-col justify-between gap-3 ${isCurrent ? 'ring-2 ring-[#e5c158]' : ''}">
+                <div class="space-y-2">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="font-heading text-xs font-bold uppercase tracking-widest text-[#8b1e1e]">${chap.number || 'Capítulo'}</span>
+                    <span class="text-[10px] font-heading uppercase font-bold px-2.5 py-0.5 rounded ${st.cls}">${st.label}</span>
+                  </div>
+                  <h4 class="font-display text-lg font-black text-[#2b1d0e]">${chap.title}</h4>
+                  <p class="text-sm text-[#2b1d0e]/90 line-clamp-3 leading-relaxed">${chap.description || ''}</p>
+                  ${chap.highlights ? `
+                    <div class="parchment-inset rounded-lg p-2.5 text-xs text-[#2b1d0e]">
+                      <strong class="font-heading text-[10px] uppercase text-[#8b1e1e] block mb-0.5">Destaques:</strong>
+                      <span class="line-clamp-2 whitespace-pre-line">${chap.highlights}</span>
+                    </div>
+                  ` : ''}
+                </div>
+
+                <div class="pt-2.5 border-t border-[#b89b6a]/60 flex flex-wrap items-center justify-between gap-2">
+                  <span class="text-xs font-semibold text-[#5c4328] truncate max-w-[180px]">
+                    ${cMap ? `🗺️ ${cMap.name}` : '🗺️ Sem mapa'}
+                  </span>
+
+                  <div class="flex items-center gap-1.5">
+                    <button onclick="app.openChapterIntroSplash(app.chapters.find(c => c.id === '${chap.id}'))" class="h-8 px-2.5 rounded bg-[#e6d5b8] hover:bg-[#d8c29d] border border-[#8b5a2b]/50 text-[11px] font-heading font-bold text-[#2b1d0e] cursor-pointer" title="Visualizar Tela de Abertura">
+                      🎬 Abrir
+                    </button>
+                    ${isDM && !isCurrent ? `
+                      <button onclick="app.activateChapter('${chap.id}')" class="h-8 px-2.5 rounded bg-[#8b1e1e] hover:bg-[#a62424] text-[#f4ead5] text-[11px] font-heading font-bold uppercase cursor-pointer">
+                        Ativar
+                      </button>
+                    ` : ''}
+                    ${isDM ? `
+                      <button onclick="app.openChapterEditorModal('${chap.id}')" class="h-8 px-2.5 rounded bg-[#2b1d0e] text-[#e5c158] text-[11px] font-heading font-bold cursor-pointer">
+                        ✏️
+                      </button>
+                      <button onclick="app.deleteChapter('${chap.id}')" class="h-8 px-2 rounded bg-red-900/15 hover:bg-red-900/30 text-[#8b1e1e] text-xs font-bold cursor-pointer">
+                        🗑️
+                      </button>
+                    ` : ''}
+                  </div>
+                </div>
+              </article>
+            `;
+          }).join('');
+        }
       }
 
       // ---------------------------------------------------------
@@ -1255,12 +1847,11 @@
         const tryStartAudio = () => {
           let needsGesture = false;
 
-          // 1. Toca a voz de boas-vindas do Cornelius uma vez ao abrir o site
           if (voiceAudio && !this.hasPlayedIntroVoice) {
             voiceAudio.play().then(() => {
               this.hasPlayedIntroVoice = true;
               if (bgAudio && this.isMusicEnabled) {
-                bgAudio.volume = 0.22; // Abaixa suavemente o fundo enquanto Cornelius fala
+                bgAudio.volume = 0.22;
               }
             }).catch(() => {
               needsGesture = true;
@@ -1268,7 +1859,6 @@
             });
           }
 
-          // 2. Toca a música de fundo em loop se estiver ativada
           if (bgAudio && this.isMusicEnabled) {
             bgAudio.play().then(() => {
               this.updateMusicButtonsUI();
@@ -1405,24 +1995,22 @@
         if (this.initialRestoreDone) return;
         this.initialRestoreDone = true;
 
-        // Restaura visão principal (Ficha ou Livro da Comunidade)
         if (this.savedUiState.view === 'compendium') {
           this.switchView('compendium', false);
+        } else if (this.savedUiState.view === 'chapters') {
+          this.switchView('chapters', false);
         } else {
           this.switchView('sheet', false);
         }
 
-        // Restaura sub-aba da ficha (Combate, Magias, Inventário, Crônica)
         if (this.savedUiState.subTab) {
           this.switchSubTab(this.savedUiState.subTab, false);
         }
 
-        // Restaura tela inteira dos Personagens Animados se estava aberta antes de recarregar
         if (this.savedUiState.isAnimPopOpen) {
           this.openAnimatedPop(false);
         }
 
-        // Restaura posição vertical do scroll
         if (typeof this.savedUiState.scrollY === 'number' && this.savedUiState.scrollY > 0) {
           requestAnimationFrame(() => {
             window.scrollTo(0, this.savedUiState.scrollY);
@@ -1441,8 +2029,11 @@
         };
         window.addEventListener('resize', handleResize);
         window.addEventListener('keydown', (e) => {
-          if (e.key === 'Escape' && this.isAnimPopOpen) {
-            this.closeAnimatedPop();
+          if (e.key === 'Escape') {
+            if (this.isAnimPopOpen) this.closeAnimatedPop();
+            if (!document.getElementById('chapterIntroOverlay').classList.contains('hidden')) {
+              this.dismissChapterIntro();
+            }
           }
         });
         window.addEventListener('beforeunload', () => {
@@ -1460,7 +2051,6 @@
         const videoEl = document.getElementById('animatedBgVideo');
         if (!videoEl) return;
 
-        // Arquivos localizados na raiz (root) do repositório GitHub
         const mobileVideoPath = './PixVerse_V6_Image_Text_540P_Based_on_the_image (1).mp4';
         const pcVideoPath = './PixVerse_V6_Image_Text_540P_Based_on_the_image.mp4';
         const targetSrc = this.isMobileDeviceViewport() ? mobileVideoPath : pcVideoPath;
@@ -1719,7 +2309,7 @@
       }
 
       // ---------------------------------------------------------
-      // MOTOR DE ANIMAÇÃO 2D SEM FUNDO PRETO E SEM CORTES (CABEÇA/PÉS)
+      // MOTOR DE ANIMAÇÃO 2D SEM FUNDO PRETO E SEM CORTES
       // ---------------------------------------------------------
       loadAnimationImage(src) {
         const img = new Image();
@@ -1896,12 +2486,10 @@
         const visibleCenterNormX = (this.animBounds.minX + this.animBounds.maxX) * 0.5;
         const offsetX = (width * 0.5) - (drawW * visibleCenterNormX);
 
-        // Linha de chão calibrada exatamente no piso do cenário
         const groundLineY = isMobile ? height * 0.875 : height * 0.895;
         const footAnchorNormY = this.animBounds.maxY;
         const offsetY = groundLineY - (drawH * footAnchorNormY);
 
-        // Sombra suave de contato no chão do cenário
         ctx.save();
         const shadowRadiusX = (visibleSrcW * fitScale) * 0.42;
         const shadowRadiusY = (visibleSrcH * fitScale) * 0.055;
@@ -2064,16 +2652,20 @@
 
       async logoutUser() {
         if (this.isAnimPopOpen) this.closeAnimatedPop(false);
+        this.dismissChapterIntro();
         const keepMusic = this.isMusicEnabled;
         localStorage.removeItem(SESSION_STATE_KEY);
         this.savedUiState = { isMusicEnabled: keepMusic };
         this.saveUiState({ isMusicEnabled: keepMusic });
         this.initialRestoreDone = false;
+        this.hasShownInitialChapterSplash = false;
         if (this.unsubUsers) this.unsubUsers();
         if (this.unsubCharacters) this.unsubCharacters();
         if (this.unsubCompendium) this.unsubCompendium();
         if (this.unsubMaps) this.unsubMaps();
         if (this.unsubProjector) this.unsubProjector();
+        if (this.unsubChapters) this.unsubChapters();
+        if (this.unsubActiveChapter) this.unsubActiveChapter();
         await signOut(auth);
       }
 
@@ -2149,6 +2741,7 @@
         document.getElementById('headerUserRoleBadge').textContent = isDM ? '👑 Mestre (DM)' : '⚔️ Jogador';
         document.getElementById('addCompendiumBtn').classList.toggle('hidden', !isDM);
         document.getElementById('dmMapBtn').classList.toggle('hidden', !isDM);
+        this.renderChaptersUI();
       }
 
       // ---------------------------------------------------------
@@ -2365,6 +2958,7 @@
             this.renderProjectorScreen();
           } else {
             this.renderMapsGallery();
+            this.renderChaptersUI();
           }
         });
 
@@ -2379,8 +2973,47 @@
         });
       }
 
+      subscribeToChapters() {
+        const chaptersRef = ref(db, 'chapters');
+        this.unsubChapters = onValue(chaptersRef, async (snapshot) => {
+          const raw = snapshot.val();
+          if (!raw) {
+            if (this.userProfile?.role === 'dm') {
+              await set(chaptersRef, DEFAULT_CHAPTERS);
+              await set(ref(db, 'campaignState'), { activeChapterId: 'chap_1' });
+            } else {
+              this.chapters = Object.values(DEFAULT_CHAPTERS);
+              this.renderChaptersUI();
+              if (!this.hasShownInitialChapterSplash) {
+                this.hasShownInitialChapterSplash = true;
+                this.openChapterIntroSplash();
+              }
+            }
+            return;
+          }
+
+          this.chapters = Object.values(raw);
+          this.renderChaptersUI();
+
+          if (!this.hasShownInitialChapterSplash && this.chapters.length > 0) {
+            this.hasShownInitialChapterSplash = true;
+            this.openChapterIntroSplash();
+          }
+        });
+
+        const campaignStateRef = ref(db, 'campaignState');
+        this.unsubActiveChapter = onValue(campaignStateRef, (snapshot) => {
+          const val = snapshot.val();
+          if (val && val.activeChapterId) {
+            this.activeChapterId = val.activeChapterId;
+            this.renderChaptersUI();
+          }
+        });
+      }
+
       subscribeToRealtimeData() {
         this.subscribeToMapsAndProjector();
+        this.subscribeToChapters();
 
         const usersRef = ref(db, 'users');
         this.unsubUsers = onValue(usersRef, (snapshot) => {
@@ -2524,33 +3157,30 @@
         if (persist) this.saveUiState({ view });
 
         document.getElementById('sheetView').classList.toggle('hidden', view !== 'sheet');
+        document.getElementById('chaptersView').classList.toggle('hidden', view !== 'chapters');
         document.getElementById('compendiumView').classList.toggle('hidden', view !== 'compendium');
-        document.getElementById('navSheetBtn').className = view === 'sheet'
-          ? 'h-9 px-3.5 rounded-md font-heading text-xs font-bold tracking-wider uppercase transition bg-[#8b1e1e] text-[#f4ead5] border border-[#e5c158]/50'
-          : 'h-9 px-3.5 rounded-md font-heading text-xs font-bold tracking-wider uppercase transition text-[#d6c29f] hover:text-white';
-        document.getElementById('navCompendiumBtn').className = view === 'compendium'
-          ? 'h-9 px-3.5 rounded-md font-heading text-xs font-bold tracking-wider uppercase transition bg-[#8b1e1e] text-[#f4ead5] border border-[#e5c158]/50'
-          : 'h-9 px-3.5 rounded-md font-heading text-xs font-bold tracking-wider uppercase transition text-[#d6c29f] hover:text-white';
+
+        const activeCls = 'h-9 px-3 rounded-md font-heading text-xs font-bold tracking-wider uppercase transition bg-[#8b1e1e] text-[#f4ead5] border border-[#e5c158]/50 flex items-center gap-1';
+        const idleCls = 'h-9 px-3 rounded-md font-heading text-xs font-bold tracking-wider uppercase transition text-[#d6c29f] hover:text-white flex items-center gap-1';
+
+        document.getElementById('navSheetBtn').className = view === 'sheet' ? activeCls : idleCls;
+        document.getElementById('navChaptersBtn').className = view === 'chapters' ? activeCls : idleCls;
+        document.getElementById('navCompendiumBtn').className = view === 'compendium' ? activeCls : idleCls;
+
+        if (view === 'chapters') {
+          this.renderChaptersUI();
+        }
       }
 
       mobileNav(target) {
-        ['party', 'sheet', 'compendium'].forEach(k => {
+        ['sheet', 'chapters', 'compendium'].forEach(k => {
           const btn = document.getElementById(`mobNav-${k}`);
           if (btn) btn.className = 'flex flex-col items-center justify-center gap-0.5 text-[#d6c29f] hover:text-[#e5c158]';
         });
         const activeBtn = document.getElementById(`mobNav-${target}`);
         if (activeBtn) activeBtn.className = 'flex flex-col items-center justify-center gap-0.5 text-[#e5c158] bg-[#8b1e1e]/30 border-t-2 border-[#e5c158]';
 
-        if (target === 'compendium') {
-          this.switchView('compendium');
-        } else {
-          this.switchView('sheet');
-          if (target === 'party') {
-            document.getElementById('partySidebar').scrollIntoView({ behavior: 'smooth' });
-          } else {
-            document.getElementById('characterSheetContainer').scrollIntoView({ behavior: 'smooth' });
-          }
-        }
+        this.switchView(target);
       }
 
       switchSubTab(tab, persist = true) {
@@ -2870,7 +3500,6 @@
         }
       }
 
-      // Sub-itens da Ficha
       addAttack() {
         const char = this.getActiveChar();
         if (!this.canEditChar(char)) return;
@@ -3055,7 +3684,6 @@
         const currentAvatarUrl = char.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(char.name)}`;
         document.getElementById('charAvatarImg').src = currentAvatarUrl;
 
-        // Atualiza a imagem da animação orgânica
         if (this.animLastCharId !== char.id || this.animLastAvatar !== currentAvatarUrl) {
           this.animLastCharId = char.id;
           this.animLastAvatar = currentAvatarUrl;
