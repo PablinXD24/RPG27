@@ -120,6 +120,11 @@
 <body class="pb-24 md:pb-8">
 
   <!-- ========================================================= -->
+  <!-- TRILHA SONORA AMBIENTE DO REPOSITÓRIO (rpgsound.mp3)      -->
+  <!-- ========================================================= -->
+  <audio id="rpgBgAudio" src="./rpgsound.mp3" loop preload="auto"></audio>
+
+  <!-- ========================================================= -->
   <!-- TELA INICIAL DE CARREGAMENTO SILENCIOSO (EVITA FLASH LOGIN) -->
   <!-- ========================================================= -->
   <div id="bootLoadingScreen" class="fixed inset-0 z-[150] bg-[#120c09] flex flex-col items-center justify-center p-6 transition-opacity duration-200">
@@ -170,9 +175,9 @@
     <!-- Vinheta atmosférica sutil para integrar o herói ao cenário -->
     <div class="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/35 pointer-events-none"></div>
 
-    <!-- Barra Superior Flutuante (Seletor de Heróis + Botão Fechar) -->
+    <!-- Barra Superior Flutuante (Seletor de Heróis + Música + Botão Fechar) -->
     <div class="absolute top-0 inset-x-0 z-30 p-3 sm:p-5 flex items-center justify-between gap-2 sm:gap-3 pointer-events-none">
-      <div class="pointer-events-auto leather-panel rounded-full px-3.5 py-2 border border-[#e5c158]/60 flex items-center gap-2.5 shadow-xl max-w-[65vw] sm:max-w-md">
+      <div class="pointer-events-auto leather-panel rounded-full px-3.5 py-2 border border-[#e5c158]/60 flex items-center gap-2.5 shadow-xl max-w-[55vw] sm:max-w-md">
         <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
         <div class="min-w-0">
           <h3 id="animPopCharName" class="font-display text-xs sm:text-base font-black text-[#e5c158] truncate leading-tight">Herói</h3>
@@ -180,10 +185,17 @@
         </div>
       </div>
 
-      <button onclick="app.closeAnimatedPop()" class="pointer-events-auto h-11 px-4 rounded-full bg-[#8b1e1e]/95 hover:bg-[#a62424] active:scale-95 border-2 border-[#e5c158] text-[#f4ead5] font-heading text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-2xl transition cursor-pointer shrink-0">
-        <span>✕</span>
-        <span>Fechar</span>
-      </button>
+      <div class="pointer-events-auto flex items-center gap-2 shrink-0">
+        <button onclick="app.toggleBgMusic()" data-music-btn class="h-11 px-3.5 rounded-full bg-black/75 hover:bg-black/90 active:scale-95 border border-[#c59b27]/70 text-[#e5c158] font-heading text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xl transition cursor-pointer" title="Ligar/Desligar Música Ambiente">
+          <span data-music-icon>🔊</span>
+          <span data-music-label class="hidden sm:inline">Música: ON</span>
+        </button>
+
+        <button onclick="app.closeAnimatedPop()" class="h-11 px-4 rounded-full bg-[#8b1e1e]/95 hover:bg-[#a62424] active:scale-95 border-2 border-[#e5c158] text-[#f4ead5] font-heading text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-2xl transition cursor-pointer">
+          <span>✕</span>
+          <span>Fechar</span>
+        </button>
+      </div>
     </div>
 
     <!-- Barra Inferior Rápida para Alternar Entre os Heróis da Mesa -->
@@ -198,7 +210,13 @@
   <!-- ========================================================= -->
   <!-- TELA DE AUTENTICAÇÃO / PORTAL DE ACESSO (FIREBASE AUTH)   -->
   <!-- ========================================================= -->
-  <div id="authScreen" class="hidden min-h-screen flex items-center justify-center p-4">
+  <div id="authScreen" class="hidden min-h-screen flex items-center justify-center p-4 relative">
+    <!-- Botão Flutuante de Controle de Música na Tela de Login -->
+    <button onclick="app.toggleBgMusic()" data-music-btn class="fixed top-4 right-4 z-50 h-10 px-3.5 rounded-full leather-panel border border-[#c59b27]/60 text-[#e5c158] font-heading text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xl hover:border-[#e5c158] transition cursor-pointer" title="Ligar ou Desligar Música">
+      <span data-music-icon>🔊</span>
+      <span data-music-label>Música: ON</span>
+    </button>
+
     <div class="leather-panel w-full max-w-md rounded-2xl p-6 sm:p-8 border-2 border-[#c59b27]/60 shadow-2xl relative overflow-hidden">
       <div class="text-center mb-6">
         <div class="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-[#9b1c1c] to-[#580c0c] border-2 border-[#e5c158] flex items-center justify-center shadow-lg mb-3">
@@ -324,8 +342,14 @@
           </button>
         </div>
 
-        <!-- Perfil do Usuário Logado + Ícone de Mapa do ADM + Sair -->
-        <div class="flex items-center gap-2 shrink-0">
+        <!-- Perfil do Usuário Logado + Controle de Música + Ícone de Mapa do ADM + Sair -->
+        <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <!-- BOTÃO DE LIGAR/DESLIGAR MÚSICA (DESKTOP E MOBILE) -->
+          <button onclick="app.toggleBgMusic()" data-music-btn class="h-10 px-2.5 sm:px-3 rounded-lg bg-[#2b1d0e] hover:bg-[#3d2914] border border-[#c59b27]/50 text-[#e5c158] font-heading text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition shrink-0 cursor-pointer" title="Ligar ou Desligar Música Ambiente">
+            <span data-music-icon class="text-sm">🔊</span>
+            <span data-music-label class="hidden lg:inline">Música: ON</span>
+          </button>
+
           <!-- ÍCONE DE MAPAS (EXCLUSIVO PARA MESTRE / ADM) -->
           <button id="dmMapBtn" onclick="app.openMapManagerModal()" class="hidden h-10 px-3 rounded-lg bg-gradient-to-r from-[#8b1e1e] to-[#5e1212] hover:from-[#a62424] hover:to-[#751717] border border-[#e5c158] text-[#f4ead5] font-heading text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow transition relative shrink-0 cursor-pointer" title="Central de Mapas & Projetor (Mestre)">
             <span class="text-base">🗺️</span>
@@ -1157,6 +1181,10 @@
         this.rollMode = this.savedUiState.rollMode || 'norm';
         this.rollHistory = [];
 
+        // Estado da Música Ambiente (rpgsound.mp3)
+        this.isMusicEnabled = this.savedUiState.isMusicEnabled !== undefined ? this.savedUiState.isMusicEnabled : true;
+        this.musicUnlockBound = false;
+
         this.unsubUsers = null;
         this.unsubCharacters = null;
         this.unsubCompendium = null;
@@ -1191,6 +1219,8 @@
         if (this.isProjectorMode) {
           this.hideBootLoader();
           this.initProjectorView();
+        } else {
+          this.initBgMusic();
         }
 
         this.initFirebaseAuthListener();
@@ -1198,6 +1228,94 @@
 
         // Inicia o motor de animação no background
         requestAnimationFrame((n) => this.renderAnimFrame(n));
+      }
+
+      // ---------------------------------------------------------
+      // MÚSICA AMBIENTE (rpgsound.mp3) COM AUTOPLAY + CONTROLE ON/OFF
+      // ---------------------------------------------------------
+      initBgMusic() {
+        const audio = document.getElementById('rpgBgAudio');
+        if (!audio) return;
+        audio.volume = 0.45;
+        this.updateMusicButtonsUI();
+
+        if (!this.isMusicEnabled) {
+          audio.pause();
+          return;
+        }
+
+        const attemptPlay = () => {
+          if (!this.isMusicEnabled) return;
+          audio.play().then(() => {
+            this.removeMusicUnlockListeners();
+            this.updateMusicButtonsUI();
+          }).catch(() => {
+            // Caso o navegador exija gesto do usuário, inicia imediatamente no primeiro clique/toque
+            this.bindMusicUnlockListeners();
+          });
+        };
+
+        attemptPlay();
+      }
+
+      bindMusicUnlockListeners() {
+        if (this.musicUnlockBound) return;
+        this.musicUnlockBound = true;
+        this._unlockHandler = () => {
+          const audio = document.getElementById('rpgBgAudio');
+          if (audio && this.isMusicEnabled && audio.paused) {
+            audio.play().then(() => {
+              this.removeMusicUnlockListeners();
+              this.updateMusicButtonsUI();
+            }).catch(() => {});
+          }
+        };
+        document.addEventListener('pointerdown', this._unlockHandler, { passive: true });
+        document.addEventListener('keydown', this._unlockHandler, { passive: true });
+      }
+
+      removeMusicUnlockListeners() {
+        if (!this.musicUnlockBound || !this._unlockHandler) return;
+        document.removeEventListener('pointerdown', this._unlockHandler);
+        document.removeEventListener('keydown', this._unlockHandler);
+        this.musicUnlockBound = false;
+      }
+
+      toggleBgMusic() {
+        const audio = document.getElementById('rpgBgAudio');
+        if (!audio) return;
+
+        this.isMusicEnabled = !this.isMusicEnabled;
+        this.saveUiState({ isMusicEnabled: this.isMusicEnabled });
+
+        if (this.isMusicEnabled) {
+          audio.volume = 0.45;
+          audio.play().catch(() => {
+            this.bindMusicUnlockListeners();
+          });
+        } else {
+          audio.pause();
+          this.removeMusicUnlockListeners();
+        }
+
+        this.updateMusicButtonsUI();
+      }
+
+      updateMusicButtonsUI() {
+        const isOn = this.isMusicEnabled;
+        document.querySelectorAll('[data-music-icon]').forEach(el => {
+          el.textContent = isOn ? '🔊' : '🔇';
+        });
+        document.querySelectorAll('[data-music-label]').forEach(el => {
+          el.textContent = isOn ? 'Música: ON' : 'Música: OFF';
+        });
+        document.querySelectorAll('[data-music-btn]').forEach(btn => {
+          if (isOn) {
+            btn.classList.remove('opacity-65');
+          } else {
+            btn.classList.add('opacity-65');
+          }
+        });
       }
 
       // ---------------------------------------------------------
@@ -1221,6 +1339,7 @@
             subTab: this.currentSubTab,
             isAnimPopOpen: this.isAnimPopOpen,
             rollMode: this.rollMode,
+            isMusicEnabled: this.isMusicEnabled,
             ...partial
           };
           localStorage.setItem(SESSION_STATE_KEY, JSON.stringify(this.savedUiState));
@@ -1897,8 +2016,10 @@
 
       async logoutUser() {
         if (this.isAnimPopOpen) this.closeAnimatedPop(false);
+        const keepMusic = this.isMusicEnabled;
         localStorage.removeItem(SESSION_STATE_KEY);
-        this.savedUiState = {};
+        this.savedUiState = { isMusicEnabled: keepMusic };
+        this.saveUiState({ isMusicEnabled: keepMusic });
         this.initialRestoreDone = false;
         if (this.unsubUsers) this.unsubUsers();
         if (this.unsubCharacters) this.unsubCharacters();
