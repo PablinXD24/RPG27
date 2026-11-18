@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
-  <title>Tomo da Comunidade • D&D 5e Grimoire Hub</title>
+  <title>Tomo da Comunidade</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -625,7 +625,7 @@
 
           <!-- IDENTIDADE DO PERSONAGEM COM CATÁLOGO COMPLETO D&D + OPÇÃO PERSONALIZADA -->
           <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            <!-- CLASSE & ARQUÉTIPO (ABRE SELETOR COMPLETO D&D + PERSONALIZADO) -->
+            <!-- CLASSE & ARQUÉTIPO -->
             <div class="parchment-inset p-2.5 rounded-lg relative group">
               <div class="flex items-center justify-between gap-1 mb-0.5">
                 <label class="block text-[10px] font-heading uppercase tracking-wider text-[#5c4328]">Classe & Arquétipo</label>
@@ -645,7 +645,7 @@
               <input id="charLevelInput" type="number" min="1" max="20" oninput="app.updateLevel(this.value)" class="w-full bg-transparent font-mono-num font-bold text-sm text-[#8b1e1e] outline-none" />
             </div>
 
-            <!-- RAÇA / ESPÉCIE (ABRE SELETOR COMPLETO D&D + PERSONALIZADO) -->
+            <!-- RAÇA / ESPÉCIE -->
             <div class="parchment-inset p-2.5 rounded-lg relative group">
               <div class="flex items-center justify-between gap-1 mb-0.5">
                 <label class="block text-[10px] font-heading uppercase tracking-wider text-[#5c4328]">Raça / Espécie</label>
@@ -660,7 +660,7 @@
                 class="w-full bg-transparent font-bold text-sm text-[#2b1d0e] outline-none cursor-pointer focus:cursor-text" />
             </div>
 
-            <!-- ANTECEDENTE (ABRE SELETOR COMPLETO D&D + PERSONALIZADO) -->
+            <!-- ANTECEDENTE -->
             <div class="parchment-inset p-2.5 rounded-lg relative group">
               <div class="flex items-center justify-between gap-1 mb-0.5">
                 <label class="block text-[10px] font-heading uppercase tracking-wider text-[#5c4328]">Antecedente</label>
@@ -675,7 +675,7 @@
                 class="w-full bg-transparent font-bold text-sm text-[#2b1d0e] outline-none cursor-pointer focus:cursor-text" />
             </div>
 
-            <!-- TENDÊNCIA (ABRE SELETOR COMPLETO D&D + PERSONALIZADO) -->
+            <!-- TENDÊNCIA -->
             <div class="parchment-inset p-2.5 rounded-lg relative group">
               <div class="flex items-center justify-between gap-1 mb-0.5">
                 <label class="block text-[10px] font-heading uppercase tracking-wider text-[#5c4328]">Tendência</label>
@@ -696,7 +696,6 @@
             </div>
           </div>
 
-          <!-- Datalists nativos de apoio rápido -->
           <datalist id="dndClassesDatalist"></datalist>
           <datalist id="dndRacesDatalist"></datalist>
           <datalist id="dndBackgroundsDatalist"></datalist>
@@ -1040,7 +1039,6 @@
     <!-- ========================================================= -->
     <div id="dndOptionPickerModal" class="fixed inset-0 bg-black/85 z-[60] hidden items-center justify-center p-3 sm:p-5">
       <div class="leather-panel rounded-2xl max-w-2xl w-full max-h-[88vh] flex flex-col border-2 border-[#e5c158] text-[#f4ead5] shadow-2xl overflow-hidden">
-        <!-- Cabeçalho -->
         <div class="p-4 sm:p-5 border-b border-[#c59b27]/35 flex items-center justify-between gap-3 bg-black/35">
           <div>
             <span class="text-[10px] font-heading uppercase tracking-[0.2em] text-[#e5c158]">Compêndio Oficial D&D 5e + Custom</span>
@@ -1049,7 +1047,6 @@
           <button onclick="app.closeDndOptionPicker()" class="w-10 h-10 rounded-lg bg-black/50 hover:bg-[#8b1e1e] text-[#f4ead5] flex items-center justify-center transition cursor-pointer">✕</button>
         </div>
 
-        <!-- Campo de Busca + Adicionar Opção Personalizada -->
         <div class="p-4 bg-[#120c09]/90 border-b border-[#c59b27]/25 space-y-3">
           <div class="flex flex-col sm:flex-row gap-2">
             <input id="dndPickerSearchInput" type="text" oninput="app.renderDndOptionPickerList()"
@@ -1065,7 +1062,6 @@
           </p>
         </div>
 
-        <!-- Lista de Opções -->
         <div id="dndPickerListContainer" class="p-4 overflow-y-auto flex-1 space-y-3"></div>
       </div>
     </div>
@@ -1341,8 +1337,7 @@
     const db = getDatabase(firebaseApp);
 
     // =========================================================
-    // CATÁLOGO COMPLETO OFICIAL DE D&D 5E (CLASSES, ARQUÉTIPOS,
-    // RAÇAS/ESPÉCIES, ANTECEDENTES E TENDÊNCIAS) + CUSTOM
+    // CATÁLOGO COMPLETO OFICIAL DE D&D 5E
     // =========================================================
     const DND_CATALOG = {
       class: {
@@ -1624,7 +1619,7 @@
         this.chapters = [];
         this.activeChapterId = null;
         this.hasShownInitialChapterSplash = false;
-        this.activeMapState = { activeMapId: null, showGrid: false };
+        this.activeMapState = { activeMapId: null, showGrid: false, activeChapterId: null };
         this.activeCharId = this.savedUiState.activeCharId || null;
         this.currentView = this.savedUiState.view || 'sheet';
         this.currentSubTab = this.savedUiState.subTab || 'combat';
@@ -1642,8 +1637,8 @@
         this.unsubMaps = null;
         this.unsubProjector = null;
         this.unsubChapters = null;
-        this.unsubActiveChapter = null;
         this.saveTimeout = null;
+        this.pendingDirtyCharId = null;
 
         this.projZoom = 1;
         this.projPanX = 0;
@@ -1940,20 +1935,19 @@
         const targetMapId = overrideMapId !== null ? overrideMapId : (chap?.mapId || '');
 
         try {
-          await update(ref(db, 'campaignState'), {
+          // Armazena activeChapterId dentro de projectorState (já permitido pelas regras do Firebase)
+          const statePatch = {
             activeChapterId: chapterId,
             updatedAt: new Date().toISOString()
-          });
+          };
+          if (targetMapId) {
+            statePatch.activeMapId = targetMapId;
+          }
+
+          await update(ref(db, 'projectorState'), statePatch);
 
           if (chap && chap.status !== 'active') {
             await update(ref(db, `chapters/${chapterId}`), { status: 'active' });
-          }
-
-          if (targetMapId) {
-            await update(ref(db, 'projectorState'), {
-              activeMapId: targetMapId,
-              updatedAt: new Date().toISOString()
-            });
           }
 
           if (showSplash && chap) {
@@ -1972,7 +1966,7 @@
           if (this.activeChapterId === chapterId) {
             const remaining = this.chapters.filter(c => c.id !== chapterId);
             const nextId = remaining.length ? remaining[0].id : null;
-            await update(ref(db, 'campaignState'), { activeChapterId: nextId });
+            await update(ref(db, 'projectorState'), { activeChapterId: nextId });
           }
         } catch (err) {
           alert("Erro ao excluir capítulo: " + err.message);
@@ -2353,6 +2347,7 @@
           }
         });
         window.addEventListener('beforeunload', () => {
+          this.flushPendingCharSave();
           if (this.currentUser) {
             this.saveUiState({ scrollY: window.scrollY });
           }
@@ -2634,7 +2629,7 @@
           const c = document.createElement('canvas');
           c.width = img.width;
           c.height = img.height;
-          const ctx = c.getContext('2d');
+          const ctx = c.getContext('2d', { willReadFrequently: true });
           ctx.clearRect(0, 0, c.width, c.height);
           ctx.drawImage(img, 0, 0);
 
@@ -2649,7 +2644,7 @@
       stripSolidBlackBackgroundIfNeeded(srcCanvas) {
         const w = srcCanvas.width;
         const h = srcCanvas.height;
-        const ctx = srcCanvas.getContext('2d');
+        const ctx = srcCanvas.getContext('2d', { willReadFrequently: true });
         const imgData = ctx.getImageData(0, 0, w, h);
         const data = imgData.data;
 
@@ -2712,7 +2707,8 @@
       autoFitGuidesAnim(srcCanvas) {
         const w = srcCanvas.width;
         const h = srcCanvas.height;
-        const imgData = srcCanvas.getContext('2d').getImageData(0, 0, w, h).data;
+        const ctx = srcCanvas.getContext('2d', { willReadFrequently: true });
+        const imgData = ctx.getImageData(0, 0, w, h).data;
         let minX = w, maxX = 0, minY = h, maxY = 0, found = false;
         for (let y = 0; y < h; y++) {
           for (let x = 0; x < w; x++) {
@@ -2967,6 +2963,7 @@
       }
 
       async logoutUser() {
+        await this.flushPendingCharSave();
         if (this.isAnimPopOpen) this.closeAnimatedPop(false);
         this.dismissChapterIntro();
         this.closeDndOptionPicker();
@@ -2982,7 +2979,6 @@
         if (this.unsubMaps) this.unsubMaps();
         if (this.unsubProjector) this.unsubProjector();
         if (this.unsubChapters) this.unsubChapters();
-        if (this.unsubActiveChapter) this.unsubActiveChapter();
         await signOut(auth);
       }
 
@@ -3281,11 +3277,15 @@
 
         const projRef = ref(db, 'projectorState');
         this.unsubProjector = onValue(projRef, (snapshot) => {
-          this.activeMapState = snapshot.val() || { activeMapId: null, showGrid: false };
+          this.activeMapState = snapshot.val() || { activeMapId: null, showGrid: false, activeChapterId: null };
+          if (this.activeMapState.activeChapterId) {
+            this.activeChapterId = this.activeMapState.activeChapterId;
+          }
           if (this.isProjectorMode) {
             this.renderProjectorScreen();
           } else {
             this.renderMapsGallery();
+            this.renderChaptersUI();
           }
         });
       }
@@ -3296,8 +3296,12 @@
           const raw = snapshot.val();
           if (!raw) {
             if (this.userProfile?.role === 'dm') {
-              await set(chaptersRef, DEFAULT_CHAPTERS);
-              await set(ref(db, 'campaignState'), { activeChapterId: 'chap_1' });
+              try {
+                await set(chaptersRef, DEFAULT_CHAPTERS);
+                await update(ref(db, 'projectorState'), { activeChapterId: 'chap_1' });
+              } catch (e) {
+                console.warn("Sem permissão para inicializar capítulos padrão:", e.message);
+              }
             } else {
               this.chapters = Object.values(DEFAULT_CHAPTERS);
               this.renderChaptersUI();
@@ -3315,15 +3319,6 @@
           if (!this.hasShownInitialChapterSplash && this.chapters.length > 0) {
             this.hasShownInitialChapterSplash = true;
             this.openChapterIntroSplash();
-          }
-        });
-
-        const campaignStateRef = ref(db, 'campaignState');
-        this.unsubActiveChapter = onValue(campaignStateRef, (snapshot) => {
-          const val = snapshot.val();
-          if (val && val.activeChapterId) {
-            this.activeChapterId = val.activeChapterId;
-            this.renderChaptersUI();
           }
         });
       }
@@ -3379,7 +3374,11 @@
           const rawVal = snapshot.val();
           if (!rawVal) {
             if (this.userProfile?.role === 'dm') {
-              await set(compRef, DEFAULT_COMPENDIUM);
+              try {
+                await set(compRef, DEFAULT_COMPENDIUM);
+              } catch (e) {
+                console.warn("Sem permissão para inicializar compêndio:", e.message);
+              }
             } else {
               this.compendium = Object.values(DEFAULT_COMPENDIUM);
               this.renderCompendium();
@@ -3425,7 +3424,31 @@
         return this.userProfile.role === 'dm' || char.ownerId === this.currentUser.uid;
       }
 
-      persistActiveChar() {
+      async flushPendingCharSave() {
+        if (!this.saveTimeout || !this.pendingDirtyCharId) return;
+        clearTimeout(this.saveTimeout);
+        this.saveTimeout = null;
+        const charToSave = this.characters.find(c => c.id === this.pendingDirtyCharId);
+        this.pendingDirtyCharId = null;
+        if (!charToSave || !this.canEditChar(charToSave)) return;
+
+        const statusEl = document.getElementById('syncStatusLabel');
+        try {
+          await update(ref(db, `characters/${charToSave.id}`), charToSave);
+          if (statusEl) {
+            statusEl.textContent = 'Sincronizado';
+            statusEl.className = 'text-emerald-400';
+          }
+        } catch (err) {
+          console.error("Erro ao salvar ficha no Realtime DB:", err);
+          if (statusEl) {
+            statusEl.textContent = 'Erro ao Salvar';
+            statusEl.className = 'text-red-400';
+          }
+        }
+      }
+
+      persistActiveChar(immediate = false) {
         const char = this.getActiveChar();
         if (!char || !this.canEditChar(char)) return;
 
@@ -3433,10 +3456,14 @@
         statusEl.textContent = 'Salvando...';
         statusEl.className = 'text-amber-300';
 
+        this.pendingDirtyCharId = char.id;
         clearTimeout(this.saveTimeout);
-        this.saveTimeout = setTimeout(async () => {
+
+        const execSave = async () => {
+          this.saveTimeout = null;
+          this.pendingDirtyCharId = null;
           try {
-            await set(ref(db, `characters/${char.id}`), char);
+            await update(ref(db, `characters/${char.id}`), char);
             statusEl.textContent = 'Sincronizado';
             statusEl.className = 'text-emerald-400';
           } catch (err) {
@@ -3444,7 +3471,13 @@
             statusEl.textContent = 'Erro ao Salvar';
             statusEl.className = 'text-red-400';
           }
-        }, 350);
+        };
+
+        if (immediate) {
+          execSave();
+        } else {
+          this.saveTimeout = setTimeout(execSave, 120);
+        }
       }
 
       async uploadCharacterAvatar(event) {
@@ -3459,7 +3492,7 @@
           document.getElementById('charAvatarImg').src = dataUrl;
           this.animLastAvatar = dataUrl;
           this.loadAnimationImage(dataUrl);
-          this.persistActiveChar();
+          this.persistActiveChar(true);
           this.renderCharacterList();
         } catch (err) {
           alert("Erro ao processar retrato do personagem: " + err.message);
@@ -3469,10 +3502,7 @@
       }
 
       // =========================================================
-      // REGRAS ADAPTADAS DA MESA:
-      // - Sem modificadores derivados (+1/-3) dos atributos
-      // - Atributo Sorte (SOR) incluído
-      // - Bônus de proficiência nas perícias configurável de +2 até +6
+      // REGRAS ADAPTADAS DA MESA
       // =========================================================
       calcMod(score) {
         return 0;
@@ -3570,7 +3600,7 @@
         const char = this.getActiveChar();
         if (!this.canEditChar(char)) return;
         char.attributes[attrKey] = Math.max(1, Math.min(30, parseInt(val) || 10));
-        this.persistActiveChar();
+        this.persistActiveChar(true);
         this.renderAll();
       }
 
@@ -3578,7 +3608,7 @@
         const char = this.getActiveChar();
         if (!this.canEditChar(char)) return;
         char.savingThrows[attrKey] = !char.savingThrows[attrKey];
-        this.persistActiveChar();
+        this.persistActiveChar(true);
         this.renderAll();
       }
 
@@ -3588,7 +3618,7 @@
         if (!char.skills) char.skills = {};
         const parsed = parseInt(bonusVal) || 0;
         char.skills[skillKey] = parsed <= 0 ? 0 : Math.min(6, Math.max(2, parsed));
-        this.persistActiveChar();
+        this.persistActiveChar(true);
         this.renderAll();
       }
 
@@ -3624,7 +3654,7 @@
         } else {
           char.hp.current = Math.min(char.hp.max, char.hp.current + amount);
         }
-        this.persistActiveChar();
+        this.persistActiveChar(true);
         this.renderAll();
       }
 
@@ -3639,7 +3669,7 @@
         const char = this.getActiveChar();
         if (!this.canEditChar(char)) return;
         char.inspiration = !char.inspiration;
-        this.persistActiveChar();
+        this.persistActiveChar(true);
         this.renderAll();
       }
 
@@ -3647,7 +3677,7 @@
         const char = this.getActiveChar();
         if (!this.canEditChar(char)) return;
         char.deathSaves[type] = char.deathSaves[type] === index ? index - 1 : index;
-        this.persistActiveChar();
+        this.persistActiveChar(true);
         this.renderAll();
       }
 
@@ -3666,7 +3696,7 @@
         Object.keys(char.spellcasting.slots).forEach(lvl => {
           char.spellcasting.slots[lvl].used = 0;
         });
-        this.persistActiveChar();
+        this.persistActiveChar(true);
         this.renderAll();
         this.triggerRollBanner("Descanso Longo Concluído", "HP e Espaços de Magia restaurados", "8 Horas", "text-[#e5c158]");
       }
@@ -3809,7 +3839,8 @@
       // ---------------------------------------------------------
       // GERENCIAMENTO DE FICHAS NA MESA
       // ---------------------------------------------------------
-      selectCharacter(id) {
+      async selectCharacter(id) {
+        await this.flushPendingCharSave();
         this.activeCharId = id;
         this.saveUiState({ activeCharId: id });
         this.renderAll();
@@ -3820,6 +3851,7 @@
 
       async createNewCharacter() {
         if (!this.currentUser) return;
+        await this.flushPendingCharSave();
         const newId = `char_${this.currentUser.uid}_${Date.now()}`;
         const newChar = buildStarterCharacter(this.currentUser.uid, this.userProfile.name, newId);
         newChar.name = "Novo Aventureiro";
@@ -3866,7 +3898,7 @@
         if (!this.canEditChar(char)) return;
         if (!char.attacks) char.attacks = [];
         char.attacks.push({ name: "Nova Arma", ability: "str", damage: "1d8+2", type: "Cortante" });
-        this.persistActiveChar();
+        this.persistActiveChar(true);
         this.renderAll();
       }
 
@@ -3882,7 +3914,7 @@
         const char = this.getActiveChar();
         if (!this.canEditChar(char)) return;
         char.attacks.splice(idx, 1);
-        this.persistActiveChar();
+        this.persistActiveChar(true);
         this.renderAll();
       }
 
@@ -3891,7 +3923,7 @@
         if (!this.canEditChar(char)) return;
         if (!char.features) char.features = [];
         char.features.push({ name: "Nova Habilidade", source: "Classe / Talento", desc: "Descreva os efeitos mecânicos..." });
-        this.persistActiveChar();
+        this.persistActiveChar(true);
         this.renderAll();
       }
 
@@ -3906,7 +3938,7 @@
         const char = this.getActiveChar();
         if (!this.canEditChar(char)) return;
         char.features.splice(idx, 1);
-        this.persistActiveChar();
+        this.persistActiveChar(true);
         this.renderAll();
       }
 
@@ -3914,7 +3946,7 @@
         const char = this.getActiveChar();
         if (!this.canEditChar(char)) return;
         char.spellcasting[field] = val;
-        this.persistActiveChar();
+        this.persistActiveChar(true);
         this.renderAll();
       }
 
@@ -3922,7 +3954,7 @@
         const char = this.getActiveChar();
         if (!this.canEditChar(char)) return;
         char.spellcasting.slots[level][field] = Math.max(0, parseInt(val) || 0);
-        this.persistActiveChar();
+        this.persistActiveChar(true);
         this.renderAll();
       }
 
@@ -3931,7 +3963,7 @@
         if (!this.canEditChar(char)) return;
         if (!char.spellcasting.spells) char.spellcasting.spells = [];
         char.spellcasting.spells.push({ name: "Nova Magia", level: 1, school: "Evocação", prepared: true, desc: "Efeito da magia..." });
-        this.persistActiveChar();
+        this.persistActiveChar(true);
         this.renderAll();
       }
 
@@ -3946,7 +3978,7 @@
         const char = this.getActiveChar();
         if (!this.canEditChar(char)) return;
         char.spellcasting.spells.splice(idx, 1);
-        this.persistActiveChar();
+        this.persistActiveChar(true);
         this.renderAll();
       }
 
@@ -3962,7 +3994,7 @@
         if (!this.canEditChar(char)) return;
         if (!char.inventory) char.inventory = [];
         char.inventory.push({ name: "Novo Item", qty: 1, weight: 0.5, equipped: false, attuned: false });
-        this.persistActiveChar();
+        this.persistActiveChar(true);
         this.renderAll();
       }
 
@@ -3970,7 +4002,7 @@
         const char = this.getActiveChar();
         if (!this.canEditChar(char)) return;
         char.inventory[idx][field] = val;
-        this.persistActiveChar();
+        this.persistActiveChar(true);
         this.renderAll();
       }
 
@@ -3978,7 +4010,7 @@
         const char = this.getActiveChar();
         if (!this.canEditChar(char)) return;
         char.inventory.splice(idx, 1);
-        this.persistActiveChar();
+        this.persistActiveChar(true);
         this.renderAll();
       }
 
@@ -4085,194 +4117,211 @@
           ? 'h-11 px-3 rounded-lg border-2 border-[#e5c158] bg-[#8b1e1e] text-[#f4ead5] flex items-center gap-2 shadow transition active:scale-95'
           : 'h-11 px-3 rounded-lg border-2 border-[#8b5a2b] bg-[#e6d5b8] text-[#2b1d0e] flex items-center gap-2 transition active:scale-95';
 
-        document.getElementById('acInput').value = char.ac ?? 10;
+        document.getElementById('acInput').value = char.ac || 10;
         document.getElementById('initRollBtn').textContent = '0';
         document.getElementById('speedInput').value = char.speed || '9m';
         document.getElementById('hitDiceInput').value = char.hitDice || '1d8';
-        document.getElementById('hpCurrentInput').value = char.hp?.current ?? 10;
-        document.getElementById('hpMaxInput').value = char.hp?.max ?? 10;
-        document.getElementById('hpTempInput').value = char.hp?.temp ?? 0;
+        document.getElementById('hpCurrentInput').value = char.hp.current;
+        document.getElementById('hpMaxInput').value = char.hp.max;
+        document.getElementById('hpTempInput').value = char.hp.temp;
         this.updateHpVisualBar(char);
 
-        const ds = char.deathSaves || { successes: 0, failures: 0 };
+        const percBonus = this.normalizeSkillBonus(char.skills?.perception || 0);
+        document.getElementById('passivePerceptionDisplay').textContent = 10 + percBonus;
+        document.getElementById('profBonusDisplay').textContent = this.formatMod(profBonus);
+
+        const totalWeight = (char.inventory || []).reduce((acc, item) => acc + ((item.weight || 0) * (item.qty || 1)), 0);
+        const maxCarry = (char.attributes.str || 10) * 7.5;
+        document.getElementById('carryWeightDisplay').textContent = `${totalWeight.toFixed(1)} / ${maxCarry.toFixed(0)} kg`;
+
         document.getElementById('deathSuccessBoxes').innerHTML = [1, 2, 3].map(i => `
-          <button onclick="app.setDeathSave('successes', ${i})" class="w-5 h-5 rounded-full border border-emerald-800 ${ds.successes >= i ? 'bg-emerald-700' : 'bg-transparent'}"></button>
+          <button onclick="app.setDeathSave('successes', ${i})" aria-label="Sucesso ${i}" class="w-6 h-6 rounded-full border-2 border-emerald-800 ${char.deathSaves.successes >= i ? 'bg-emerald-700' : 'bg-transparent'}"></button>
         `).join('');
         document.getElementById('deathFailBoxes').innerHTML = [1, 2, 3].map(i => `
-          <button onclick="app.setDeathSave('failures', ${i})" class="w-5 h-5 rounded-full border border-[#8b1e1e] ${ds.failures >= i ? 'bg-[#8b1e1e]' : 'bg-transparent'}"></button>
+          <button onclick="app.setDeathSave('failures', ${i})" aria-label="Falha ${i}" class="w-6 h-6 rounded-full border-2 border-[#8b1e1e] ${char.deathSaves.failures >= i ? 'bg-[#8b1e1e]' : 'bg-transparent'}"></button>
         `).join('');
 
-        const percSkillBonus = this.normalizeSkillBonus(char.skills?.perception || 0);
-        const passivePerc = 10 + percSkillBonus;
-        document.getElementById('passivePerceptionDisplay').textContent = passivePerc;
-        document.getElementById('profBonusDisplay').textContent = this.formatMod(profBonus);
-        const totalWeight = (char.inventory || []).reduce((acc, it) => acc + ((it.weight || 0) * (it.qty || 1)), 0);
-        const maxCarry = Math.round((char.attributes.str || 10) * 7.5);
-        document.getElementById('carryWeightDisplay').textContent = `${totalWeight.toFixed(1)} / ${maxCarry} kg`;
-
         document.getElementById('attributesGrid').innerHTML = ATTRIBUTES_META.map(attr => {
-          const score = char.attributes?.[attr.key] ?? 10;
-          const isLuck = attr.key === 'luck';
+          const score = char.attributes[attr.key] ?? 10;
           return `
-            <div class="parchment-page rounded-xl p-3 text-center flex flex-col items-center justify-between border ${isLuck ? 'border-[#c59b27] ring-1 ring-[#c59b27]/40' : 'border-[#8b5a2b]/60'}">
-              <span class="font-heading text-[11px] font-bold uppercase tracking-wider ${isLuck ? 'text-[#8b1e1e]' : 'text-[#5c4328]'}">${isLuck ? '🍀 ' : ''}${attr.label}</span>
-              <input type="number" min="1" max="30" value="${score}" ${editable ? '' : 'disabled'} onchange="app.updateAttribute('${attr.key}', this.value)"
-                class="w-full text-center font-display text-3xl font-black text-[#2b1d0e] bg-transparent outline-none my-2" />
-              <button onclick="app.rollD20Check('Teste de ${attr.label}', 0, 'Valor ${score}')"
-                class="w-full py-1.5 rounded-lg bg-[#2b1d0e] hover:bg-[#8b1e1e] active:scale-95 text-[#e5c158] font-heading text-[10px] font-bold uppercase tracking-wider transition cursor-pointer">
-                🎲 Rolar d20
+            <div class="parchment-page rounded-xl p-2.5 flex flex-col items-center text-center">
+              <button onclick="app.rollD20Check('Teste de ${attr.label}', 0, 'Valor: ${score}')"
+                class="w-full min-h-[34px] text-[10px] font-heading font-bold uppercase tracking-wider text-[#8b1e1e] hover:underline flex items-center justify-center gap-1 cursor-pointer">
+                <span>🎲</span>
+                <span>${attr.label}</span>
               </button>
+              <div class="my-1.5 flex items-center justify-center">
+                <input type="number" min="1" max="30" value="${score}" ${editable ? '' : 'disabled'} onchange="app.updateAttribute('${attr.key}', this.value)"
+                  class="w-16 h-12 text-center font-display text-2xl font-black text-[#2b1d0e] parchment-inset rounded-xl outline-none focus:border-[#8b1e1e]" />
+              </div>
+              <span class="text-[9px] font-heading uppercase tracking-widest text-[#5c4328]">${attr.short}</span>
             </div>
           `;
         }).join('');
 
         document.getElementById('savingThrowsList').innerHTML = ATTRIBUTES_META.map(attr => {
-          const isProf = !!char.savingThrows?.[attr.key];
+          const isProf = !!char.savingThrows[attr.key];
           const total = isProf ? profBonus : 0;
           return `
-            <div class="flex items-center justify-between py-1.5 px-2 rounded hover:bg-[#e6d5b8]/60 gap-2">
+            <div class="flex items-center justify-between gap-2 py-1 px-2 rounded hover:bg-[#e6d5b8]/70 transition">
               <div class="flex items-center gap-2 min-w-0">
-                <button onclick="app.toggleSaveProf('${attr.key}')" class="w-5 h-5 rounded-full border-2 border-[#8b1e1e] flex items-center justify-center text-[10px] shrink-0 ${isProf ? 'bg-[#8b1e1e] text-[#f4ead5]' : 'bg-transparent'}">
-                  ${isProf ? '●' : ''}
+                <button onclick="app.toggleSaveProf('${attr.key}')" aria-label="Proficiência Salvaguarda ${attr.label}"
+                  class="w-6 h-6 rounded-full border-2 border-[#8b1e1e] flex items-center justify-center shrink-0 ${isProf ? 'bg-[#8b1e1e]' : 'bg-transparent'}">
+                  ${isProf ? '<span class="w-2 h-2 rounded-full bg-[#f4ead5]"></span>' : ''}
                 </button>
-                <span class="text-sm font-semibold text-[#2b1d0e] truncate">${attr.label}</span>
+                <button onclick="app.rollD20Check('Salvaguarda: ${attr.label}', ${total})" class="text-sm font-semibold text-[#2b1d0e] hover:text-[#8b1e1e] truncate text-left cursor-pointer">
+                  ${attr.label}
+                </button>
               </div>
-              <button onclick="app.rollD20Check('Salvaguarda de ${attr.label}', ${total})" class="min-w-[44px] h-8 font-mono-num text-xs font-bold px-2.5 rounded bg-[#e6d5b8] hover:bg-[#8b1e1e] hover:text-white transition shrink-0">
-                ${this.formatMod(total)}
-              </button>
+              <span class="font-mono-num text-xs font-bold text-[#2b1d0e] shrink-0">${this.formatMod(total)}</span>
             </div>
           `;
         }).join('');
+
         document.getElementById('proficienciesText').value = char.otherProficiencies || '';
 
         document.getElementById('skillsList').innerHTML = SKILLS_META.map(sk => {
-          const bonusVal = this.normalizeSkillBonus(char.skills?.[sk.key] || 0);
-          const isProficient = bonusVal > 0;
+          const profVal = this.normalizeSkillBonus(char.skills?.[sk.key] || 0);
+          const attrShort = ATTRIBUTES_META.find(a => a.key === sk.attr)?.short || sk.attr.toUpperCase();
           return `
-            <div class="flex items-center justify-between py-1 px-2 rounded hover:bg-[#e6d5b8]/60 gap-1.5">
+            <div class="flex items-center justify-between gap-1.5 py-1 px-2 rounded hover:bg-[#e6d5b8]/70 transition">
               <div class="flex items-center gap-1.5 min-w-0 flex-1">
-                <select ${editable ? '' : 'disabled'} onchange="app.setSkillProfBonus('${sk.key}', this.value)"
-                  title="Bônus de Proficiência da Perícia (0 ou +2 até +6)"
-                  class="h-7 px-1 rounded border text-[11px] font-mono-num font-bold outline-none shrink-0 cursor-pointer ${isProficient ? 'bg-[#8b1e1e] border-[#e5c158] text-[#f4ead5]' : 'bg-[#e6d5b8] border-[#8b5a2b]/60 text-[#5c4328]'}">
-                  <option value="0" ${bonusVal === 0 ? 'selected' : ''}>0</option>
-                  <option value="2" ${bonusVal === 2 ? 'selected' : ''}>+2</option>
-                  <option value="3" ${bonusVal === 3 ? 'selected' : ''}>+3</option>
-                  <option value="4" ${bonusVal === 4 ? 'selected' : ''}>+4</option>
-                  <option value="5" ${bonusVal === 5 ? 'selected' : ''}>+5</option>
-                  <option value="6" ${bonusVal === 6 ? 'selected' : ''}>+6</option>
+                <select aria-label="Bônus de Proficiência em ${sk.label}" ${editable ? '' : 'disabled'}
+                  onchange="app.setSkillProfBonus('${sk.key}', this.value)"
+                  class="h-7 px-1 rounded border font-mono-num text-[11px] font-bold shrink-0 outline-none cursor-pointer ${profVal > 0 ? 'bg-[#8b1e1e] text-[#f4ead5] border-[#e5c158]' : 'bg-[#e6d5b8] text-[#5c4328] border-[#8b5a2b]/60'}">
+                  <option value="0" ${profVal === 0 ? 'selected' : ''}>+0</option>
+                  <option value="2" ${profVal === 2 ? 'selected' : ''}>+2</option>
+                  <option value="3" ${profVal === 3 ? 'selected' : ''}>+3</option>
+                  <option value="4" ${profVal === 4 ? 'selected' : ''}>+4</option>
+                  <option value="5" ${profVal === 5 ? 'selected' : ''}>+5</option>
+                  <option value="6" ${profVal === 6 ? 'selected' : ''}>+6</option>
                 </select>
-                <span class="text-xs font-semibold text-[#2b1d0e] truncate">${sk.label} <span class="text-[10px] text-[#5c4328] uppercase">(${sk.attr})</span></span>
+                <button onclick="app.rollD20Check('Perícia: ${sk.label}', ${profVal})" class="text-xs font-semibold text-[#2b1d0e] hover:text-[#8b1e1e] text-left truncate cursor-pointer">
+                  ${sk.label} <span class="text-[10px] text-[#5c4328]">(${attrShort})</span>
+                </button>
               </div>
-              <button onclick="app.rollD20Check('Perícia: ${sk.label}', ${bonusVal})" class="min-w-[44px] h-8 font-mono-num text-xs font-bold px-2 rounded bg-[#e6d5b8] hover:bg-[#8b1e1e] hover:text-white transition shrink-0" title="Rolar ${sk.label} (1d20 ${this.formatMod(bonusVal)})">
-                ${this.formatMod(bonusVal)}
-              </button>
+              <span class="font-mono-num text-xs font-bold text-[#2b1d0e] shrink-0">${this.formatMod(profVal)}</span>
             </div>
           `;
         }).join('');
 
         document.getElementById('attacksList').innerHTML = (char.attacks || []).map((atk, idx) => {
+          const atkBonus = profBonus;
           return `
-            <div class="parchment-inset p-3 rounded-lg flex flex-col sm:flex-row sm:items-center gap-2.5 justify-between">
-              <div class="grid grid-cols-1 sm:grid-cols-4 gap-2 flex-1 min-w-0">
-                <input type="text" value="${atk.name}" ${editable ? '' : 'disabled'} onchange="app.updateAttack(${idx}, 'name', this.value)" class="sm:col-span-2 bg-[#f4ead5] border border-[#b89b6a] rounded px-2.5 h-9 text-sm font-bold text-[#2b1d0e]" />
-                <input type="text" value="${atk.damage}" ${editable ? '' : 'disabled'} onchange="app.updateAttack(${idx}, 'damage', this.value)" class="bg-[#f4ead5] border border-[#b89b6a] rounded px-2.5 h-9 font-mono-num text-sm text-[#2b1d0e]" placeholder="1d8+3" />
-                <input type="text" value="${atk.type}" ${editable ? '' : 'disabled'} onchange="app.updateAttack(${idx}, 'type', this.value)" class="bg-[#f4ead5] border border-[#b89b6a] rounded px-2.5 h-9 text-xs text-[#5c4328]" placeholder="Tipo Dano" />
+            <div class="parchment-inset rounded-lg p-3 flex flex-col sm:flex-row sm:items-center gap-2.5 justify-between">
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 flex-1 min-w-0">
+                <input type="text" value="${atk.name}" ${editable ? '' : 'disabled'} onchange="app.updateAttack(${idx}, 'name', this.value)" class="col-span-2 sm:col-span-1 bg-[#f4ead5] border border-[#b89b6a] rounded px-2.5 h-9 text-xs font-bold text-[#2b1d0e]" />
+                <select ${editable ? '' : 'disabled'} onchange="app.updateAttack(${idx}, 'ability', this.value)" class="bg-[#f4ead5] border border-[#b89b6a] rounded px-2 h-9 text-xs font-heading font-bold">
+                  <option value="str" ${atk.ability==='str'?'selected':''}>FOR</option>
+                  <option value="dex" ${atk.ability==='dex'?'selected':''}>DES</option>
+                  <option value="int" ${atk.ability==='int'?'selected':''}>INT</option>
+                  <option value="wis" ${atk.ability==='wis'?'selected':''}>SAB</option>
+                  <option value="cha" ${atk.ability==='cha'?'selected':''}>CAR</option>
+                  <option value="luck" ${atk.ability==='luck'?'selected':''}>SOR</option>
+                </select>
+                <input type="text" value="${atk.damage}" ${editable ? '' : 'disabled'} onchange="app.updateAttack(${idx}, 'damage', this.value)" class="bg-[#f4ead5] border border-[#b89b6a] rounded px-2.5 h-9 text-xs font-mono-num font-bold text-center" />
+                <input type="text" value="${atk.type}" ${editable ? '' : 'disabled'} onchange="app.updateAttack(${idx}, 'type', this.value)" class="col-span-2 sm:col-span-1 bg-[#f4ead5] border border-[#b89b6a] rounded px-2.5 h-9 text-xs text-[#5c4328]" />
               </div>
-              <div class="flex items-center gap-1.5 justify-end shrink-0">
-                <button onclick="app.rollAttack(${idx})" class="h-9 px-3 rounded-lg bg-[#8b1e1e] hover:bg-[#a62424] text-[#f4ead5] font-mono-num text-xs font-bold">
-                  🎯 ${this.formatMod(profBonus)}
+              <div class="flex items-center justify-end gap-1.5 shrink-0">
+                <button onclick="app.rollAttack(${idx})" class="h-9 px-3 rounded-lg bg-[#8b1e1e] hover:bg-[#a62424] text-[#f4ead5] font-mono-num text-xs font-bold transition">
+                  🎲 ${this.formatMod(atkBonus)}
                 </button>
-                <button onclick="app.rollDamage(${idx})" class="h-9 px-3 rounded-lg bg-[#2b1d0e] hover:bg-[#3d2914] text-[#e5c158] font-mono-num text-xs font-bold">
+                <button onclick="app.rollDamage(${idx})" class="h-9 px-3 rounded-lg bg-[#2b1d0e] hover:bg-[#3d2914] text-[#e5c158] font-mono-num text-xs font-bold transition">
                   💥 Dano
                 </button>
-                ${editable ? `<button onclick="app.removeAttack(${idx})" class="h-9 w-9 rounded-lg text-[#8b1e1e] hover:bg-red-900/20 flex items-center justify-center">✕</button>` : ''}
+                ${editable ? `<button onclick="app.removeAttack(${idx})" class="h-9 w-9 rounded-lg text-[#8b1e1e] hover:bg-red-900/10 flex items-center justify-center text-sm shrink-0">✕</button>` : ''}
               </div>
             </div>
           `;
         }).join('');
 
         document.getElementById('featuresList').innerHTML = (char.features || []).map((feat, idx) => `
-          <div class="parchment-inset p-3.5 rounded-lg space-y-2 relative">
+          <div class="parchment-inset rounded-lg p-3 space-y-1.5">
             <div class="flex items-center justify-between gap-2">
               <input type="text" value="${feat.name}" ${editable ? '' : 'disabled'} onchange="app.updateFeature(${idx}, 'name', this.value)" class="font-heading font-bold text-sm text-[#8b1e1e] bg-transparent outline-none flex-1 min-w-0" />
-              ${editable ? `<button onclick="app.removeFeature(${idx})" class="w-8 h-8 rounded text-xs text-[#8b1e1e] shrink-0">✕</button>` : ''}
+              <input type="text" value="${feat.source}" ${editable ? '' : 'disabled'} onchange="app.updateFeature(${idx}, 'source', this.value)" class="text-[11px] text-right text-[#5c4328] bg-transparent outline-none w-28 shrink-0" />
+              ${editable ? `<button onclick="app.removeFeature(${idx})" class="w-8 h-8 flex items-center justify-center text-xs text-[#8b1e1e] shrink-0">✕</button>` : ''}
             </div>
-            <input type="text" value="${feat.source}" ${editable ? '' : 'disabled'} onchange="app.updateFeature(${idx}, 'source', this.value)" class="text-[11px] font-heading uppercase text-[#5c4328] bg-transparent outline-none w-full" />
             <textarea rows="3" ${editable ? '' : 'disabled'} onchange="app.updateFeature(${idx}, 'desc', this.value)" class="w-full bg-transparent text-xs text-[#2b1d0e] outline-none leading-relaxed">${feat.desc}</textarea>
           </div>
         `).join('');
 
-        const sc = char.spellcasting || { ability: 'int', slots: {}, spells: [] };
-        document.getElementById('spellAbilitySelect').value = sc.ability || 'int';
-        const spellDc = 8 + profBonus;
-        document.getElementById('spellSaveDcDisplay').textContent = spellDc;
+        const spellAbil = char.spellcasting?.ability || 'int';
+        document.getElementById('spellAbilitySelect').value = spellAbil;
+        document.getElementById('spellSaveDcDisplay').textContent = 8 + profBonus;
         document.getElementById('spellAttackDisplay').textContent = this.formatMod(profBonus);
 
         document.getElementById('spellSlotsGrid').innerHTML = [1, 2, 3, 4, 5, 6, 7, 8, 9].map(lvl => {
-          const sl = sc.slots?.[lvl] || { total: 0, used: 0 };
+          const slot = char.spellcasting?.slots?.[lvl] || { total: 0, used: 0 };
           return `
-            <div class="parchment-inset p-2 rounded-lg text-center">
-              <span class="block text-[10px] font-heading font-bold text-[#8b1e1e] mb-1">${lvl}º Círculo</span>
+            <div class="parchment-inset rounded-lg p-2 text-center">
+              <span class="block text-[10px] font-heading font-bold text-[#8b1e1e] mb-1">${lvl}º Círc.</span>
               <div class="flex items-center justify-center gap-1 text-xs font-mono-num">
-                <input type="number" min="0" max="9" value="${sl.used}" ${editable ? '' : 'disabled'} onchange="app.updateSlot(${lvl}, 'used', this.value)" class="w-9 h-8 text-center bg-[#f4ead5] rounded border border-[#b89b6a] text-[#8b1e1e] font-bold" title="Usados" />
+                <input type="number" min="0" max="9" value="${slot.used}" ${editable ? '' : 'disabled'} onchange="app.updateSlot(${lvl}, 'used', this.value)" class="w-8 h-7 text-center bg-[#f4ead5] border border-[#b89b6a] rounded font-bold text-[#8b1e1e]" />
                 <span>/</span>
-                <input type="number" min="0" max="9" value="${sl.total}" ${editable ? '' : 'disabled'} onchange="app.updateSlot(${lvl}, 'total', this.value)" class="w-9 h-8 text-center bg-[#f4ead5] rounded border border-[#b89b6a] font-bold" title="Totais" />
+                <input type="number" min="0" max="9" value="${slot.total}" ${editable ? '' : 'disabled'} onchange="app.updateSlot(${lvl}, 'total', this.value)" class="w-8 h-7 text-center bg-[#f4ead5] border border-[#b89b6a] rounded font-bold" />
               </div>
             </div>
           `;
         }).join('');
 
-        document.getElementById('spellsList').innerHTML = (sc.spells || []).map((sp, idx) => `
-          <div class="parchment-inset p-3.5 rounded-lg space-y-2">
-            <div class="flex flex-wrap items-center justify-between gap-2">
-              <div class="flex items-center gap-2 flex-1 min-w-0">
-                <input type="checkbox" ${sp.prepared ? 'checked' : ''} ${editable ? '' : 'disabled'} onchange="app.updateSpell(${idx}, 'prepared', this.checked)" class="w-4 h-4 accent-[#8b1e1e] shrink-0" title="Magia Preparada" />
+        document.getElementById('spellsList').innerHTML = (char.spellcasting?.spells || []).map((sp, idx) => `
+          <div class="parchment-inset rounded-lg p-3 space-y-2">
+            <div class="flex flex-wrap items-center gap-2 justify-between">
+              <div class="flex items-center gap-2 flex-1 min-w-[180px]">
+                <input type="checkbox" ${sp.prepared ? 'checked' : ''} ${editable ? '' : 'disabled'} onchange="app.updateSpell(${idx}, 'prepared', this.checked)" class="w-5 h-5 accent-[#8b1e1e] shrink-0" />
                 <input type="text" value="${sp.name}" ${editable ? '' : 'disabled'} onchange="app.updateSpell(${idx}, 'name', this.value)" class="font-bold text-sm text-[#2b1d0e] bg-transparent outline-none flex-1 min-w-0" />
               </div>
               <div class="flex items-center gap-1.5 shrink-0">
-                <select ${editable ? '' : 'disabled'} onchange="app.updateSpell(${idx}, 'level', parseInt(this.value))" class="h-8 text-xs bg-[#f4ead5] border border-[#b89b6a] rounded px-1.5 font-mono-num">
-                  ${[0,1,2,3,4,5,6,7,8,9].map(l => `<option value="${l}" ${sp.level === l ? 'selected' : ''}>${l === 0 ? 'Truque' : l + 'º C.'}</option>`).join('')}
+                <select ${editable ? '' : 'disabled'} onchange="app.updateSpell(${idx}, 'level', parseInt(this.value))" class="h-8 bg-[#f4ead5] border border-[#b89b6a] rounded px-1.5 text-xs font-mono-num">
+                  <option value="0" ${sp.level===0?'selected':''}>Truque</option>
+                  ${[1,2,3,4,5,6,7,8,9].map(l => `<option value="${l}" ${sp.level===l?'selected':''}>${l}º Círculo</option>`).join('')}
                 </select>
-                <button onclick="app.rollD20Check('Conjurar: ${sp.name}', ${profBonus})" class="h-8 px-2.5 rounded bg-[#8b1e1e] text-[#f4ead5] text-xs font-heading font-bold">✨ Conjurar</button>
-                ${editable ? `<button onclick="app.removeSpell(${idx})" class="w-8 h-8 rounded text-xs text-[#8b1e1e]">✕</button>` : ''}
+                <input type="text" value="${sp.school}" ${editable ? '' : 'disabled'} onchange="app.updateSpell(${idx}, 'school', this.value)" class="h-8 bg-[#f4ead5] border border-[#b89b6a] rounded px-2 text-xs w-24" />
+                ${editable ? `<button onclick="app.removeSpell(${idx})" class="w-8 h-8 flex items-center justify-center text-xs text-[#8b1e1e]">✕</button>` : ''}
               </div>
             </div>
-            <textarea rows="2" ${editable ? '' : 'disabled'} onchange="app.updateSpell(${idx}, 'desc', this.value)" class="w-full bg-transparent text-xs text-[#5c4328] outline-none leading-relaxed">${sp.desc}</textarea>
+            <input type="text" value="${sp.desc}" ${editable ? '' : 'disabled'} onchange="app.updateSpell(${idx}, 'desc', this.value)" class="w-full bg-transparent text-xs text-[#5c4328] outline-none" />
           </div>
         `).join('');
 
-        const coins = char.coins || { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 };
         ['cp', 'sp', 'ep', 'gp', 'pp'].forEach(c => {
-          document.getElementById(`coin-${c}`).value = coins[c] || 0;
+          document.getElementById(`coin-${c}`).value = char.coins?.[c] || 0;
         });
 
         document.getElementById('inventoryList').innerHTML = (char.inventory || []).map((item, idx) => `
-          <div class="parchment-inset p-3 rounded-lg flex flex-wrap items-center justify-between gap-2">
-            <div class="flex items-center gap-2 flex-1 min-w-[200px]">
-              <input type="checkbox" ${item.equipped ? 'checked' : ''} ${editable ? '' : 'disabled'} onchange="app.updateItem(${idx}, 'equipped', this.checked)" class="w-4 h-4 accent-[#8b1e1e] shrink-0" title="Equipado" />
+          <div class="parchment-inset rounded-lg p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div class="flex items-center gap-2 flex-1 min-w-0">
+              <input type="checkbox" ${item.equipped ? 'checked' : ''} ${editable ? '' : 'disabled'} onchange="app.updateItem(${idx}, 'equipped', this.checked)" class="w-5 h-5 accent-emerald-800 shrink-0" />
               <input type="text" value="${item.name}" ${editable ? '' : 'disabled'} onchange="app.updateItem(${idx}, 'name', this.value)" class="font-bold text-sm text-[#2b1d0e] bg-transparent outline-none flex-1 min-w-0" />
             </div>
-            <div class="flex items-center gap-2 text-xs shrink-0">
-              <label class="flex items-center gap-1">Qtd:
-                <input type="number" min="1" value="${item.qty}" ${editable ? '' : 'disabled'} onchange="app.updateItem(${idx}, 'qty', parseInt(this.value)||1)" class="w-12 h-8 text-center bg-[#f4ead5] border border-[#b89b6a] rounded font-mono-num" />
+            <div class="flex items-center justify-end gap-2 text-xs shrink-0">
+              <label class="flex items-center gap-1 text-[#5c4328]">Qtd:
+                <input type="number" min="1" value="${item.qty}" ${editable ? '' : 'disabled'} onchange="app.updateItem(${idx}, 'qty', parseInt(this.value)||1)" class="w-14 h-8 text-center bg-[#f4ead5] border border-[#b89b6a] rounded font-mono-num" />
               </label>
-              <label class="flex items-center gap-1">Kg:
-                <input type="number" step="0.1" min="0" value="${item.weight}" ${editable ? '' : 'disabled'} onchange="app.updateItem(${idx}, 'weight', parseFloat(this.value)||0)" class="w-14 h-8 text-center bg-[#f4ead5] border border-[#b89b6a] rounded font-mono-num" />
+              <label class="flex items-center gap-1 text-[#5c4328]">Peso:
+                <input type="number" step="0.1" min="0" value="${item.weight}" ${editable ? '' : 'disabled'} onchange="app.updateItem(${idx}, 'weight', parseFloat(this.value)||0)" class="w-16 h-8 text-center bg-[#f4ead5] border border-[#b89b6a] rounded font-mono-num" />
               </label>
-              <button onclick="app.updateItem(${idx}, 'attuned', ${!item.attuned})" class="h-8 px-2 rounded border ${item.attuned ? 'bg-[#8b1e1e] text-[#f4ead5] border-[#e5c158]' : 'bg-[#f4ead5] text-[#5c4328] border-[#b89b6a]'} font-heading text-[10px] font-bold uppercase" title="Sintonização Mágica">
+              <button ${editable ? '' : 'disabled'} onclick="app.updateItem(${idx}, 'attuned', ${!item.attuned})" class="h-8 px-2.5 rounded border font-heading text-[10px] uppercase ${item.attuned ? 'bg-indigo-900 text-white border-indigo-400' : 'bg-[#f4ead5] text-[#5c4328] border-[#b89b6a]'}">
                 ${item.attuned ? '✦ Sinton.' : 'Sintonizar'}
               </button>
-              ${editable ? `<button onclick="app.removeItem(${idx})" class="w-8 h-8 rounded text-[#8b1e1e]">✕</button>` : ''}
+              ${editable ? `<button onclick="app.removeItem(${idx})" class="w-8 h-8 flex items-center justify-center text-[#8b1e1e] text-xs">✕</button>` : ''}
             </div>
           </div>
         `).join('');
 
-        const bio = char.bio || {};
-        document.getElementById('bioTraits').value = bio.traits || '';
-        document.getElementById('bioIdeals').value = bio.ideals || '';
-        document.getElementById('bioBonds').value = bio.bonds || '';
-        document.getElementById('bioFlaws').value = bio.flaws || '';
-        document.getElementById('bioBackstory').value = bio.backstory || '';
+        document.getElementById('bioTraits').value = char.bio?.traits || '';
+        document.getElementById('bioIdeals').value = char.bio?.ideals || '';
+        document.getElementById('bioBonds').value = char.bio?.bonds || '';
+        document.getElementById('bioFlaws').value = char.bio?.flaws || '';
+        document.getElementById('bioBackstory').value = char.bio?.backstory || '';
+
+        const inputs = document.getElementById('characterSheetContainer').querySelectorAll('input, textarea, select');
+        inputs.forEach(el => {
+          if (el.id !== 'hpDeltaInput') {
+            el.disabled = !editable;
+          }
+        });
       }
 
       renderCharacterList() {
@@ -4285,19 +4334,19 @@
           const charPortrait = c.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(c.name)}`;
 
           return `
-            <button onclick="app.selectCharacter('${c.id}')" class="w-full text-left p-2.5 rounded-lg border transition flex items-center gap-2.5 ${isActive ? 'bg-[#8b1e1e] border-[#e5c158] text-[#f4ead5] shadow-md' : 'bg-black/35 border-[#c59b27]/25 text-[#d6c29f] hover:border-[#c59b27]/60'}">
-              <img src="${charPortrait}" alt="${c.name}" class="w-10 h-10 rounded-lg object-contain border border-[#e5c158]/60 bg-[#e6d5b8] shrink-0" />
+            <button onclick="app.selectCharacter('${c.id}')"
+              class="w-full text-left p-2.5 rounded-lg border transition flex items-center gap-3 ${isActive ? 'bg-[#8b1e1e] border-[#e5c158] text-[#f4ead5] shadow-md' : 'bg-black/35 border-[#c59b27]/25 text-[#d6c29f] hover:border-[#c59b27]/60'}">
+              <img src="${charPortrait}" alt="${c.name}" class="w-11 h-11 rounded-lg object-contain border border-[#e5c158]/70 shrink-0 bg-[#1a110b]" />
               <div class="min-w-0 flex-1">
                 <div class="flex items-center justify-between gap-1">
                   <span class="font-heading font-bold text-sm truncate">${c.name}</span>
-                  ${isMine ? '<span class="text-[9px] uppercase font-heading px-1.5 py-0.5 rounded bg-black/40 text-[#e5c158] shrink-0">Sua</span>' : ''}
+                  <span class="font-mono-num text-[11px] px-1.5 py-0.5 rounded bg-black/40 shrink-0">Nv ${c.level}</span>
                 </div>
-                <div class="text-xs opacity-85 truncate">${c.race} • ${c.class} (Nv ${c.level})</div>
-                <div class="text-[10px] opacity-75 mt-0.5 truncate">Jogador: ${ownerName}</div>
-              </div>
-              <div class="text-right font-mono-num text-xs shrink-0">
-                <div class="font-bold text-emerald-300">${c.hp?.current ?? 0}/${c.hp?.max ?? 0}</div>
-                <div class="text-[10px] opacity-75">CA ${c.ac ?? 10}</div>
+                <div class="text-[11px] opacity-85 truncate mt-0.5">${c.race} • ${c.class}</div>
+                <div class="flex items-center justify-between mt-1 text-[10px]">
+                  <span class="opacity-75 truncate">Por: ${ownerName} ${isMine ? '(Você)' : ''}</span>
+                  <span class="font-mono-num font-bold text-emerald-300 shrink-0">HP ${c.hp.current}/${c.hp.max}</span>
+                </div>
               </div>
             </button>
           `;
@@ -4307,28 +4356,20 @@
       renderCompendium() {
         const search = document.getElementById('compendiumSearch').value.toLowerCase();
         const cat = document.getElementById('compendiumCategory').value;
-        const filtered = this.compendium.filter(item => {
-          const matchesCat = cat === 'all' || item.category === cat;
-          const matchesText = item.title.toLowerCase().includes(search) || item.description.toLowerCase().includes(search);
-          return matchesCat && matchesText;
+        const filtered = this.compendium.filter(entry => {
+          const matchCat = cat === 'all' || entry.category === cat;
+          const matchText = entry.title.toLowerCase().includes(search) || entry.description.toLowerCase().includes(search);
+          return matchCat && matchText;
         });
 
-        const grid = document.getElementById('compendiumGrid');
-        if (!filtered.length) {
-          grid.innerHTML = `<div class="col-span-full parchment-page rounded-xl p-8 text-center text-[#5c4328]">Nenhuma entrada encontrada no Tomo da Comunidade para esta busca.</div>`;
-          return;
-        }
-        grid.innerHTML = filtered.map(entry => `
-          <article class="parchment-page rounded-xl p-5 flex flex-col justify-between gap-2">
-            <div>
-              <div class="flex items-center justify-between gap-2 mb-1">
-                <span class="text-[10px] font-heading uppercase tracking-widest font-bold px-2 py-0.5 rounded bg-[#8b1e1e] text-[#f4ead5]">${entry.category}</span>
-                ${entry.author ? `<span class="text-[10px] text-[#5c4328] italic">Por ${entry.author}</span>` : ''}
-              </div>
-              <h3 class="font-display text-lg font-black text-[#2b1d0e] mt-1">${entry.title}</h3>
-              <hr class="dnd-divider my-2" />
-              <p class="text-sm text-[#2b1d0e] leading-relaxed">${entry.description}</p>
+        document.getElementById('compendiumGrid').innerHTML = filtered.map(entry => `
+          <article class="parchment-page rounded-xl p-5 space-y-2">
+            <div class="flex items-center justify-between gap-2">
+              <h3 class="font-heading font-bold text-base text-[#8b1e1e] min-w-0 truncate">${entry.title}</h3>
+              <span class="text-[10px] font-heading uppercase px-2 py-0.5 rounded bg-[#2b1d0e] text-[#e5c158] shrink-0">${entry.category}</span>
             </div>
+            <hr class="dnd-divider" />
+            <p class="text-sm text-[#2b1d0e] leading-relaxed">${entry.description}</p>
           </article>
         `).join('');
       }
