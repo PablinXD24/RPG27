@@ -120,9 +120,10 @@
 <body class="pb-24 md:pb-8">
 
   <!-- ========================================================= -->
-  <!-- TRILHA SONORA AMBIENTE DO REPOSITÓRIO (rpgsound.mp3)      -->
+  <!-- TRILHA SONORA AMBIENTE & VOZ DE ABERTURA (ROOT DO GITHUB) -->
   <!-- ========================================================= -->
   <audio id="rpgBgAudio" src="./rpgsound.mp3" loop preload="auto"></audio>
+  <audio id="rpgIntroVoice" src="./ElevenLabs_2026-11-18T02_35_48_Cornelius_pvc_s50_sim75_v4.mp3" preload="auto"></audio>
 
   <!-- ========================================================= -->
   <!-- TELA INICIAL DE CARREGAMENTO SILENCIOSO (EVITA FLASH LOGIN) -->
@@ -1181,9 +1182,10 @@
         this.rollMode = this.savedUiState.rollMode || 'norm';
         this.rollHistory = [];
 
-        // Estado da Música Ambiente (rpgsound.mp3)
+        // Estado da Música Ambiente (rpgsound.mp3) e Voz de Boas-vindas (Cornelius)
         this.isMusicEnabled = this.savedUiState.isMusicEnabled !== undefined ? this.savedUiState.isMusicEnabled : true;
-        this.musicUnlockBound = false;
+        this.hasPlayedIntroVoice = false;
+        this.audioUnlockBound = false;
 
         this.unsubUsers = null;
         this.unsubCharacters = null;
@@ -1220,7 +1222,7 @@
           this.hideBootLoader();
           this.initProjectorView();
         } else {
-          this.initBgMusic();
+          this.initOpeningAudio();
         }
 
         this.initFirebaseAuthListener();
@@ -1231,71 +1233,117 @@
       }
 
       // ---------------------------------------------------------
-      // MÚSICA AMBIENTE (rpgsound.mp3) COM AUTOPLAY + CONTROLE ON/OFF
+      // VOZ DE ABERTURA (CORNELIUS) + MÚSICA AMBIENTE (rpgsound.mp3)
       // ---------------------------------------------------------
-      initBgMusic() {
-        const audio = document.getElementById('rpgBgAudio');
-        if (!audio) return;
-        audio.volume = 0.45;
+      initOpeningAudio() {
+        const bgAudio = document.getElementById('rpgBgAudio');
+        const voiceAudio = document.getElementById('rpgIntroVoice');
         this.updateMusicButtonsUI();
 
-        if (!this.isMusicEnabled) {
-          audio.pause();
-          return;
+        if (bgAudio) {
+          bgAudio.volume = this.isMusicEnabled ? 0.35 : 0;
+        }
+        if (voiceAudio) {
+          voiceAudio.volume = 1.0;
+          voiceAudio.onended = () => {
+            if (bgAudio && this.isMusicEnabled) {
+              bgAudio.volume = 0.45;
+            }
+          };
         }
 
-        const attemptPlay = () => {
-          if (!this.isMusicEnabled) return;
-          audio.play().then(() => {
-            this.removeMusicUnlockListeners();
-            this.updateMusicButtonsUI();
-          }).catch(() => {
-            // Caso o navegador exija gesto do usuário, inicia imediatamente no primeiro clique/toque
-            this.bindMusicUnlockListeners();
-          });
+        const tryStartAudio = () => {
+          let needsGesture = false;
+
+          // 1. Toca a voz de boas-vindas do Cornelius uma vez ao abrir o site
+          if (voiceAudio && !this.hasPlayedIntroVoice) {
+            voiceAudio.play().then(() => {
+              this.hasPlayedIntroVoice = true;
+              if (bgAudio && this.isMusicEnabled) {
+                bgAudio.volume = 0.22; // Abaixa suavemente o fundo enquanto Cornelius fala
+              }
+            }).catch(() => {
+              needsGesture = true;
+              this.bindAudioUnlockListeners();
+            });
+          }
+
+          // 2. Toca a música de fundo em loop se estiver ativada
+          if (bgAudio && this.isMusicEnabled) {
+            bgAudio.play().then(() => {
+              this.updateMusicButtonsUI();
+            }).catch(() => {
+              needsGesture = true;
+              this.bindAudioUnlockListeners();
+            });
+          }
+
+          if (!needsGesture) {
+            this.removeAudioUnlockListeners();
+          }
         };
 
-        attemptPlay();
+        tryStartAudio();
       }
 
-      bindMusicUnlockListeners() {
-        if (this.musicUnlockBound) return;
-        this.musicUnlockBound = true;
+      bindAudioUnlockListeners() {
+        if (this.audioUnlockBound) return;
+        this.audioUnlockBound = true;
         this._unlockHandler = () => {
-          const audio = document.getElementById('rpgBgAudio');
-          if (audio && this.isMusicEnabled && audio.paused) {
-            audio.play().then(() => {
-              this.removeMusicUnlockListeners();
+          const bgAudio = document.getElementById('rpgBgAudio');
+          const voiceAudio = document.getElementById('rpgIntroVoice');
+          let allStarted = true;
+
+          if (voiceAudio && !this.hasPlayedIntroVoice) {
+            voiceAudio.play().then(() => {
+              this.hasPlayedIntroVoice = true;
+              if (bgAudio && this.isMusicEnabled) {
+                bgAudio.volume = 0.22;
+              }
+            }).catch(() => {
+              allStarted = false;
+            });
+          }
+
+          if (bgAudio && this.isMusicEnabled && bgAudio.paused) {
+            bgAudio.play().then(() => {
               this.updateMusicButtonsUI();
-            }).catch(() => {});
+            }).catch(() => {
+              allStarted = false;
+            });
+          }
+
+          if (allStarted) {
+            this.removeAudioUnlockListeners();
           }
         };
         document.addEventListener('pointerdown', this._unlockHandler, { passive: true });
         document.addEventListener('keydown', this._unlockHandler, { passive: true });
       }
 
-      removeMusicUnlockListeners() {
-        if (!this.musicUnlockBound || !this._unlockHandler) return;
+      removeAudioUnlockListeners() {
+        if (!this.audioUnlockBound || !this._unlockHandler) return;
         document.removeEventListener('pointerdown', this._unlockHandler);
         document.removeEventListener('keydown', this._unlockHandler);
-        this.musicUnlockBound = false;
+        this.audioUnlockBound = false;
       }
 
       toggleBgMusic() {
-        const audio = document.getElementById('rpgBgAudio');
-        if (!audio) return;
+        const bgAudio = document.getElementById('rpgBgAudio');
+        const voiceAudio = document.getElementById('rpgIntroVoice');
+        if (!bgAudio) return;
 
         this.isMusicEnabled = !this.isMusicEnabled;
         this.saveUiState({ isMusicEnabled: this.isMusicEnabled });
 
         if (this.isMusicEnabled) {
-          audio.volume = 0.45;
-          audio.play().catch(() => {
-            this.bindMusicUnlockListeners();
+          const voiceSpeaking = voiceAudio && !voiceAudio.paused && !voiceAudio.ended;
+          bgAudio.volume = voiceSpeaking ? 0.22 : 0.45;
+          bgAudio.play().catch(() => {
+            this.bindAudioUnlockListeners();
           });
         } else {
-          audio.pause();
-          this.removeMusicUnlockListeners();
+          bgAudio.pause();
         }
 
         this.updateMusicButtonsUI();
