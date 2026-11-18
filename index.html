@@ -165,37 +165,30 @@
   <!-- Exibida com antecedência ao abrir o site ou trocar cap.   -->
   <!-- ========================================================= -->
   <div id="chapterIntroOverlay" class="fixed inset-0 z-[140] hidden bg-[#090604] text-[#f4ead5] flex flex-col items-center justify-center p-5 sm:p-10 overflow-y-auto select-none">
-    <!-- Fundo Atmosférico (usa o mapa do capítulo como fundo desfocado se existir) -->
     <div id="chapterIntroBgImage" class="absolute inset-0 bg-cover bg-center opacity-20 scale-105 blur-[3px] pointer-events-none transition-all duration-700"></div>
     <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(139,30,30,0.22)_0%,rgba(9,6,4,0.95)_75%)] pointer-events-none"></div>
 
-    <!-- Partículas / Brasas sutis -->
     <div class="absolute top-1/4 left-1/4 w-2 h-2 rounded-full bg-[#e5c158]/40 animate-ember pointer-events-none"></div>
     <div class="absolute bottom-1/3 right-1/4 w-2.5 h-2.5 rounded-full bg-[#8b1e1e]/60 animate-ember pointer-events-none" style="animation-delay: 1.4s"></div>
     <div class="absolute top-1/3 right-1/3 w-1.5 h-1.5 rounded-full bg-[#e5c158]/50 animate-ember pointer-events-none" style="animation-delay: 2.3s"></div>
 
-    <!-- Moldura Central da Crônica -->
     <div class="relative z-10 max-w-3xl w-full text-center space-y-5 my-auto py-6 animate-chapter-reveal">
-      <!-- Selo D20 & Número do Capítulo -->
       <div class="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-black/60 border border-[#c59b27]/60 shadow-lg">
         <span class="w-2 h-2 rounded-full bg-[#e5c158] animate-pulse"></span>
         <span id="splashChapterNumber" class="font-heading text-xs sm:text-sm font-bold uppercase tracking-[0.28em] text-[#e5c158]">Capítulo I</span>
         <span id="splashChapterStatusBadge" class="text-[10px] font-heading uppercase px-2 py-0.5 rounded bg-[#8b1e1e] text-[#f4ead5]">Em Andamento</span>
       </div>
 
-      <!-- Título Épico do Capítulo -->
       <h1 id="splashChapterTitle" class="font-display text-3xl sm:text-5xl md:text-6xl font-black text-[#f4ead5] tracking-wide leading-tight drop-shadow-[0_4px_18px_rgba(0,0,0,0.9)]">
         As Sombras de Valdris
       </h1>
 
       <hr class="dnd-divider max-w-md mx-auto animate-chapter-divider" />
 
-      <!-- Prólogo / Descrição do Mestre -->
       <p id="splashChapterDesc" class="text-base sm:text-xl text-[#e6d5b8] italic leading-relaxed max-w-2xl mx-auto px-2">
         Os heróis se reúnem diante dos portões antigos enquanto os tambores ecoam nas profundezas...
       </p>
 
-      <!-- Cards de Contexto Rápido do Capítulo (Local/Mapa + Último Grande Acontecimento) -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-left max-w-2xl mx-auto pt-2">
         <div class="leather-panel rounded-xl p-4 border border-[#c59b27]/45">
           <div class="flex items-center gap-2 text-[11px] font-heading uppercase tracking-wider text-[#e5c158] font-bold mb-1">
@@ -217,7 +210,6 @@
         </div>
       </div>
 
-      <!-- Botões de Ação da Tela de Abertura -->
       <div class="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
         <button onclick="app.dismissChapterIntro()" class="w-full sm:w-auto h-12 px-8 rounded-xl bg-gradient-to-r from-[#8b1e1e] to-[#691414] hover:from-[#a62424] hover:to-[#7a1818] border-2 border-[#e5c158] text-[#f4ead5] font-heading font-bold text-sm uppercase tracking-[0.18em] shadow-[0_0_25px_rgba(139,30,30,0.75)] transition transform hover:scale-[1.02] active:scale-95 cursor-pointer">
           ⚔️ Entrar na Sessão
@@ -232,10 +224,8 @@
 
   <!-- ========================================================= -->
   <!-- MODO PROJETOR DEDICADO (?projector=1)                     -->
-  <!-- Exibe APENAS o mapa ativo em tela limpa para segunda tela -->
   <!-- ========================================================= -->
   <div id="projectorScreen" class="hidden fixed inset-0 z-[100] bg-[#070504] flex flex-col items-center justify-center select-none overflow-hidden">
-    <!-- Barra discreta flutuante -->
     <div id="projectorControls" class="absolute top-3 right-3 z-20 flex items-center gap-2 bg-black/75 backdrop-blur-md border border-[#c59b27]/40 rounded-full px-3 py-1.5 opacity-80 hover:opacity-100 transition">
       <span id="projectorMapTitle" class="text-xs font-heading text-[#e5c158] px-2 max-w-[200px] truncate">Aguardando Mapa...</span>
       <button onclick="app.adjustProjectorZoom(-0.15)" class="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-[#f4ead5] font-mono-num text-sm flex items-center justify-center" title="Reduzir Zoom">-</button>
@@ -244,12 +234,10 @@
       <button onclick="app.toggleProjectorFullscreen()" class="w-7 h-7 rounded-full bg-[#8b1e1e] hover:bg-[#a62424] text-[#f4ead5] text-xs flex items-center justify-center" title="Tela Cheia">⛶</button>
     </div>
 
-    <!-- Container do Mapa Projetado -->
     <div id="projectorViewport" class="w-full h-full flex items-center justify-center relative overflow-hidden cursor-grab active:cursor-grabbing">
       <img id="projectorMapImage" src="" alt="Mapa da Campanha" class="hidden max-w-full max-h-full object-contain transition-transform duration-150 ease-out pointer-events-none" />
       <div id="projectorGridLayer" class="hidden absolute inset-0 tactical-grid-overlay pointer-events-none"></div>
 
-      <!-- Estado vazio quando nenhum mapa está projetado -->
       <div id="projectorEmptyState" class="text-center p-8 max-w-md">
         <div class="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-[#9b1c1c] to-[#3b0808] border-2 border-[#c59b27]/60 flex items-center justify-center mb-4 shadow-2xl">
           <span class="font-display text-3xl text-[#e5c158]">D20</span>
@@ -262,13 +250,11 @@
 
   <!-- ========================================================= -->
   <!-- POPUP TELA INTEIRA: PERSONAGENS ANIMADOS NO CENÁRIO       -->
-  <!-- Responsivo para Mobile (cenário 1) e PC (cenário padrão)  -->
   <!-- ========================================================= -->
   <div id="animatedPopOverlay" class="fixed inset-0 z-[120] hidden bg-black overflow-hidden select-none">
     <video id="animatedBgVideo" autoplay loop muted playsinline class="absolute inset-0 w-full h-full object-cover pointer-events-none"></video>
     <div class="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/35 pointer-events-none"></div>
 
-    <!-- Barra Superior Flutuante -->
     <div class="absolute top-0 inset-x-0 z-30 p-3 sm:p-5 flex items-center justify-between gap-2 sm:gap-3 pointer-events-none">
       <div class="pointer-events-auto leather-panel rounded-full px-3.5 py-2 border border-[#e5c158]/60 flex items-center gap-2.5 shadow-xl max-w-[55vw] sm:max-w-md">
         <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
@@ -291,7 +277,6 @@
       </div>
     </div>
 
-    <!-- Barra Inferior Rápida para Alternar Entre os Heróis da Mesa -->
     <div class="absolute bottom-2.5 sm:bottom-3.5 inset-x-0 z-30 px-3 flex justify-center pointer-events-none">
       <div id="animHeroSwitcherBar" class="pointer-events-auto leather-panel rounded-full px-2.5 py-1 border border-[#c59b27]/50 flex items-center gap-2 overflow-x-auto max-w-[94vw] shadow-2xl"></div>
     </div>
@@ -314,7 +299,7 @@
           <span class="font-display text-2xl text-[#f4ead5] font-black">D20</span>
         </div>
         <h1 class="font-display text-2xl sm:text-3xl font-black text-[#e5c158] tracking-wide">Tomo da Comunidade</h1>
-        <p class="text-xs sm:text-sm uppercase tracking-[0.2em] text-[#d6c29f]/80 font-heading mt-1">Grimório Oficial • D&D 5e</p>
+        <p class="text-xs sm:text-sm uppercase tracking-[0.2em] text-[#d6c29f]/80 font-heading mt-1">Grimório Oficial • D&D Custom</p>
       </div>
 
       <hr class="dnd-divider mb-5" />
@@ -502,8 +487,8 @@
           <button onclick="document.getElementById('diceToast').classList.add('hidden')" class="w-8 h-8 flex items-center justify-center rounded-lg text-[#d6c29f] hover:text-white text-sm shrink-0">✕</button>
         </div>
         <div class="flex items-baseline justify-between gap-3">
-          <div id="diceToastFormula" class="text-xs font-mono-num text-[#d6c29f] truncate">1d20 (14) + 5</div>
-          <div id="diceToastTotal" class="text-3xl font-display font-black text-[#f4ead5] shrink-0">19</div>
+          <div id="diceToastFormula" class="text-xs font-mono-num text-[#d6c29f] truncate">1d20 (14) + 3</div>
+          <div id="diceToastTotal" class="text-3xl font-display font-black text-[#f4ead5] shrink-0">17</div>
         </div>
         <div id="diceToastBadge" class="mt-1.5 text-[11px] font-heading uppercase tracking-widest font-bold"></div>
       </div>
@@ -570,7 +555,7 @@
               <span id="passivePerceptionDisplay" class="font-mono-num font-bold text-base text-[#2b1d0e] shrink-0">10</span>
             </div>
             <div class="flex justify-between items-center gap-2">
-              <span class="text-[#5c4328]">Bônus Proficiência:</span>
+              <span class="text-[#5c4328]">Bônus Prof. Geral:</span>
               <span id="profBonusDisplay" class="font-mono-num font-bold text-base text-[#8b1e1e] shrink-0">+2</span>
             </div>
             <div class="flex justify-between items-center gap-2">
@@ -590,7 +575,7 @@
         </div>
       </aside>
 
-      <!-- COLUNA PRINCIPAL: PÁGINA DO LIVRO (FICHA D&D 5E) -->
+      <!-- COLUNA PRINCIPAL: PÁGINA DO LIVRO (FICHA ADAPTADA) -->
       <section id="characterSheetContainer" class="lg:col-span-9 space-y-5 min-w-0">
 
         <div id="readOnlyBanner" class="hidden leather-panel rounded-xl px-4 py-3 border border-[#e5c158] text-[#f4ead5] flex items-center justify-between gap-2 text-xs">
@@ -686,7 +671,7 @@
             <div class="parchment-page rounded-xl p-3 flex flex-col items-center justify-between text-center">
               <span class="text-[10px] font-heading uppercase font-bold tracking-wider text-[#5c4328]">Iniciativa</span>
               <button id="initRollBtn" onclick="app.rollInitiative()" class="w-16 h-16 my-1 rounded-xl parchment-inset hover:border-[#8b1e1e] active:scale-95 flex items-center justify-center font-mono-num text-2xl font-bold text-[#8b1e1e] transition cursor-pointer">
-                +0
+                0
               </button>
               <span class="text-[10px] text-[#5c4328] font-semibold">Toque p/ rolar</span>
             </div>
@@ -754,10 +739,10 @@
           </div>
         </div>
 
-        <!-- OS 6 ATRIBUTOS PRINCIPAIS -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3" id="attributesGrid"></div>
+        <!-- OS 7 ATRIBUTOS PRINCIPAIS (INCLUINDO SORTE, SEM MODIFICADORES +1/-3) -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3" id="attributesGrid"></div>
 
-        <!-- SALVAGUARDAS & PERÍCIAS -->
+        <!-- SALVAGUARDAS & PERÍCIAS (COM PROFICIÊNCIA CONFIGURÁVEL DE +2 A +6) -->
         <div class="grid grid-cols-1 md:grid-cols-12 gap-5">
           <div class="md:col-span-5 parchment-page rounded-xl p-4 sm:p-5">
             <div class="flex items-center justify-between gap-2 mb-2">
@@ -775,9 +760,9 @@
           </div>
 
           <div class="md:col-span-7 parchment-page rounded-xl p-4 sm:p-5">
-            <div class="flex items-center justify-between gap-2 mb-2">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
               <h3 class="font-heading text-xs font-bold uppercase tracking-wider text-[#8b1e1e]">Perícias (Skills)</h3>
-              <span class="text-[10px] text-[#5c4328] font-semibold">○ 0x • ● Prof • ★ Espec</span>
+              <span class="text-[10px] text-[#5c4328] font-semibold">Bônus Prof. Perícia: 0 ou +2 até +6</span>
             </div>
             <hr class="dnd-divider mb-3" />
             <div id="skillsList" class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5"></div>
@@ -819,6 +804,7 @@
                   <option value="int">Inteligência (INT)</option>
                   <option value="wis">Sabedoria (SAB)</option>
                   <option value="cha">Carisma (CAR)</option>
+                  <option value="luck">Sorte (SOR)</option>
                 </select>
               </div>
               <div class="parchment-inset p-3 rounded-lg text-center flex flex-col justify-center">
@@ -909,7 +895,6 @@
     <!-- VISÃO 2: CRÔNICA & CAPÍTULOS DA CAMPANHA (CONTROLE MESTRE) -->
     <!-- ========================================================= -->
     <main id="chaptersView" class="hidden max-w-6xl mx-auto px-3 sm:px-5 pt-5 space-y-5">
-      <!-- Cabeçalho da Seção de Capítulos -->
       <div class="leather-panel rounded-xl p-5 sm:p-6 text-[#f4ead5] flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-[#c59b27]/50">
         <div>
           <div class="flex items-center gap-2 text-xs font-heading uppercase tracking-widest text-[#e5c158] font-bold">
@@ -934,10 +919,8 @@
         </div>
       </div>
 
-      <!-- Destaque do Capítulo Ativo no Momento -->
       <div id="activeChapterHeroCard" class="parchment-page rounded-2xl p-5 sm:p-7 border-2 border-[#c59b27]"></div>
 
-      <!-- Lista de Todos os Capítulos da Campanha -->
       <div class="space-y-3">
         <h3 class="font-heading text-xs font-bold uppercase tracking-[0.2em] text-[#e5c158] px-1">Todos os Capítulos Registrados</h3>
         <div id="chaptersTimelineGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
@@ -951,7 +934,7 @@
       <div class="leather-panel rounded-xl p-5 sm:p-6 text-[#f4ead5] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 class="font-display text-2xl font-black text-[#e5c158]">Livro da Comunidade</h2>
-          <p class="text-sm text-[#d6c29f]">Compêndio compartilhado de Regras SRD 5e, Magias, Raças e Itens Mágicos da campanha.</p>
+          <p class="text-sm text-[#d6c29f]">Compêndio compartilhado de Regras da Mesa, Magias, Raças e Itens Mágicos da campanha.</p>
         </div>
         <button id="addCompendiumBtn" onclick="app.openCompendiumModal()" class="hidden h-11 px-4 rounded-lg bg-[#8b1e1e] hover:bg-[#a62424] border border-[#e5c158] font-heading text-xs font-bold uppercase tracking-wider shrink-0">
           + Escrever no Livro
@@ -1290,12 +1273,12 @@
         hitDice: "5d6",
         hp: { current: 28, max: 32, temp: 4 },
         deathSaves: { successes: 0, failures: 0 },
-        attributes: { str: 8, dex: 14, con: 14, int: 18, wis: 12, cha: 10 },
-        savingThrows: { str: false, dex: false, con: false, int: true, wis: true, cha: false },
+        attributes: { str: 8, dex: 14, con: 14, int: 18, wis: 12, cha: 10, luck: 12 },
+        savingThrows: { str: false, dex: false, con: false, int: true, wis: true, cha: false, luck: false },
         skills: {
-          acrobatics: 0, animal_handling: 0, arcana: 2, athletics: 0,
-          deception: 0, history: 1, insight: 1, intimidation: 0,
-          investigation: 2, medicine: 0, nature: 0, perception: 1,
+          acrobatics: 0, animal_handling: 0, arcana: 4, athletics: 0,
+          deception: 0, history: 2, insight: 2, intimidation: 0,
+          investigation: 4, medicine: 0, nature: 0, perception: 2,
           performance: 0, persuasion: 0, religion: 0, sleight_of_hand: 0,
           stealth: 0, survival: 0
         },
@@ -1366,7 +1349,7 @@
       comp_1: { id: "comp_1", title: "Bola de Fogo (3º Círculo)", category: "Magias", description: "Tempo: 1 ação | Alcance: 45m | Componentes: V, S, M. Um raio brilhante lampeja de seu dedo até um ponto escolhido e explode com um rugido grave. Cada criatura em uma esfera de 6m de raio deve fazer um teste de resistência de Destreza, sofrendo 8d6 de dano de fogo se falhar, ou metade se passar." },
       comp_2: { id: "comp_2", title: "Condição: Caído (Prone)", category: "Regras", description: "A única opção de movimento é rastejar (custa o dobro). A criatura tem desvantagem nas jogadas de ataque. Jogadas de ataque contra ela têm vantagem se o atacante estiver a 1,5m, ou desvantagem caso contrário." },
       comp_3: { id: "comp_3", title: "Anel de Proteção", category: "Itens Mágicos", description: "Item Maravilhoso, Raro (requer sintonização). Você recebe +1 de bônus na CA e nos testes de resistência enquanto estiver usando este anel." },
-      comp_4: { id: "comp_4", title: "Descanso Curto vs. Descanso Longo", category: "Regras", description: "Descanso Curto (1 hora): permite gastar Dados de Vida para recuperar HP. Descanso Longo (8 horas): recupera todo o HP perdido, metade dos Dados de Vida totais e todos os Espaços de Magia gastos." }
+      comp_4: { id: "comp_4", title: "Sistema Adaptado da Mesa (Atributos & Sorte)", category: "Regras", description: "Esta campanha utiliza o atributo Sorte (SOR) e não aplica modificadores derivados (+1/-3) dos valores de atributo. As perícias possuem bônus de proficiência configuráveis diretamente de +2 até +6." }
     };
 
     const ATTRIBUTES_META = [
@@ -1375,7 +1358,8 @@
       { key: 'con', label: 'Constituição', short: 'CON' },
       { key: 'int', label: 'Inteligência', short: 'INT' },
       { key: 'wis', label: 'Sabedoria', short: 'SAB' },
-      { key: 'cha', label: 'Carisma', short: 'CAR' }
+      { key: 'cha', label: 'Carisma', short: 'CAR' },
+      { key: 'luck', label: 'Sorte', short: 'SOR' }
     ];
 
     const SKILLS_META = [
@@ -1399,6 +1383,7 @@
       { key: 'survival', label: 'Sobrevivência', attr: 'wis' }
     ];
 
+    const SKILL_PROF_OPTIONS = [0, 2, 3, 4, 5, 6];
     const SESSION_STATE_KEY = 'tomo_dnd_ui_state_v1';
 
     // =========================================================
@@ -1430,7 +1415,6 @@
         this.rollMode = this.savedUiState.rollMode || 'norm';
         this.rollHistory = [];
 
-        // Estado da Música Ambiente (rpgsound.mp3) e Voz de Boas-vindas (Cornelius)
         this.isMusicEnabled = this.savedUiState.isMusicEnabled !== undefined ? this.savedUiState.isMusicEnabled : true;
         this.hasPlayedIntroVoice = false;
         this.audioUnlockBound = false;
@@ -1444,7 +1428,6 @@
         this.unsubActiveChapter = null;
         this.saveTimeout = null;
 
-        // Estado de Zoom/Pan da Tela do Projetor
         this.projZoom = 1;
         this.projPanX = 0;
         this.projPanY = 0;
@@ -1452,7 +1435,6 @@
         this.dragStartX = 0;
         this.dragStartY = 0;
 
-        // Estado do Motor de Animação
         this.isAnimPopOpen = false;
         this.animTime = 0;
         this.animLastTime = 0;
@@ -1632,7 +1614,6 @@
             await update(ref(db, `chapters/${chapterId}`), { status: 'active' });
           }
 
-          // Atualiza automaticamente o mapa no projetor se o capítulo tiver um mapa vinculado
           if (targetMapId) {
             await update(ref(db, 'projectorState'), {
               activeMapId: targetMapId,
@@ -1671,7 +1652,6 @@
         const activeChap = this.getActiveChapter();
         const linkedMap = activeChap ? this.maps.find(m => m.id === activeChap.mapId) : null;
 
-        // Atualiza badges no Cabeçalho e na Barra Lateral da Ficha
         const headerBadge = document.getElementById('headerActiveChapterBadge');
         if (headerBadge) {
           headerBadge.textContent = activeChap ? `${activeChap.number}: ${activeChap.title}` : 'Capítulo I';
@@ -1684,7 +1664,6 @@
           document.getElementById('sidebarChapterMapLabel').textContent = linkedMap ? `🗺️ ${linkedMap.name}` : '🗺️ Sem mapa vinculado';
         }
 
-        // Renderiza o Card Principal do Capítulo Atual na Aba de Capítulos
         const heroCard = document.getElementById('activeChapterHeroCard');
         if (heroCard) {
           if (!activeChap) {
@@ -1728,7 +1707,6 @@
                   </div>
                 </div>
 
-                <!-- Painel Lateral do Mapa Salvo no Capítulo -->
                 <div class="lg:w-72 shrink-0 flex flex-col justify-between parchment-inset rounded-xl p-3.5 space-y-3">
                   <div>
                     <span class="block text-[10px] font-heading uppercase font-bold tracking-wider text-[#8b1e1e] mb-2">🗺️ Mapa Salvo do Capítulo</span>
@@ -1762,7 +1740,6 @@
           }
         }
 
-        // Renderiza a Lista de Todos os Capítulos
         const grid = document.getElementById('chaptersTimelineGrid');
         if (grid) {
           const sorted = [...this.chapters].sort((a, b) => (a.order || 0) - (b.order || 0));
@@ -1957,7 +1934,7 @@
       }
 
       // ---------------------------------------------------------
-      // PERSISTÊNCIA DE ESTADO DE NAVEGAÇÃO (EVITA RESET AO RECARREGAR)
+      // PERSISTÊNCIA DE ESTADO DE NAVEGAÇÃO
       // ---------------------------------------------------------
       loadUiState() {
         try {
@@ -3038,7 +3015,12 @@
             return;
           }
 
-          this.characters = list;
+          this.characters = list.map(c => ({
+            ...c,
+            attributes: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10, luck: 10, ...(c.attributes || {}) },
+            savingThrows: { str: false, dex: false, con: false, int: false, wis: false, cha: false, luck: false, ...(c.savingThrows || {}) }
+          }));
+
           if (!this.activeCharId || !this.characters.some(c => c.id === this.activeCharId)) {
             const ownChar = this.characters.find(c => c.ownerId === this.currentUser.uid);
             this.activeCharId = ownChar ? ownChar.id : this.characters[0].id;
@@ -3146,10 +3128,30 @@
         }
       }
 
-      // Fórmulas Oficiais D&D 5e
-      calcMod(score) { return Math.floor((score - 10) / 2); }
-      formatMod(mod) { return mod >= 0 ? `+${mod}` : `${mod}`; }
-      calcProfBonus(level) { return Math.ceil((level || 1) / 4) + 1; }
+      // =========================================================
+      // REGRAS ADAPTADAS DA MESA:
+      // - Sem modificadores derivados (+1/-3) dos atributos
+      // - Atributo Sorte (SOR) incluído
+      // - Bônus de proficiência nas perícias configurável de +2 até +6
+      // =========================================================
+      calcMod(score) {
+        return 0;
+      }
+
+      formatMod(mod) {
+        return mod >= 0 ? `+${mod}` : `${mod}`;
+      }
+
+      calcProfBonus(level) {
+        return Math.min(6, Math.max(2, Math.ceil((level || 1) / 4) + 1));
+      }
+
+      normalizeSkillBonus(rawVal) {
+        const num = parseInt(rawVal) || 0;
+        if (num <= 0) return 0;
+        if (num === 1) return 2; // Compatibilidade com fichas antigas marcadas como 1
+        return Math.min(6, Math.max(2, num));
+      }
 
       // Navegação
       switchView(view, persist = true) {
@@ -3240,12 +3242,23 @@
         this.renderAll();
       }
 
+      setSkillProfBonus(skillKey, bonusVal) {
+        const char = this.getActiveChar();
+        if (!this.canEditChar(char)) return;
+        if (!char.skills) char.skills = {};
+        const parsed = parseInt(bonusVal) || 0;
+        char.skills[skillKey] = parsed <= 0 ? 0 : Math.min(6, Math.max(2, parsed));
+        this.persistActiveChar();
+        this.renderAll();
+      }
+
       cycleSkillProf(skillKey) {
         const char = this.getActiveChar();
         if (!this.canEditChar(char)) return;
-        char.skills[skillKey] = ((char.skills[skillKey] || 0) + 1) % 3;
-        this.persistActiveChar();
-        this.renderAll();
+        const curr = this.normalizeSkillBonus(char.skills?.[skillKey] || 0);
+        const idx = SKILL_PROF_OPTIONS.indexOf(curr);
+        const nextVal = SKILL_PROF_OPTIONS[(idx + 1) % SKILL_PROF_OPTIONS.length];
+        this.setSkillProfBonus(skillKey, nextVal);
       }
 
       updateHp(key, val) {
@@ -3301,7 +3314,7 @@
       shortRest() {
         const char = this.getActiveChar();
         if (!this.canEditChar(char)) return;
-        this.triggerRollBanner("Descanso Curto", `Você pode gastar Dados de Vida (${char.hitDice}) + CON`, "1 Hora", "text-emerald-400");
+        this.triggerRollBanner("Descanso Curto", `Você pode gastar Dados de Vida (${char.hitDice})`, "1 Hora", "text-emerald-400");
       }
 
       longRest() {
@@ -3334,7 +3347,7 @@
         });
       }
 
-      rollD20Check(label, modifier) {
+      rollD20Check(label, bonus = 0, extraNote = '') {
         const r1 = Math.floor(Math.random() * 20) + 1;
         const r2 = Math.floor(Math.random() * 20) + 1;
         let chosen = r1;
@@ -3348,8 +3361,11 @@
           detail = `2d20 Desv. [${r1}, ${r2}] → ${chosen}`;
         }
 
-        const total = chosen + modifier;
-        const formula = `${detail} ${modifier >= 0 ? '+' : '-'} ${Math.abs(modifier)}`;
+        const total = chosen + bonus;
+        const bonusStr = bonus !== 0 ? ` ${bonus > 0 ? '+' : '-'} ${Math.abs(bonus)}` : '';
+        const noteStr = extraNote ? ` (${extraNote})` : '';
+        const formula = `${detail}${bonusStr}${noteStr}`;
+
         let badge = '';
         let badgeClass = 'text-[#d6c29f]';
         if (chosen === 20) { badge = '🔥 ACERTO CRÍTICO (20 NATURAL)!'; badgeClass = 'text-emerald-400'; }
@@ -3365,16 +3381,14 @@
 
       rollInitiative() {
         const char = this.getActiveChar();
-        const dexMod = this.calcMod(char.attributes.dex);
-        this.rollD20Check(`Iniciativa (${char.name})`, dexMod);
+        this.rollD20Check(`Iniciativa (${char.name})`, 0);
       }
 
       rollAttack(idx) {
         const char = this.getActiveChar();
         const atk = char.attacks[idx];
         const prof = this.calcProfBonus(char.level);
-        const mod = this.calcMod(char.attributes[atk.ability] || 10) + prof;
-        this.rollD20Check(`Ataque: ${atk.name}`, mod);
+        this.rollD20Check(`Ataque: ${atk.name}`, prof);
       }
 
       rollDamage(idx) {
@@ -3476,8 +3490,15 @@
         newChar.ac = 16;
         newChar.hitDice = "1d10";
         newChar.hp = { current: 12, max: 12, temp: 0 };
-        newChar.attributes = { str: 16, dex: 14, con: 14, int: 10, wis: 12, cha: 10 };
-        newChar.savingThrows = { str: true, dex: false, con: true, int: false, wis: false, cha: false };
+        newChar.attributes = { str: 16, dex: 14, con: 14, int: 10, wis: 12, cha: 10, luck: 12 };
+        newChar.savingThrows = { str: true, dex: false, con: true, int: false, wis: false, cha: false, luck: false };
+        newChar.skills = {
+          acrobatics: 0, animal_handling: 0, arcana: 0, athletics: 2,
+          deception: 0, history: 0, insight: 0, intimidation: 2,
+          investigation: 0, medicine: 0, nature: 0, perception: 2,
+          performance: 0, persuasion: 0, religion: 0, sleight_of_hand: 0,
+          stealth: 0, survival: 0
+        };
         newChar.attacks = [{ name: "Espada Longa", ability: "str", damage: "1d8+3", type: "Cortante" }];
 
         try {
@@ -3720,7 +3741,7 @@
           : 'h-11 px-3 rounded-lg border-2 border-[#8b5a2b] bg-[#e6d5b8] text-[#2b1d0e] flex items-center gap-2 transition active:scale-95';
 
         document.getElementById('acInput').value = char.ac ?? 10;
-        document.getElementById('initRollBtn').textContent = this.formatMod(this.calcMod(char.attributes.dex));
+        document.getElementById('initRollBtn').textContent = '0';
         document.getElementById('speedInput').value = char.speed || '9m';
         document.getElementById('hitDiceInput').value = char.hitDice || '1d8';
         document.getElementById('hpCurrentInput').value = char.hp?.current ?? 10;
@@ -3736,37 +3757,42 @@
           <button onclick="app.setDeathSave('failures', ${i})" class="w-5 h-5 rounded-full border border-[#8b1e1e] ${ds.failures >= i ? 'bg-[#8b1e1e]' : 'bg-transparent'}"></button>
         `).join('');
 
-        const percSkill = char.skills?.perception || 0;
-        const passivePerc = 10 + this.calcMod(char.attributes.wis) + (percSkill * profBonus);
+        // Percepção Passiva e Carga sem modificador derivado de atributo
+        const percSkillBonus = this.normalizeSkillBonus(char.skills?.perception || 0);
+        const passivePerc = 10 + percSkillBonus;
         document.getElementById('passivePerceptionDisplay').textContent = passivePerc;
         document.getElementById('profBonusDisplay').textContent = this.formatMod(profBonus);
         const totalWeight = (char.inventory || []).reduce((acc, it) => acc + ((it.weight || 0) * (it.qty || 1)), 0);
-        const maxCarry = Math.round(char.attributes.str * 7.5);
+        const maxCarry = Math.round((char.attributes.str || 10) * 7.5);
         document.getElementById('carryWeightDisplay').textContent = `${totalWeight.toFixed(1)} / ${maxCarry} kg`;
 
+        // CARDS DOS 7 ATRIBUTOS (SEM MODIFICADORES +1 / -3)
         document.getElementById('attributesGrid').innerHTML = ATTRIBUTES_META.map(attr => {
-          const score = char.attributes[attr.key];
-          const mod = this.calcMod(score);
+          const score = char.attributes[attr.key] ?? 10;
+          const isLuck = attr.key === 'luck';
           return `
-            <div class="parchment-page rounded-xl p-3 text-center flex flex-col items-center justify-between">
-              <span class="font-heading text-xs font-bold uppercase tracking-wider text-[#2b1d0e]">${attr.label}</span>
-              <button onclick="app.rollD20Check('Teste de ${attr.label}', ${mod})"
-                class="my-2 w-14 h-12 rounded-lg parchment-inset hover:border-[#8b1e1e] active:scale-95 flex items-center justify-center font-display text-2xl font-black text-[#8b1e1e] transition cursor-pointer"
-                title="Rolar teste de ${attr.label}">
-                ${this.formatMod(mod)}
-              </button>
-              <div class="w-16 h-8 rounded-full border border-[#8b5a2b] bg-[#f4ead5] flex items-center justify-center shadow-inner">
+            <div class="parchment-page rounded-xl p-3 text-center flex flex-col items-center justify-between ${isLuck ? 'ring-2 ring-[#c59b27]' : ''}">
+              <span class="font-heading text-xs font-bold uppercase tracking-wider ${isLuck ? 'text-[#8b1e1e]' : 'text-[#2b1d0e]'}">
+                ${isLuck ? '🍀 ' + attr.label : attr.label}
+              </span>
+              <div class="my-2 w-16 h-14 rounded-xl parchment-inset border border-[#8b5a2b]/60 flex items-center justify-center shadow-inner">
                 <input type="number" min="1" max="30" value="${score}" ${!editable ? 'disabled' : ''}
                   onchange="app.updateAttribute('${attr.key}', this.value)"
-                  class="w-full text-center font-mono-num font-bold text-sm text-[#2b1d0e] bg-transparent outline-none" />
+                  class="w-full text-center font-display text-2xl font-black ${isLuck ? 'text-amber-800' : 'text-[#8b1e1e]'} bg-transparent outline-none" />
               </div>
+              <button onclick="app.rollD20Check('Teste de ${attr.label}', 0, '${attr.short}: ${score}')"
+                class="w-full h-7 rounded-full border border-[#8b5a2b] bg-[#f4ead5] hover:bg-[#8b1e1e] hover:text-[#f4ead5] active:scale-95 flex items-center justify-center font-heading text-[10px] font-bold uppercase tracking-wider text-[#2b1d0e] transition cursor-pointer"
+                title="Rolar 1d20 para ${attr.label}">
+                🎲 Rolar ${attr.short}
+              </button>
             </div>
           `;
         }).join('');
 
+        // SALVAGUARDAS (INCLUINDO SORTE, SEM MODIFICADOR DE ATRIBUTO)
         document.getElementById('savingThrowsList').innerHTML = ATTRIBUTES_META.map(attr => {
           const isProf = char.savingThrows?.[attr.key];
-          const total = this.calcMod(char.attributes[attr.key]) + (isProf ? profBonus : 0);
+          const total = isProf ? profBonus : 0;
           return `
             <div class="grid grid-cols-[36px_1fr_auto] items-center gap-2 py-1 px-1.5 rounded hover:bg-[#e6d5b8]/60">
               <button onclick="app.toggleSaveProf('${attr.key}')" class="w-8 h-8 rounded-full flex items-center justify-center text-base font-bold ${isProf ? 'text-[#8b1e1e]' : 'text-[#5c4328]/50'}">
@@ -3783,29 +3809,41 @@
 
         document.getElementById('proficienciesText').value = char.otherProficiencies || '';
 
+        // PERÍCIAS COM BÔNUS DE PROFICIÊNCIA CONFIGURÁVEL DE +2 ATÉ +6
         document.getElementById('skillsList').innerHTML = SKILLS_META.map(sk => {
-          const level = char.skills?.[sk.key] || 0;
-          const total = this.calcMod(char.attributes[sk.attr]) + (level * profBonus);
-          const symbol = level === 2 ? '★' : level === 1 ? '●' : '○';
-          const color = level === 2 ? 'text-amber-700' : level === 1 ? 'text-[#8b1e1e]' : 'text-[#5c4328]/50';
+          const skillBonus = this.normalizeSkillBonus(char.skills?.[sk.key] || 0);
+          const isProf = skillBonus > 0;
           return `
-            <div class="grid grid-cols-[36px_1fr_auto] items-center gap-1.5 py-1 px-1.5 rounded hover:bg-[#e6d5b8]/60">
-              <button onclick="app.cycleSkillProf('${sk.key}')" class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${color}" title="Alternar Proficiência">
-                ${symbol}
-              </button>
-              <div class="min-w-0">
+            <div class="grid grid-cols-[1fr_auto_auto] items-center gap-1.5 py-1 px-1.5 rounded hover:bg-[#e6d5b8]/60">
+              <div class="min-w-0 flex items-center gap-1.5">
+                <span class="text-xs font-bold ${isProf ? 'text-[#8b1e1e]' : 'text-[#5c4328]/40'}">${isProf ? '●' : '○'}</span>
                 <span class="text-sm font-semibold text-[#2b1d0e] truncate block">${sk.label} <span class="text-[10px] uppercase text-[#5c4328]">(${sk.attr})</span></span>
               </div>
-              <button onclick="app.rollD20Check('Perícia: ${sk.label}', ${total})"
-                class="h-8 min-w-[44px] px-2 rounded parchment-inset hover:border-[#8b1e1e] font-mono-num text-xs font-bold text-[#2b1d0e] text-center shrink-0">
-                ${this.formatMod(total)}
+
+              <select ${!editable ? 'disabled' : ''} onchange="app.setSkillProfBonus('${sk.key}', this.value)"
+                aria-label="Bônus de proficiência de ${sk.label}"
+                title="Bônus de Proficiência (0 ou +2 até +6)"
+                class="h-8 px-1.5 rounded bg-[#f4ead5] border border-[#b89b6a] font-mono-num text-xs font-bold ${isProf ? 'text-[#8b1e1e] border-[#8b1e1e]' : 'text-[#5c4328]'} outline-none cursor-pointer">
+                <option value="0" ${skillBonus === 0 ? 'selected' : ''}>0</option>
+                <option value="2" ${skillBonus === 2 ? 'selected' : ''}>+2</option>
+                <option value="3" ${skillBonus === 3 ? 'selected' : ''}>+3</option>
+                <option value="4" ${skillBonus === 4 ? 'selected' : ''}>+4</option>
+                <option value="5" ${skillBonus === 5 ? 'selected' : ''}>+5</option>
+                <option value="6" ${skillBonus === 6 ? 'selected' : ''}>+6</option>
+              </select>
+
+              <button onclick="app.rollD20Check('Perícia: ${sk.label}', ${skillBonus})"
+                class="h-8 min-w-[42px] px-2 rounded parchment-inset hover:border-[#8b1e1e] font-mono-num text-xs font-bold text-[#2b1d0e] text-center shrink-0 cursor-pointer"
+                title="Rolar 1d20 + ${skillBonus}">
+                🎲
               </button>
             </div>
           `;
         }).join('');
 
+        // ATAQUES (SEM MODIFICADOR DERIVADO DE ATRIBUTO)
         document.getElementById('attacksList').innerHTML = (char.attacks || []).map((atk, idx) => {
-          const hitBonus = this.calcMod(char.attributes[atk.ability] || 10) + profBonus;
+          const hitBonus = profBonus;
           return `
             <div class="parchment-inset rounded-lg p-3 grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center">
               <input type="text" value="${atk.name}" ${!editable ? 'disabled' : ''} oninput="app.updateAttack(${idx}, 'name', this.value)"
@@ -3845,10 +3883,9 @@
 
         const sc = char.spellcasting || { ability: 'int', slots: {}, spells: [] };
         const spellAbility = sc.ability || 'int';
-        const spellMod = this.calcMod(char.attributes[spellAbility]);
         document.getElementById('spellAbilitySelect').value = spellAbility;
-        document.getElementById('spellSaveDcDisplay').textContent = 8 + profBonus + spellMod;
-        document.getElementById('spellAttackDisplay').textContent = this.formatMod(profBonus + spellMod);
+        document.getElementById('spellSaveDcDisplay').textContent = 8 + profBonus;
+        document.getElementById('spellAttackDisplay').textContent = this.formatMod(profBonus);
 
         document.getElementById('spellSlotsGrid').innerHTML = [1, 2, 3, 4, 5, 6, 7, 8, 9].map(lvl => {
           const slot = sc.slots?.[lvl] || { total: 0, used: 0 };
