@@ -73,7 +73,7 @@
       background-color: rgba(230, 213, 184, 0.55);
       border: 1px solid rgba(139, 90, 43, 0.35);
       box-shadow: inset 0 1px 3px rgba(43, 29, 14, 0.12);
-      min-width:
+      min-width: 0;
     }
 
     .dnd-divider {
@@ -214,10 +214,12 @@
   </div>
 
   <!-- ========================================================= -->
-  <!-- MODO PROJETOR EMBUTIDO (?projector=1) - APENAS O MAPA     -->
+  <!-- MODO PROJETOR / RECEPTOR EMBUTIDO (?projector=1&room=XXXX)-->
   <!-- ========================================================= -->
   <div id="projectorScreen" class="hidden fixed inset-0 z-[100] bg-[#050403] flex flex-col items-center justify-center select-none overflow-hidden">
-    <div id="projectorControls" class="absolute top-3 right-3 z-30 flex items-center gap-2 bg-black/75 backdrop-blur-md border border-[#c59b27]/40 rounded-full px-3 py-1.5 opacity-15 hover:opacity-100 transition-opacity duration-300">
+    <!-- Barra discreta que só aparece ao passar o mouse no canto superior direito -->
+    <div id="projectorControls" class="absolute top-3 right-3 z-30 flex items-center gap-2 bg-black/80 backdrop-blur-md border border-[#c59b27]/50 rounded-full px-3 py-1.5 opacity-25 hover:opacity-100 transition-opacity duration-300">
+      <span id="projectorRoomTag" class="text-[11px] font-mono-num font-bold text-emerald-400 px-2 border-r border-[#c59b27]/30">SALA: ----</span>
       <span id="projectorMapTitle" class="text-xs font-heading text-[#e5c158] px-2 max-w-[200px] truncate">Aguardando Mapa...</span>
       <button onclick="app.adjustProjectorZoom(-0.15)" class="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-[#f4ead5] font-mono-num text-sm flex items-center justify-center cursor-pointer" title="Reduzir Zoom">-</button>
       <button onclick="app.resetProjectorTransform()" class="px-2 h-7 rounded-full bg-white/10 hover:bg-white/20 text-[#f4ead5] font-mono-num text-[11px] cursor-pointer" title="Ajustar à Tela">100%</button>
@@ -225,6 +227,7 @@
       <button onclick="app.toggleProjectorFullscreen()" class="w-7 h-7 rounded-full bg-[#8b1e1e] hover:bg-[#a62424] text-[#f4ead5] text-xs flex items-center justify-center cursor-pointer" title="Tela Cheia">⛶</button>
     </div>
 
+    <!-- Área de Exibição Pura do Mapa + Tokens Sincronizados -->
     <div id="projectorViewport" class="w-full h-full flex items-center justify-center relative overflow-hidden cursor-grab active:cursor-grabbing">
       <div id="projectorStageContainer" class="hidden relative inline-flex items-center justify-center transition-transform duration-150 ease-out">
         <img id="projectorMapImage" src="" alt="Mapa da Campanha" class="max-w-screen max-h-screen w-auto h-auto object-contain block pointer-events-none select-none" />
@@ -235,15 +238,26 @@
             <span class="font-display text-sm sm:text-base text-[#e5c158] tracking-widest uppercase">Território Oculto pelo Mestre</span>
           </div>
         </div>
+        <!-- Camada de Tokens / Posição dos Jogadores e Pinos Táticos -->
         <div id="projectorTokensLayer" class="absolute inset-0 pointer-events-none overflow-hidden"></div>
       </div>
 
-      <div id="projectorEmptyState" class="text-center p-8 max-w-md">
-        <div class="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-[#9b1c1c] to-[#3b0808] border-2 border-[#c59b27]/60 flex items-center justify-center mb-4 shadow-2xl">
+      <div id="projectorEmptyState" class="text-center p-8 max-w-md space-y-4">
+        <div class="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-[#9b1c1c] to-[#3b0808] border-2 border-[#c59b27]/60 flex items-center justify-center shadow-2xl">
           <span class="font-display text-3xl text-[#e5c158]">D20</span>
         </div>
-        <h2 class="font-display text-xl text-[#e5c158] tracking-wider">Tela do Projetor Pronta</h2>
-        <p class="text-sm text-[#d6c29f]/75 mt-2">Aguardando o Mestre selecionar um mapa na Central de Cartografia. Apenas o mapa será exibido aqui.</p>
+        <h2 class="font-display text-xl text-[#e5c158] tracking-wider">Receptor de Cartografia</h2>
+        <p id="projectorEmptyDesc" class="text-sm text-[#d6c29f]/75">Conectado à sala. Aguardando o Mestre emitir um mapa...</p>
+
+        <!-- Formulário rápido caso o receptor abra sem código de sala na URL -->
+        <div id="projectorRoomJoinBox" class="pt-2 flex items-center justify-center gap-2">
+          <input id="projectorRoomInput" type="text" maxlength="12" placeholder="CÓDIGO DA SALA"
+            class="h-11 w-44 rounded-xl bg-black/70 border border-[#c59b27] px-3 text-center font-mono-num font-bold uppercase tracking-widest text-[#e5c158] outline-none" />
+          <button onclick="app.joinProjectorRoomFromInput()"
+            class="h-11 px-4 rounded-xl bg-[#8b1e1e] hover:bg-[#a62424] border border-[#e5c158] text-[#f4ead5] font-heading text-xs font-bold uppercase tracking-wider cursor-pointer">
+            Conectar
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -431,10 +445,10 @@
             <span data-music-label class="hidden xl:inline">Música: ON</span>
           </button>
 
-          <button id="dmMapBtn" onclick="app.openMapManagerModal()" class="hidden h-10 px-3 rounded-lg bg-gradient-to-r from-[#8b1e1e] to-[#5e1212] hover:from-[#a62424] hover:to-[#751717] border border-[#e5c158] text-[#f4ead5] font-heading text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow transition relative shrink-0 cursor-pointer" title="Central de Mapas & Emissão para App Receptor">
+          <button id="dmMapBtn" onclick="app.openMapManagerModal()" class="hidden h-10 px-3 rounded-lg bg-gradient-to-r from-[#8b1e1e] to-[#5e1212] hover:from-[#a62424] hover:to-[#751717] border border-[#e5c158] text-[#f4ead5] font-heading text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow transition relative shrink-0 cursor-pointer" title="Central de Mapas & Sala de Emissão">
             <span class="text-base">🗺️</span>
-            <span class="hidden sm:inline">Cartógrafo</span>
-            <span id="activeMapLiveDot" class="hidden w-2.5 h-2.5 rounded-full bg-emerald-400 border border-black animate-pulse" title="Mapa ativo sendo emitido"></span>
+            <span class="hidden sm:inline">Mapas</span>
+            <span id="activeMapLiveDot" class="hidden w-2.5 h-2.5 rounded-full bg-emerald-400 border border-black animate-pulse" title="Transmitindo mapa na Sala"></span>
           </button>
 
           <button onclick="app.openUserProfileModal()" class="flex items-center gap-2 bg-black/40 hover:bg-black/60 border border-[#c59b27]/40 rounded-full pl-1 pr-2.5 py-1 transition cursor-pointer" title="Editar Perfil e Foto">
@@ -1139,7 +1153,7 @@
           <div class="flex items-center gap-2.5 p-3 rounded-xl bg-black/35 border border-[#c59b27]/35">
             <input id="editChapterSetAsCurrent" type="checkbox" checked class="w-4 h-4 accent-[#8b1e1e]" />
             <label for="editChapterSetAsCurrent" class="text-xs font-semibold text-[#f4ead5] cursor-pointer">
-              Definir este capítulo como o <strong>Capítulo Atual da Mesa</strong> (e emitir seu mapa automaticamente)
+              Definir este capítulo como o <strong>Capítulo Atual da Mesa</strong> (e emitir seu mapa na Sala automaticamente)
             </label>
           </div>
 
@@ -1154,61 +1168,65 @@
     </div>
 
     <!-- ========================================================= -->
-    <!-- MODAL CENTRAL DE CARTOGRAFIA TÁTICA & EMISSÃO PARA APP    -->
+    <!-- MODAL CENTRAL DE CARTOGRAFIA TÁTICA & SALA DE TRANSMISSÃO -->
     <!-- ========================================================= -->
     <div id="mapManagerModal" class="fixed inset-0 bg-black/85 z-50 hidden items-center justify-center p-2 sm:p-4">
-      <div class="leather-panel rounded-2xl max-w-6xl w-full h-[92vh] flex flex-col border-2 border-[#e5c158] text-[#f4ead5] shadow-2xl overflow-hidden">
+      <div class="leather-panel rounded-2xl max-w-6xl w-full h-[94vh] flex flex-col border-2 border-[#e5c158] text-[#f4ead5] shadow-2xl overflow-hidden">
 
         <!-- Cabeçalho da Central de Mapas -->
         <div class="p-3.5 sm:p-4 border-b border-[#c59b27]/35 flex flex-wrap items-center justify-between gap-3 bg-black/40 shrink-0">
           <div class="flex items-center gap-3 min-w-0">
             <span class="text-2xl">🗺️</span>
             <div class="min-w-0">
-              <div class="flex items-center gap-2">
-                <h3 class="font-display text-base sm:text-xl font-black text-[#e5c158] truncate">Mesa Cartográfica & Emissor de Mapas</h3>
-                <span id="broadcastLivePill" class="hidden px-2 py-0.5 rounded-full bg-emerald-600/90 text-white font-heading text-[10px] font-bold uppercase tracking-wider animate-pulse">● Emitindo ao Vivo</span>
-              </div>
-              <p class="text-[11px] sm:text-xs text-[#d6c29f] truncate">Gerencie mapas, posicione os heróis e transmita em tempo real para o App Receptor de Mapas.</p>
+              <h3 class="font-display text-base sm:text-xl font-black text-[#e5c158] truncate">Mesa Cartográfica & Sala de Emissão</h3>
+              <p class="text-[11px] sm:text-xs text-[#d6c29f] truncate">Crie uma Sala no Firebase e emita o mapa, tokens e pinos em tempo real para o app receptor.</p>
             </div>
           </div>
 
-          <div class="flex flex-wrap items-center gap-2 shrink-0">
-            <button onclick="app.toggleReceiverUrlPanel()" class="h-10 px-3 rounded-xl bg-[#2b1d0e] hover:bg-[#3d2914] border border-[#c59b27]/70 text-[#e5c158] font-heading text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition cursor-pointer" title="Configurar URL ou copiar link do App Receptor">
-              <span>📡</span>
-              <span class="hidden sm:inline">App Receptor</span>
-            </button>
-
-            <button onclick="app.launchReceiverApp()" class="h-10 px-3.5 rounded-xl bg-gradient-to-r from-[#8b1e1e] to-[#691414] hover:from-[#a62424] hover:to-[#7a1818] border border-[#e5c158] text-[#f4ead5] font-heading text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-lg transition cursor-pointer" title="Abre o App Receptor dedicado que recebe apenas o mapa emitido">
-              <span>📺</span>
-              <span>Abrir App Receptor</span>
-            </button>
-
+          <div class="flex items-center gap-2 shrink-0">
             <button onclick="document.getElementById('mapManagerModal').classList.add('hidden')" class="w-10 h-10 rounded-xl bg-black/50 hover:bg-[#8b1e1e] text-[#f4ead5] flex items-center justify-center transition shrink-0 cursor-pointer">✕</button>
           </div>
         </div>
 
-        <!-- Painel Expansível de Configuração do App Receptor de Mapas -->
-        <div id="receiverAppConfigBar" class="hidden px-4 py-3 bg-[#140d09] border-b border-[#c59b27]/40 shrink-0">
-          <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5">
-            <div class="flex-1 min-w-0">
-              <label class="block text-[10px] font-heading uppercase tracking-wider text-[#e5c158] font-bold mb-1">
-                📡 URL do App Receptor de Mapas (Padrão: ./mapa_receptor.html ou link hospedado)
-              </label>
-              <div class="flex items-center gap-2">
-                <input id="receiverAppUrlInput" type="text" placeholder="./mapa_receptor.html"
-                  onchange="app.saveReceiverAppUrl(this.value)"
-                  class="flex-1 h-9 rounded-lg bg-black/60 border border-[#c59b27]/50 px-3 text-xs font-mono-num text-[#f4ead5] outline-none focus:border-[#e5c158]" />
-                <button type="button" onclick="app.copyReceiverAppLink()" class="h-9 px-3 rounded-lg bg-[#2b1d0e] hover:bg-[#3d2914] border border-[#c59b27]/60 text-[#e5c158] font-heading text-[11px] font-bold uppercase shrink-0 cursor-pointer">
-                  📋 Copiar Link
-                </button>
-                <button type="button" onclick="app.resetReceiverAppUrl()" class="h-9 px-2.5 rounded-lg bg-black/50 hover:bg-black/80 border border-[#c59b27]/30 text-[#d6c29f] font-heading text-[10px] uppercase shrink-0 cursor-pointer" title="Restaurar padrão">
-                  Padrão
-                </button>
-              </div>
+        <!-- BARRA DA SALA DE TRANSMISSÃO FIREBASE (COMUNICAÇÃO ENTRE SITES) -->
+        <div class="px-3.5 sm:px-4 py-2.5 bg-gradient-to-r from-[#1f120b] via-[#2b180e] to-[#1f120b] border-b border-[#e5c158]/40 flex flex-wrap items-center justify-between gap-2.5 shrink-0">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-black/60 border border-[#c59b27]/50 text-[11px] font-heading font-bold uppercase text-[#e5c158]">
+              <span id="roomLiveIndicatorDot" class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+              <span>Sala de Emissão:</span>
+            </span>
+
+            <div class="flex items-center gap-1 bg-black/75 border border-[#e5c158]/60 rounded-lg px-2.5 h-9">
+              <input id="activeRoomCodeInput" type="text" maxlength="12"
+                onchange="app.switchBroadcastRoom(this.value)"
+                class="w-24 bg-transparent font-mono-num font-bold text-sm uppercase tracking-widest text-emerald-400 outline-none text-center"
+                title="Código da Sala Firebase" />
+              <button type="button" onclick="app.generateNewBroadcastRoom()"
+                class="text-xs text-[#d6c29f] hover:text-[#e5c158] px-1 cursor-pointer" title="Gerar novo código de sala">
+                🔄
+              </button>
             </div>
-            <div class="text-[11px] text-[#d6c29f]/85 md:max-w-xs leading-snug">
-              O App Receptor recebe automaticamente o mapa emitido, tokens, pinos, grade tática e névoa de guerra em tempo real sem precisar de login.
-            </div>
+
+            <button type="button" onclick="app.copyRoomCode()"
+              class="h-9 px-3 rounded-lg bg-[#2b1d0e] hover:bg-[#3d2914] border border-[#c59b27]/60 text-[#f4ead5] font-heading text-[11px] font-bold uppercase tracking-wider flex items-center gap-1 cursor-pointer transition" title="Copiar código da sala">
+              <span>📋</span>
+              <span id="copyRoomCodeBtnText">Copiar Código</span>
+            </button>
+
+            <button type="button" onclick="app.copyReceiverLink()"
+              class="h-9 px-3 rounded-lg bg-[#2b1d0e] hover:bg-[#3d2914] border border-[#c59b27]/60 text-[#e5c158] font-heading text-[11px] font-bold uppercase tracking-wider flex items-center gap-1 cursor-pointer transition" title="Copiar link direto para o app receptor">
+              <span>🔗</span>
+              <span id="copyReceiverLinkBtnText">Link Receptor</span>
+            </button>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="app.launchProjectorWindow()"
+              class="h-9 px-3.5 rounded-lg bg-gradient-to-r from-[#8b1e1e] to-[#691414] hover:from-[#a62424] hover:to-[#7a1818] border border-[#e5c158] text-[#f4ead5] font-heading text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow cursor-pointer transition"
+              title="Abre o receptor em uma nova janela já conectado a esta sala">
+              <span>📡</span>
+              <span>Abrir Receptor da Sala</span>
+            </button>
           </div>
         </div>
 
@@ -1228,7 +1246,7 @@
                   <span>📤 Adicionar Mapas</span>
                   <input id="multiMapUploadInput" type="file" accept="image/*" multiple onchange="app.handleMultiMapUpload(event)" class="hidden" />
                 </label>
-                <button id="stopProjectionBtn" onclick="app.clearProjectedMap()" class="hidden h-10 px-3 rounded-xl bg-black/60 hover:bg-red-950 border border-red-500/50 text-red-300 font-heading text-[11px] font-bold uppercase tracking-wider transition cursor-pointer" title="Encerrar emissão atual">
+                <button id="stopProjectionBtn" onclick="app.clearProjectedMap()" class="hidden h-10 px-3 rounded-xl bg-black/60 hover:bg-red-950 border border-red-500/50 text-red-300 font-heading text-[11px] font-bold uppercase tracking-wider transition cursor-pointer" title="Encerrar emissão na sala">
                   ⏹️ Parar
                 </button>
               </div>
@@ -1663,7 +1681,20 @@
 
     const SKILL_PROF_OPTIONS = [0, 2, 3, 4, 5, 6];
     const SESSION_STATE_KEY = 'tomo_dnd_ui_state_v1';
-    const DEFAULT_RECEIVER_URL = './mapa_receptor.html';
+    const BROADCAST_ROOM_KEY = 'tomo_dnd_broadcast_room_v1';
+
+    function sanitizeRoomCode(raw) {
+      return (raw || '').toUpperCase().replace(/[^A-Z0-9_-]/g, '').slice(0, 12);
+    }
+
+    function generateRandomRoomCode() {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let code = 'D20-';
+      for (let i = 0; i < 4; i++) {
+        code += chars[Math.floor(Math.random() * chars.length)];
+      }
+      return code;
+    }
 
     // =========================================================
     // CONTROLADOR PRINCIPAL DA APLICAÇÃO (100% REALTIME DB)
@@ -1673,11 +1704,13 @@
         const params = new URLSearchParams(window.location.search);
         this.isProjectorMode = params.get('projector') === '1';
 
+        const urlRoom = sanitizeRoomCode(params.get('room'));
+        const storedRoom = sanitizeRoomCode(localStorage.getItem(BROADCAST_ROOM_KEY));
+        this.roomCode = urlRoom || storedRoom || 'MESA-01';
+        localStorage.setItem(BROADCAST_ROOM_KEY, this.roomCode);
+
         this.savedUiState = this.loadUiState();
         this.initialRestoreDone = false;
-
-        this.receiverAppUrl = this.savedUiState.receiverAppUrl || DEFAULT_RECEIVER_URL;
-        this.receiverPopupWindow = null;
 
         this.authMode = 'login';
         this.pendingRegAvatarDataUrl = null;
@@ -1699,6 +1732,7 @@
           tokenScale: 1,
           activeChapterId: null
         };
+        this.roomLivePayload = null;
         this.activeCharId = this.savedUiState.activeCharId || null;
         this.currentView = this.savedUiState.view || 'sheet';
         this.currentSubTab = this.savedUiState.subTab || 'combat';
@@ -1715,6 +1749,7 @@
         this.unsubCompendium = null;
         this.unsubMaps = null;
         this.unsubProjector = null;
+        this.unsubRoom = null;
         this.unsubChapters = null;
         this.saveTimeout = null;
         this.pendingDirtyCharId = null;
@@ -1747,6 +1782,7 @@
         if (this.isProjectorMode) {
           this.hideBootLoader();
           this.initProjectorView();
+          this.subscribeToRoomReceiver(this.roomCode);
         } else {
           this.initOpeningAudio();
         }
@@ -1759,118 +1795,161 @@
       }
 
       // ---------------------------------------------------------
-      // EMISSOR DE MAPA PARA O APP RECEPTOR DEDICADO
+      // SISTEMA DE SALAS FIREBASE (EMISSÃO EM TEMPO REAL)
       // ---------------------------------------------------------
-      toggleReceiverUrlPanel() {
-        const bar = document.getElementById('receiverAppConfigBar');
-        if (!bar) return;
-        const input = document.getElementById('receiverAppUrlInput');
-        if (input) input.value = this.receiverAppUrl || DEFAULT_RECEIVER_URL;
-        bar.classList.toggle('hidden');
+      buildRoomBroadcastPayload(overrideState = null) {
+        const state = overrideState || this.activeMapState || {};
+        const activeId = state.activeMapId || null;
+        const mapObj = activeId ? this.maps.find(m => m.id === activeId) : null;
+
+        if (!mapObj) {
+          return {
+            roomCode: this.roomCode,
+            activeMapId: null,
+            mapName: null,
+            imageUrl: null,
+            showGrid: !!state.showGrid,
+            fogEnabled: !!state.fogEnabled,
+            showTokensOnProjector: state.showTokensOnProjector !== false,
+            tokens: [],
+            pins: [],
+            updatedAt: Date.now()
+          };
+        }
+
+        const showTokens = state.showTokensOnProjector !== false;
+        const resolvedTokens = showTokens
+          ? Object.values(mapObj.tokens || {})
+              .map(tk => {
+                const char = this.characters.find(c => c.id === tk.charId);
+                if (!char) return null;
+                return {
+                  charId: char.id,
+                  name: (char.name || 'Herói').split(' ')[0],
+                  fullName: char.name || 'Herói',
+                  avatarUrl: char.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(char.name || 'Hero')}`,
+                  x: Number(tk.x) || 50,
+                  y: Number(tk.y) || 50
+                };
+              })
+              .filter(Boolean)
+          : [];
+
+        const resolvedPins = Object.values(mapObj.pins || {}).map(pin => {
+          const meta = TACTICAL_PINS_META.find(p => p.id === pin.type) || TACTICAL_PINS_META[0];
+          return {
+            id: pin.id,
+            type: pin.type || 'party',
+            label: pin.label || meta.label,
+            icon: meta.icon,
+            color: meta.color,
+            x: Number(pin.x) || 50,
+            y: Number(pin.y) || 50
+          };
+        });
+
+        return {
+          roomCode: this.roomCode,
+          activeMapId: mapObj.id,
+          mapName: mapObj.name || 'Mapa da Campanha',
+          category: mapObj.category || 'battlemap',
+          imageUrl: mapObj.imageUrl,
+          showGrid: !!state.showGrid,
+          fogEnabled: !!state.fogEnabled,
+          showTokensOnProjector: showTokens,
+          tokens: resolvedTokens,
+          pins: resolvedPins,
+          emittedBy: this.userProfile?.name || 'Mestre',
+          updatedAt: Date.now()
+        };
       }
 
-      saveReceiverAppUrl(val) {
-        const clean = (val || '').trim() || DEFAULT_RECEIVER_URL;
-        this.receiverAppUrl = clean;
-        this.saveUiState({ receiverAppUrl: clean });
-      }
-
-      resetReceiverAppUrl() {
-        this.receiverAppUrl = DEFAULT_RECEIVER_URL;
-        this.saveUiState({ receiverAppUrl: DEFAULT_RECEIVER_URL });
-        const input = document.getElementById('receiverAppUrlInput');
-        if (input) input.value = DEFAULT_RECEIVER_URL;
-      }
-
-      resolveReceiverFullUrl() {
+      async syncBroadcastRoomNow(overrideState = null) {
+        if (this.userProfile?.role !== 'dm' || !this.roomCode) return;
         try {
-          return new URL(this.receiverAppUrl || DEFAULT_RECEIVER_URL, window.location.href).toString();
-        } catch (e) {
-          return this.receiverAppUrl || DEFAULT_RECEIVER_URL;
+          const payload = this.buildRoomBroadcastPayload(overrideState);
+          await set(ref(db, `rooms/${this.roomCode}`), payload);
+        } catch (err) {
+          console.error("Erro ao sincronizar Sala Firebase:", err);
         }
       }
 
-      copyReceiverAppLink() {
-        const fullUrl = this.resolveReceiverFullUrl();
-        navigator.clipboard?.writeText(fullUrl).then(() => {
-          alert(`Link do App Receptor copiado!\n\n${fullUrl}\n\nAbra este link em qualquer monitor, TV, tablet ou aba para receber os mapas emitidos em tempo real.`);
-        }).catch(() => {
-          prompt("Copie o endereço do App Receptor:", fullUrl);
+      async switchBroadcastRoom(newRawCode) {
+        const clean = sanitizeRoomCode(newRawCode);
+        if (!clean) return;
+        this.roomCode = clean;
+        localStorage.setItem(BROADCAST_ROOM_KEY, clean);
+        const input = document.getElementById('activeRoomCodeInput');
+        if (input) input.value = clean;
+        await this.syncBroadcastRoomNow();
+      }
+
+      async generateNewBroadcastRoom() {
+        const nextCode = generateRandomRoomCode();
+        await this.switchBroadcastRoom(nextCode);
+      }
+
+      copyRoomCode() {
+        navigator.clipboard?.writeText(this.roomCode).catch(() => {});
+        const btnText = document.getElementById('copyRoomCodeBtnText');
+        if (btnText) {
+          btnText.textContent = '✓ Copiado!';
+          setTimeout(() => { btnText.textContent = 'Copiar Código'; }, 2000);
+        }
+      }
+
+      getReceiverUrlForRoom() {
+        const url = new URL(window.location.href);
+        url.searchParams.set('projector', '1');
+        url.searchParams.set('room', this.roomCode);
+        return url.toString();
+      }
+
+      copyReceiverLink() {
+        const link = this.getReceiverUrlForRoom();
+        navigator.clipboard?.writeText(link).catch(() => {});
+        const btnText = document.getElementById('copyReceiverLinkBtnText');
+        if (btnText) {
+          btnText.textContent = '✓ Link Copiado!';
+          setTimeout(() => { btnText.textContent = 'Link Receptor'; }, 2000);
+        }
+      }
+
+      subscribeToRoomReceiver(code) {
+        if (this.unsubRoom) {
+          this.unsubRoom();
+          this.unsubRoom = null;
+        }
+        const clean = sanitizeRoomCode(code) || 'MESA-01';
+        this.roomCode = clean;
+        localStorage.setItem(BROADCAST_ROOM_KEY, clean);
+
+        const roomTag = document.getElementById('projectorRoomTag');
+        if (roomTag) roomTag.textContent = `SALA: ${clean}`;
+        const roomInput = document.getElementById('projectorRoomInput');
+        if (roomInput) roomInput.value = clean;
+        const emptyDesc = document.getElementById('projectorEmptyDesc');
+        if (emptyDesc) emptyDesc.textContent = `Conectado à sala ${clean}. Aguardando o Mestre emitir um mapa...`;
+
+        const roomRef = ref(db, `rooms/${clean}`);
+        this.unsubRoom = onValue(roomRef, (snapshot) => {
+          this.roomLivePayload = snapshot.val() || null;
+          this.renderProjectorScreen();
+        }, (err) => {
+          console.error("Erro ao escutar sala:", err);
         });
       }
 
-      launchReceiverApp() {
-        const fullUrl = this.resolveReceiverFullUrl();
-        this.receiverPopupWindow = window.open(fullUrl, 'TomoMapaReceptorD20', 'popup=yes,width=1366,height=768');
-        setTimeout(() => this.pushInstantPayloadToReceiver(), 600);
-      }
-
-      // Publica pacote completo otimizado no nó mapBroadcast do Firebase + postMessage
-      async syncBroadcastMapPayload() {
-        if (this.userProfile?.role !== 'dm') return;
-        const activeId = this.activeMapState?.activeMapId || null;
-        const activeMap = activeId ? this.maps.find(m => m.id === activeId) : null;
-        const activeChap = this.getActiveChapter();
-
-        const enrichedTokens = {};
-        if (activeMap && activeMap.tokens) {
-          Object.values(activeMap.tokens).forEach(tk => {
-            const char = this.characters.find(c => c.id === tk.charId);
-            if (char) {
-              enrichedTokens[tk.charId] = {
-                charId: tk.charId,
-                name: char.name || 'Herói',
-                avatarUrl: char.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(char.name || 'Hero')}`,
-                x: tk.x,
-                y: tk.y
-              };
-            }
-          });
-        }
-
-        const payload = {
-          active: !!(activeMap && activeMap.imageUrl),
-          mapId: activeMap?.id || null,
-          mapName: activeMap?.name || '',
-          category: activeMap?.category || 'battlemap',
-          regionNote: activeMap?.regionNote || '',
-          imageUrl: activeMap?.imageUrl || '',
-          showGrid: !!this.activeMapState?.showGrid,
-          fogEnabled: !!this.activeMapState?.fogEnabled,
-          showTokens: this.activeMapState?.showTokensOnProjector !== false,
-          tokens: enrichedTokens,
-          pins: activeMap?.pins || {},
-          chapterTitle: activeChap ? `${activeChap.number}: ${activeChap.title}` : '',
-          emittedBy: this.userProfile?.name || 'Mestre',
-          emittedAt: Date.now()
-        };
-
-        try {
-          await set(ref(db, 'mapBroadcast'), payload);
-          this.pushInstantPayloadToReceiver(payload);
-        } catch (err) {
-          console.error("Erro ao emitir pacote de mapa para o App Receptor:", err);
-        }
-      }
-
-      pushInstantPayloadToReceiver(customPayload = null) {
-        if (!this.receiverPopupWindow || this.receiverPopupWindow.closed) return;
-        try {
-          const activeId = this.activeMapState?.activeMapId || null;
-          const activeMap = activeId ? this.maps.find(m => m.id === activeId) : null;
-          const payload = customPayload || {
-            active: !!(activeMap && activeMap.imageUrl),
-            mapId: activeMap?.id || null,
-            mapName: activeMap?.name || '',
-            imageUrl: activeMap?.imageUrl || '',
-            showGrid: !!this.activeMapState?.showGrid,
-            fogEnabled: !!this.activeMapState?.fogEnabled,
-            showTokens: this.activeMapState?.showTokensOnProjector !== false,
-            pins: activeMap?.pins || {},
-            emittedAt: Date.now()
-          };
-          this.receiverPopupWindow.postMessage({ type: 'TOMO_MAP_BROADCAST', payload }, '*');
-        } catch (e) {}
+      joinProjectorRoomFromInput() {
+        const input = document.getElementById('projectorRoomInput');
+        if (!input) return;
+        const code = sanitizeRoomCode(input.value);
+        if (!code) return;
+        const url = new URL(window.location.href);
+        url.searchParams.set('projector', '1');
+        url.searchParams.set('room', code);
+        window.history.replaceState({}, '', url.toString());
+        this.subscribeToRoomReceiver(code);
       }
 
       // ---------------------------------------------------------
@@ -2138,12 +2217,13 @@
           };
           if (targetMapId) {
             statePatch.activeMapId = targetMapId;
-            this.activeMapState.activeMapId = targetMapId;
           }
 
-          this.activeChapterId = chapterId;
           await update(ref(db, 'projectorState'), statePatch);
-          await this.syncBroadcastMapPayload();
+
+          const nextState = { ...this.activeMapState, ...statePatch };
+          this.activeMapState = nextState;
+          await this.syncBroadcastRoomNow(nextState);
 
           if (chap && chap.status !== 'active') {
             await update(ref(db, `chapters/${chapterId}`), { status: 'active' });
@@ -2253,7 +2333,7 @@
                   <div class="space-y-2">
                     ${isDM && linkedMap ? `
                       <button onclick="app.projectMap('${linkedMap.id}')" class="w-full h-10 px-3 rounded-lg bg-[#8b1e1e] hover:bg-[#a62424] text-[#f4ead5] font-heading text-xs font-bold uppercase tracking-wider transition cursor-pointer">
-                        📡 Emitir Mapa Agora
+                        📡 Emitir Mapa na Sala
                       </button>
                     ` : ''}
                     ${isDM ? `
@@ -2483,7 +2563,6 @@
             isAnimPopOpen: this.isAnimPopOpen,
             rollMode: this.rollMode,
             isMusicEnabled: this.isMusicEnabled,
-            receiverAppUrl: this.receiverAppUrl,
             ...partial
           };
           localStorage.setItem(SESSION_STATE_KEY, JSON.stringify(this.savedUiState));
@@ -2643,7 +2722,7 @@
       }
 
       // ---------------------------------------------------------
-      // MODO PROJETOR EMBUTIDO (?projector=1)
+      // MODO RECEPTOR / PROJETOR (ESPELHAMENTO VIA SALA FIREBASE)
       // ---------------------------------------------------------
       initProjectorView() {
         document.body.className = "bg-[#050403] overflow-hidden m-0 p-0";
@@ -2653,6 +2732,7 @@
 
         const viewport = document.getElementById('projectorViewport');
         viewport.addEventListener('mousedown', (e) => {
+          if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
           this.isDraggingMap = true;
           this.dragStartX = e.clientX - this.projPanX;
           this.dragStartY = e.clientY - this.projPanY;
@@ -2700,6 +2780,44 @@
         }
       }
 
+      buildReceiverTokensHtml(roomData) {
+        let html = '';
+        const tokens = Array.isArray(roomData.tokens) ? roomData.tokens : Object.values(roomData.tokens || {});
+        const pins = Array.isArray(roomData.pins) ? roomData.pins : Object.values(roomData.pins || {});
+
+        tokens.forEach(tk => {
+          if (!tk) return;
+          html += `
+            <div style="left: ${tk.x}%; top: ${tk.y}%; transform: translate(-50%, -50%);"
+              class="absolute z-20 flex flex-col items-center select-none pointer-events-none transition-all duration-150">
+              <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-[#e5c158] bg-[#1a110b] shadow-[0_0_14px_rgba(0,0,0,0.95)] overflow-hidden flex items-center justify-center">
+                <img src="${tk.avatarUrl}" alt="${tk.name}" class="w-full h-full object-contain pointer-events-none" />
+              </div>
+              <span class="mt-0.5 px-2 py-0.2 rounded bg-black/85 border border-[#c59b27]/70 text-[10px] sm:text-xs font-heading font-bold text-[#f4ead5] whitespace-nowrap shadow">
+                ${tk.name}
+              </span>
+            </div>
+          `;
+        });
+
+        pins.forEach(pin => {
+          if (!pin) return;
+          html += `
+            <div style="left: ${pin.x}%; top: ${pin.y}%; transform: translate(-50%, -50%);"
+              class="absolute z-10 flex flex-col items-center select-none pointer-events-none transition-all duration-150">
+              <div style="background-color: ${pin.color || '#16a34a'};" class="w-8 h-8 sm:w-9 sm:h-9 rounded-full border-2 border-white shadow-lg flex items-center justify-center text-sm sm:text-base">
+                <span>${pin.icon || '🚩'}</span>
+              </div>
+              <span class="mt-0.5 px-2 py-0.2 rounded bg-black/85 text-[10px] font-heading font-bold text-white whitespace-nowrap shadow">
+                ${pin.label}
+              </span>
+            </div>
+          `;
+        });
+
+        return html;
+      }
+
       renderProjectorScreen() {
         if (!this.isProjectorMode) return;
         const stageEl = document.getElementById('projectorStageContainer');
@@ -2710,6 +2828,29 @@
         const tokensEl = document.getElementById('projectorTokensLayer');
         const titleEl = document.getElementById('projectorMapTitle');
 
+        const roomData = this.roomLivePayload;
+
+        if (roomData && roomData.imageUrl) {
+          gridEl.classList.toggle('hidden', !roomData.showGrid);
+          fogEl.classList.toggle('hidden', !roomData.fogEnabled);
+
+          if (imgEl.src !== roomData.imageUrl) {
+            imgEl.src = roomData.imageUrl;
+            this.resetProjectorTransform();
+          }
+          stageEl.classList.remove('hidden');
+          emptyEl.classList.add('hidden');
+          titleEl.textContent = roomData.mapName || 'Mapa em Projeção';
+
+          if (roomData.showTokensOnProjector !== false) {
+            tokensEl.innerHTML = this.buildReceiverTokensHtml(roomData);
+          } else {
+            tokensEl.innerHTML = '';
+          }
+          return;
+        }
+
+        // Fallback caso esteja logado e usando projectorState antigo
         const activeId = this.activeMapState?.activeMapId;
         const activeMap = this.maps.find(m => m.id === activeId);
 
@@ -2724,13 +2865,9 @@
           stageEl.classList.remove('hidden');
           emptyEl.classList.add('hidden');
           titleEl.textContent = activeMap.name || 'Mapa em Projeção';
-
-          const showTokens = this.activeMapState?.showTokensOnProjector !== false;
-          if (showTokens) {
-            tokensEl.innerHTML = this.buildMapTokensHtml(activeMap, false);
-          } else {
-            tokensEl.innerHTML = '';
-          }
+          tokensEl.innerHTML = this.activeMapState?.showTokensOnProjector !== false
+            ? this.buildMapTokensHtml(activeMap, false)
+            : '';
         } else {
           stageEl.classList.add('hidden');
           emptyEl.classList.remove('hidden');
@@ -3182,10 +3319,9 @@
         this.dismissChapterIntro();
         this.closeDndOptionPicker();
         const keepMusic = this.isMusicEnabled;
-        const keepReceiverUrl = this.receiverAppUrl;
         localStorage.removeItem(SESSION_STATE_KEY);
-        this.savedUiState = { isMusicEnabled: keepMusic, receiverAppUrl: keepReceiverUrl };
-        this.saveUiState({ isMusicEnabled: keepMusic, receiverAppUrl: keepReceiverUrl });
+        this.savedUiState = { isMusicEnabled: keepMusic };
+        this.saveUiState({ isMusicEnabled: keepMusic });
         this.initialRestoreDone = false;
         this.hasShownInitialChapterSplash = false;
         if (this.unsubUsers) this.unsubUsers();
@@ -3217,8 +3353,6 @@
             document.getElementById('authScreen').classList.add('hidden');
             document.getElementById('mainAppContainer').classList.add('hidden');
             document.getElementById('projectorScreen').classList.remove('hidden');
-            this.subscribeToMapsAndProjector();
-            this.subscribeToCharactersForProjector();
             return;
           }
 
@@ -3274,15 +3408,15 @@
       }
 
       // ---------------------------------------------------------
-      // CENTRAL DE CARTOGRAFIA TÁTICA & EMISSÃO PARA APP RECEPTOR
+      // CENTRAL DE CARTOGRAFIA TÁTICA & SALA DE TRANSMISSÃO
       // ---------------------------------------------------------
       openMapManagerModal() {
         if (this.userProfile?.role !== 'dm') return;
         if (!this.selectedEditorMapId && this.maps.length > 0) {
           this.selectedEditorMapId = this.activeMapState?.activeMapId || this.maps[0].id;
         }
-        const urlInput = document.getElementById('receiverAppUrlInput');
-        if (urlInput) urlInput.value = this.receiverAppUrl || DEFAULT_RECEIVER_URL;
+        const roomInput = document.getElementById('activeRoomCodeInput');
+        if (roomInput) roomInput.value = this.roomCode;
 
         this.renderMapsGallery();
         this.renderMapTacticalWorkspace();
@@ -3294,6 +3428,11 @@
         this.selectedEditorMapId = mapId;
         this.renderMapsGallery();
         this.renderMapTacticalWorkspace();
+      }
+
+      launchProjectorWindow() {
+        const url = this.getReceiverUrlForRoom();
+        window.open(url, `TomoReceptor_${this.roomCode}`, 'popup=yes,width=1280,height=720');
       }
 
       async handleMultiMapUpload(event) {
@@ -3340,38 +3479,43 @@
       async projectMap(mapId) {
         if (this.userProfile?.role !== 'dm') return;
         try {
-          this.activeMapState.activeMapId = mapId;
-          await update(ref(db, 'projectorState'), {
+          const patch = {
             activeMapId: mapId,
             updatedAt: new Date().toISOString()
-          });
-          await this.syncBroadcastMapPayload();
+          };
+          await update(ref(db, 'projectorState'), patch);
+          const nextState = { ...this.activeMapState, ...patch };
+          this.activeMapState = nextState;
+          await this.syncBroadcastRoomNow(nextState);
         } catch (err) {
-          alert("Erro ao emitir mapa: " + err.message);
+          alert("Erro ao emitir mapa na sala: " + err.message);
         }
       }
 
       async clearProjectedMap() {
         if (this.userProfile?.role !== 'dm') return;
         try {
-          this.activeMapState.activeMapId = null;
-          await update(ref(db, 'projectorState'), {
+          const patch = {
             activeMapId: null,
             updatedAt: new Date().toISOString()
-          });
-          await this.syncBroadcastMapPayload();
+          };
+          await update(ref(db, 'projectorState'), patch);
+          const nextState = { ...this.activeMapState, ...patch };
+          this.activeMapState = nextState;
+          await this.syncBroadcastRoomNow(nextState);
         } catch (err) {
-          alert("Erro ao encerrar emissão do mapa: " + err.message);
+          alert("Erro ao encerrar emissão na sala: " + err.message);
         }
       }
 
       async toggleProjectorGrid() {
         if (this.userProfile?.role !== 'dm') return;
         const nextVal = !this.activeMapState?.showGrid;
-        this.activeMapState.showGrid = nextVal;
         try {
           await update(ref(db, 'projectorState'), { showGrid: nextVal });
-          await this.syncBroadcastMapPayload();
+          const nextState = { ...this.activeMapState, showGrid: nextVal };
+          this.activeMapState = nextState;
+          await this.syncBroadcastRoomNow(nextState);
         } catch (err) {
           alert("Erro ao alternar grade tática: " + err.message);
         }
@@ -3380,10 +3524,11 @@
       async toggleProjectorFog() {
         if (this.userProfile?.role !== 'dm') return;
         const nextVal = !this.activeMapState?.fogEnabled;
-        this.activeMapState.fogEnabled = nextVal;
         try {
           await update(ref(db, 'projectorState'), { fogEnabled: nextVal });
-          await this.syncBroadcastMapPayload();
+          const nextState = { ...this.activeMapState, fogEnabled: nextVal };
+          this.activeMapState = nextState;
+          await this.syncBroadcastRoomNow(nextState);
         } catch (err) {
           alert("Erro ao alternar névoa de guerra: " + err.message);
         }
@@ -3392,10 +3537,12 @@
       async toggleProjectorTokensVisibility() {
         if (this.userProfile?.role !== 'dm') return;
         const current = this.activeMapState?.showTokensOnProjector !== false;
-        this.activeMapState.showTokensOnProjector = !current;
+        const nextVal = !current;
         try {
-          await update(ref(db, 'projectorState'), { showTokensOnProjector: !current });
-          await this.syncBroadcastMapPayload();
+          await update(ref(db, 'projectorState'), { showTokensOnProjector: nextVal });
+          const nextState = { ...this.activeMapState, showTokensOnProjector: nextVal };
+          this.activeMapState = nextState;
+          await this.syncBroadcastRoomNow(nextState);
         } catch (err) {
           alert("Erro ao alternar visibilidade dos marcadores: " + err.message);
         }
@@ -3405,10 +3552,10 @@
         if (this.userProfile?.role !== 'dm') return;
         try {
           await update(ref(db, `maps/${mapId}`), patch);
-          const mapObj = this.maps.find(m => m.id === mapId);
-          if (mapObj) Object.assign(mapObj, patch);
           if (this.activeMapState?.activeMapId === mapId) {
-            await this.syncBroadcastMapPayload();
+            const mapObj = this.maps.find(m => m.id === mapId);
+            if (mapObj) Object.assign(mapObj, patch);
+            await this.syncBroadcastRoomNow();
           }
         } catch (err) {
           console.error("Erro ao atualizar dados do mapa:", err);
@@ -3446,12 +3593,12 @@
             const existingCount = Object.keys(mapObj.tokens).length;
             const offsetX = Math.min(85, 25 + (existingCount * 8));
             const offsetY = Math.min(85, 45 + ((existingCount % 3) * 8));
-            const tokenData = { charId, x: offsetX, y: offsetY };
-            mapObj.tokens[charId] = tokenData;
-            await set(ref(db, `maps/${mapId}/tokens/${charId}`), tokenData);
+            const tkData = { charId, x: offsetX, y: offsetY };
+            mapObj.tokens[charId] = tkData;
+            await set(ref(db, `maps/${mapId}/tokens/${charId}`), tkData);
           }
           if (this.activeMapState?.activeMapId === mapId) {
-            await this.syncBroadcastMapPayload();
+            await this.syncBroadcastRoomNow();
           }
         } catch (err) {
           alert("Erro ao posicionar jogador no mapa: " + err.message);
@@ -3471,11 +3618,11 @@
             y: Math.min(88, 40 + row * 12)
           };
         });
-        if (mapObj) mapObj.tokens = tokensPatch;
         try {
+          if (mapObj) mapObj.tokens = tokensPatch;
           await set(ref(db, `maps/${mapId}/tokens`), tokensPatch);
           if (this.activeMapState?.activeMapId === mapId) {
-            await this.syncBroadcastMapPayload();
+            await this.syncBroadcastRoomNow();
           }
         } catch (err) {
           alert("Erro ao posicionar grupo no mapa: " + err.message);
@@ -3484,6 +3631,7 @@
 
       async addTacticalPinToMap(mapId, pinType) {
         if (this.userProfile?.role !== 'dm') return;
+        const mapObj = this.maps.find(m => m.id === mapId);
         const meta = TACTICAL_PINS_META.find(p => p.id === pinType) || TACTICAL_PINS_META[0];
         const customLabel = prompt(`Nome do marcador (${meta.label}):`, meta.label);
         if (customLabel === null) return;
@@ -3495,15 +3643,14 @@
           x: 50,
           y: 50
         };
-        const mapObj = this.maps.find(m => m.id === mapId);
-        if (mapObj) {
-          if (!mapObj.pins) mapObj.pins = {};
-          mapObj.pins[pinId] = pinData;
-        }
         try {
+          if (mapObj) {
+            if (!mapObj.pins) mapObj.pins = {};
+            mapObj.pins[pinId] = pinData;
+          }
           await set(ref(db, `maps/${mapId}/pins/${pinId}`), pinData);
           if (this.activeMapState?.activeMapId === mapId) {
-            await this.syncBroadcastMapPayload();
+            await this.syncBroadcastRoomNow();
           }
         } catch (err) {
           alert("Erro ao adicionar pino tático: " + err.message);
@@ -3513,19 +3660,20 @@
       async removeTacticalPin(mapId, pinId) {
         if (this.userProfile?.role !== 'dm') return;
         const mapObj = this.maps.find(m => m.id === mapId);
-        if (mapObj && mapObj.pins) {
-          delete mapObj.pins[pinId];
-        }
         try {
+          if (mapObj && mapObj.pins) {
+            delete mapObj.pins[pinId];
+          }
           await remove(ref(db, `maps/${mapId}/pins/${pinId}`));
           if (this.activeMapState?.activeMapId === mapId) {
-            await this.syncBroadcastMapPayload();
+            await this.syncBroadcastRoomNow();
           }
         } catch (err) {
           console.error(err);
         }
       }
 
+      // Arrastar tokens e pinos em tempo real no preview do Mestre
       startDraggingMapMarker(event, kind, markerId, mapId) {
         if (this.userProfile?.role !== 'dm') return;
         event.preventDefault();
@@ -3584,7 +3732,7 @@
               });
             }
             if (this.activeMapState?.activeMapId === mapId) {
-              await this.syncBroadcastMapPayload();
+              await this.syncBroadcastRoomNow();
             }
           } catch (err) {
             console.error("Erro ao salvar posição do marcador:", err);
@@ -3674,11 +3822,15 @@
         const filterCat = document.getElementById('mapCategoryFilter')?.value || 'all';
 
         document.getElementById('activeMapLiveDot').classList.toggle('hidden', !activeId);
-        const livePill = document.getElementById('broadcastLivePill');
-        if (livePill) livePill.classList.toggle('hidden', !activeId);
-
         const stopBtn = document.getElementById('stopProjectionBtn');
         if (stopBtn) stopBtn.classList.toggle('hidden', !activeId);
+
+        const roomDot = document.getElementById('roomLiveIndicatorDot');
+        if (roomDot) {
+          roomDot.className = activeId
+            ? 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse'
+            : 'w-2 h-2 rounded-full bg-amber-400';
+        }
 
         if (!this.selectedEditorMapId && this.maps.length > 0) {
           this.selectedEditorMapId = activeId || this.maps[0].id;
@@ -3726,7 +3878,7 @@
                   </span>
                   <button type="button" onclick="event.stopPropagation(); app.projectMap('${m.id}')"
                     class="h-6 px-2 rounded font-heading text-[9px] font-bold uppercase tracking-wider cursor-pointer ${isProjected ? 'bg-emerald-700 text-white' : 'bg-[#8b1e1e] hover:bg-[#a62424] text-[#f4ead5] border border-[#e5c158]/60'}">
-                    ${isProjected ? 'Emitindo' : 'Emitir'}
+                    ${isProjected ? 'Na Sala' : 'Emitir'}
                   </button>
                 </div>
               </div>
@@ -3747,7 +3899,7 @@
             <div class="flex-1 flex flex-col items-center justify-center text-center p-8 border border-dashed border-[#c59b27]/30 rounded-2xl bg-black/30">
               <span class="text-5xl mb-3">🧭</span>
               <h4 class="font-display text-lg text-[#e5c158]">Mesa Cartográfica Vazia</h4>
-              <p class="text-xs text-[#d6c29f]/80 max-w-md mt-1">Envie um mapa de batalha, masmorra, cidade ou mundo na coluna à esquerda para posicionar os jogadores, vincular ao capítulo e emitir para o App Receptor.</p>
+              <p class="text-xs text-[#d6c29f]/80 max-w-md mt-1">Envie um mapa de batalha, masmorra, cidade ou mundo na coluna à esquerda para posicionar os jogadores, vincular ao capítulo e emitir na sala.</p>
             </div>
           `;
           return;
@@ -3775,7 +3927,7 @@
               <div class="flex items-center gap-2 shrink-0">
                 <button type="button" onclick="app.projectMap('${mapObj.id}')"
                   class="h-9 px-4 rounded-lg font-heading text-xs font-bold uppercase tracking-wider transition cursor-pointer ${isProjected ? 'bg-emerald-700 text-white border border-emerald-300 shadow' : 'bg-[#8b1e1e] hover:bg-[#a62424] text-[#f4ead5] border border-[#e5c158]'}">
-                  ${isProjected ? '● Emitindo no App Receptor' : '📡 Emitir Este Mapa'}
+                  ${isProjected ? `● Transmitindo (${this.roomCode})` : `📡 Emitir na Sala (${this.roomCode})`}
                 </button>
                 <button type="button" onclick="app.deleteMap('${mapObj.id}')"
                   class="h-9 w-9 rounded-lg bg-black/60 hover:bg-red-900/70 border border-red-500/40 text-red-300 flex items-center justify-center cursor-pointer" title="Excluir Mapa">
@@ -3784,7 +3936,7 @@
               </div>
             </div>
 
-            <!-- Linha 2: Vínculo com Capítulo + Controles Visuais do App Receptor -->
+            <!-- Linha 2: Vínculo com Capítulo + Controles Visuais do Receptor -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 pt-2 border-t border-[#c59b27]/20">
               <div class="sm:col-span-2 flex items-center gap-2 bg-[#1a110b] border border-[#c59b27]/35 rounded-lg px-2.5 h-9">
                 <span class="text-[11px] font-heading uppercase text-[#e5c158] shrink-0">🚩 Capítulo:</span>
@@ -3816,7 +3968,7 @@
 
             <div class="absolute bottom-2 left-2 right-2 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
               <span class="px-2.5 py-1 rounded-full bg-black/80 border border-[#c59b27]/40 text-[10px] font-heading text-[#e5c158]">
-                ✋ Arraste os retratos dos heróis ou marcadores para sincronizar no App Receptor
+                ✋ Arraste os retratos dos heróis ou marcadores para sincronizar em tempo real na Sala ${this.roomCode}
               </span>
               <button type="button" onclick="app.toggleProjectorTokensVisibility()"
                 class="pointer-events-auto h-7 px-2.5 rounded-full bg-black/85 border border-[#c59b27]/60 text-[10px] font-heading font-bold uppercase text-[#f4ead5] cursor-pointer">
@@ -3827,58 +3979,59 @@
 
           <!-- Painel Inferior: Onde Estão os Jogadores + Marcadores Táticos + Notas do Mestre -->
           <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
-            <!-- Controle de Posição dos Jogadores neste Mapa -->
+            <!-- Posição dos Heróis / Jogadores -->
             <div class="md:col-span-7 rounded-xl bg-black/45 border border-[#c59b27]/35 p-3 space-y-2">
               <div class="flex items-center justify-between gap-2">
-                <span class="font-heading text-xs font-bold uppercase tracking-wider text-[#e5c158]">👥 Jogadores Neste Mapa</span>
-                <button type="button" onclick="app.placeAllPartyOnMap('${mapObj.id}')" class="h-7 px-2.5 rounded bg-[#2b1d0e] hover:bg-[#3d2914] border border-[#c59b27]/50 text-[10px] font-heading font-bold uppercase text-[#e5c158] cursor-pointer">
+                <span class="font-heading text-xs font-bold uppercase tracking-wider text-[#e5c158]">👥 Posição dos Jogadores no Mapa</span>
+                <button type="button" onclick="app.placeAllPartyOnMap('${mapObj.id}')"
+                  class="h-7 px-2.5 rounded bg-[#2b1d0e] hover:bg-[#3d2914] border border-[#c59b27]/50 text-[10px] font-heading font-bold uppercase text-[#e5c158] cursor-pointer">
                   + Colocar Todos
                 </button>
               </div>
               <div class="flex flex-wrap gap-1.5">
                 ${this.characters.map(c => {
-                  const isPlaced = !!(mapObj.tokens && mapObj.tokens[c.id]);
+                  const isOnMap = !!(mapObj.tokens && mapObj.tokens[c.id]);
                   const avatar = c.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(c.name)}`;
                   return `
                     <button type="button" onclick="app.toggleCharacterTokenOnMap('${mapObj.id}', '${c.id}')"
-                      class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-semibold transition cursor-pointer ${isPlaced ? 'bg-emerald-900/60 border-emerald-400 text-white' : 'bg-[#1a110b] border-[#c59b27]/30 text-[#d6c29f] hover:border-[#e5c158]'}">
-                      <img src="${avatar}" alt="" class="w-5 h-5 rounded-full object-contain bg-black/50" />
+                      class="flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-semibold transition cursor-pointer ${isOnMap ? 'bg-emerald-900/70 border-emerald-400 text-white shadow' : 'bg-[#1a110b] border-[#c59b27]/30 text-[#d6c29f] hover:border-[#e5c158]'}">
+                      <img src="${avatar}" alt="${c.name}" class="w-5 h-5 rounded-full object-contain bg-black/50" />
                       <span>${c.name.split(' ')[0]}</span>
-                      <span class="text-[10px]">${isPlaced ? '✓' : '+'}</span>
+                      <span class="text-[10px]">${isOnMap ? '✓' : '+'}</span>
                     </button>
                   `;
                 }).join('')}
               </div>
             </div>
 
-            <!-- Marcadores Táticos & Anotações de Localização -->
+            <!-- Pinos de Localização e Notas -->
             <div class="md:col-span-5 rounded-xl bg-black/45 border border-[#c59b27]/35 p-3 space-y-2">
-              <span class="block font-heading text-xs font-bold uppercase tracking-wider text-[#e5c158]">📍 Pinos de Localização</span>
+              <span class="block font-heading text-xs font-bold uppercase tracking-wider text-[#e5c158]">📍 Marcadores & Pontos de Interesse</span>
               <div class="flex flex-wrap gap-1.5">
                 ${TACTICAL_PINS_META.map(p => `
                   <button type="button" onclick="app.addTacticalPinToMap('${mapObj.id}', '${p.id}')"
-                    class="h-7 px-2 rounded bg-[#1a110b] hover:bg-[#2b1d0e] border border-[#c59b27]/40 text-[11px] font-semibold text-[#f4ead5] flex items-center gap-1 cursor-pointer" title="Adicionar ${p.label}">
+                    class="h-7 px-2 rounded-lg bg-[#1a110b] hover:bg-[#2b1d0e] border border-[#c59b27]/40 text-[11px] font-semibold text-[#f4ead5] flex items-center gap-1 cursor-pointer" title="Adicionar ${p.label}">
                     <span>${p.icon}</span>
-                    <span>+ ${p.label.split('/')[0].trim()}</span>
+                    <span>+ ${p.label.split(' ')[0]}</span>
                   </button>
                 `).join('')}
               </div>
-              <input type="text" value="${mapObj.regionNote || ''}"
+              <input type="text" value="${mapObj.regionNote || ''}" placeholder="Nota secreta do Mestre sobre este local..."
                 onchange="app.updateMapMetadata('${mapObj.id}', { regionNote: this.value })"
-                placeholder="Nota rápida do Mestre sobre este mapa..."
-                class="w-full h-8 rounded bg-[#120c09] border border-[#c59b27]/30 px-2.5 text-xs text-[#f4ead5] outline-none focus:border-[#e5c158]" />
+                class="w-full h-8 rounded-lg bg-[#1a110b] border border-[#c59b27]/30 px-2.5 text-xs text-[#f4ead5] outline-none focus:border-[#e5c158]" />
             </div>
           </div>
         `;
       }
 
       // ---------------------------------------------------------
-      // EDIÇÃO DE PERFIL E UPLOAD DE FOTO DO USUÁRIO
+      // MODAL PERFIL DO USUÁRIO (UPLOAD FOTO + NOME + PAPEL)
       // ---------------------------------------------------------
       openUserProfileModal() {
         if (!this.userProfile) return;
-        document.getElementById('profileModalAvatarPreview').src = this.userProfile.photoURL || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(this.userProfile.name)}`;
-        document.getElementById('profileNameInput').value = this.userProfile.name;
+        const avatar = this.userProfile.photoURL || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(this.userProfile.name)}`;
+        document.getElementById('profileModalAvatarPreview').src = avatar;
+        document.getElementById('profileNameInput').value = this.userProfile.name || '';
         document.getElementById('profileRoleSelect').value = this.userProfile.role || 'player';
         document.getElementById('avatarUploadStatus').textContent = 'Otimizada automaticamente e visível para toda a mesa';
         document.getElementById('userProfileModal').classList.remove('hidden');
@@ -3889,67 +4042,159 @@
         const file = event.target.files[0];
         if (!file || !this.currentUser) return;
         const statusEl = document.getElementById('avatarUploadStatus');
-        statusEl.textContent = 'Processando e sincronizando imagem...';
+        statusEl.textContent = 'Processando imagem...';
 
         try {
           const dataUrl = await this.compressImageToDataUrl(file, 220, 0.8);
+          await update(ref(db, `users/${this.currentUser.uid}`), { photoURL: dataUrl });
           this.userProfile.photoURL = dataUrl;
           document.getElementById('profileModalAvatarPreview').src = dataUrl;
-
-          await update(ref(db, `users/${this.currentUser.uid}`), { photoURL: dataUrl });
           this.updateUserHeaderUI();
-          this.renderCommunityMembers();
-          this.renderAll();
-          statusEl.textContent = '✅ Foto salva e visível para todos os jogadores!';
+          statusEl.textContent = '✓ Foto atualizada no Tomo!';
         } catch (err) {
-          statusEl.textContent = '❌ Erro ao salvar imagem: ' + err.message;
-          console.error(err);
+          statusEl.textContent = 'Erro ao enviar foto: ' + err.message;
+        }
+      }
+
+      async uploadCharacterAvatar(event) {
+        const file = event.target.files[0];
+        const char = this.getActiveChar();
+        if (!file || !char || !this.canEditChar(char)) return;
+        try {
+          const dataUrl = await this.processCharacterPngToDataUrl(file, 720);
+          this.updateField('avatarUrl', dataUrl);
+          document.getElementById('charAvatarImg').src = dataUrl;
+          if (this.isAnimPopOpen) {
+            this.animLastAvatar = dataUrl;
+            this.loadAnimationImage(dataUrl);
+          }
+        } catch (err) {
+          alert("Erro ao subir retrato PNG do personagem: " + err.message);
+        } finally {
+          event.target.value = '';
         }
       }
 
       async saveUserProfile() {
         if (!this.currentUser) return;
         const newName = document.getElementById('profileNameInput').value.trim() || this.userProfile.name;
-        const newRole = document.getElementById('profileRoleSelect').value;
+        const newRole = document.getElementById('profileRoleSelect').value || 'player';
+
+        await update(ref(db, `users/${this.currentUser.uid}`), {
+          name: newName,
+          role: newRole
+        });
+        await updateProfile(this.currentUser, { displayName: newName });
 
         this.userProfile.name = newName;
         this.userProfile.role = newRole;
-
-        try {
-          await update(ref(db, `users/${this.currentUser.uid}`), {
-            name: newName,
-            role: newRole
-          });
-          this.updateUserHeaderUI();
-          this.renderAll();
-          document.getElementById('userProfileModal').classList.add('hidden');
-        } catch (err) {
-          alert("Erro ao salvar perfil: " + err.message);
-        }
+        this.updateUserHeaderUI();
+        this.renderSheet();
+        document.getElementById('userProfileModal').classList.add('hidden');
       }
 
       // ---------------------------------------------------------
-      // SINCRONIZAÇÃO EM TEMPO REAL COM REALTIME DATABASE
+      // SINCRONIZAÇÃO EM TEMPO REAL COM FIREBASE REALTIME DATABASE
       // ---------------------------------------------------------
-      subscribeToCharactersForProjector() {
-        const charsRef = ref(db, 'characters');
-        this.unsubCharacters = onValue(charsRef, (snapshot) => {
-          const rawVal = snapshot.val();
-          this.characters = rawVal ? Object.values(rawVal) : [];
-          this.renderProjectorScreen();
+      subscribeToRealtimeData() {
+        if (this.unsubUsers) this.unsubUsers();
+        if (this.unsubCharacters) this.unsubCharacters();
+        if (this.unsubCompendium) this.unsubCompendium();
+        if (this.unsubMaps) this.unsubMaps();
+        if (this.unsubProjector) this.unsubProjector();
+        if (this.unsubChapters) this.unsubChapters();
+
+        const usersRef = ref(db, 'users');
+        this.unsubUsers = onValue(usersRef, (snapshot) => {
+          this.usersMap = snapshot.val() || {};
+          this.renderCommunityMembers();
+          this.renderSheet();
         });
-      }
 
-      subscribeToMapsAndProjector() {
+        const charsRef = ref(db, 'characters');
+        this.unsubCharacters = onValue(charsRef, async (snapshot) => {
+          const data = snapshot.val();
+          if (!data) {
+            const firstCharId = `char_${this.currentUser.uid}_${Date.now()}`;
+            const starter = buildStarterCharacter(this.currentUser.uid, this.userProfile?.name || 'Aventureiro', firstCharId);
+            await set(ref(db, `characters/${firstCharId}`), starter);
+            return;
+          }
+
+          const incomingChars = Object.values(data);
+          if (this.pendingDirtyCharId) {
+            const localDirty = this.characters.find(c => c.id === this.pendingDirtyCharId);
+            if (localDirty) {
+              this.characters = incomingChars.map(c => c.id === this.pendingDirtyCharId ? localDirty : c);
+            } else {
+              this.characters = incomingChars;
+            }
+          } else {
+            this.characters = incomingChars;
+          }
+
+          if (!this.activeCharId || !this.characters.some(c => c.id === this.activeCharId)) {
+            const savedMatch = this.savedUiState.activeCharId && this.characters.find(c => c.id === this.savedUiState.activeCharId);
+            const myChar = this.characters.find(c => c.ownerId === this.currentUser.uid);
+            this.activeCharId = savedMatch ? savedMatch.id : (myChar ? myChar.id : this.characters[0].id);
+            this.saveUiState({ activeCharId: this.activeCharId });
+          }
+
+          this.renderCharacterList();
+          if (!this.pendingDirtyCharId) {
+            this.renderSheet();
+          }
+
+          this.restoreSavedNavigationState();
+
+          if (this.isAnimPopOpen) {
+            this.renderAnimHeroSwitcher();
+          }
+
+          if (!document.getElementById('mapManagerModal').classList.contains('hidden')) {
+            this.renderMapsGallery();
+          }
+        }, (err) => {
+          console.error("Erro na sincronização de personagens:", err);
+          document.getElementById('syncStatusLabel').textContent = "Verifique Regras RTDB";
+          document.getElementById('syncStatusLabel').className = "text-amber-400";
+        });
+
+        const compRef = ref(db, 'compendium');
+        this.unsubCompendium = onValue(compRef, async (snapshot) => {
+          const data = snapshot.val();
+          if (!data) {
+            await set(compRef, DEFAULT_COMPENDIUM);
+            return;
+          }
+          this.compendium = Object.values(data);
+          this.renderCompendium();
+        });
+
+        const chaptersRef = ref(db, 'chapters');
+        this.unsubChapters = onValue(chaptersRef, async (snapshot) => {
+          const data = snapshot.val();
+          if (!data) {
+            await set(chaptersRef, DEFAULT_CHAPTERS);
+            return;
+          }
+          this.chapters = Object.values(data);
+          this.renderChaptersUI();
+
+          if (!this.hasShownInitialChapterSplash && !this.isProjectorMode) {
+            this.hasShownInitialChapterSplash = true;
+            this.openChapterIntroSplash();
+          }
+        });
+
         const mapsRef = ref(db, 'maps');
         this.unsubMaps = onValue(mapsRef, (snapshot) => {
-          const raw = snapshot.val();
-          this.maps = raw ? Object.values(raw) : [];
-          if (this.isProjectorMode) {
-            this.renderProjectorScreen();
-          } else {
-            this.renderMapsGallery();
-            this.renderChaptersUI();
+          const data = snapshot.val();
+          this.maps = data ? Object.values(data) : [];
+          this.renderMapsGallery();
+          this.renderChaptersUI();
+          if (this.userProfile?.role === 'dm' && this.activeMapState?.activeMapId) {
+            this.syncBroadcastRoomNow();
           }
         });
 
@@ -3965,196 +4210,23 @@
           if (this.activeMapState.activeChapterId) {
             this.activeChapterId = this.activeMapState.activeChapterId;
           }
-          if (this.isProjectorMode) {
-            this.renderProjectorScreen();
-          } else {
-            this.renderMapsGallery();
-            this.renderChaptersUI();
-          }
-        });
-      }
-
-      subscribeToRealtimeData() {
-        const usersRef = ref(db, 'users');
-        this.unsubUsers = onValue(usersRef, (snapshot) => {
-          this.usersMap = snapshot.val() || {};
-          if (this.currentUser && this.usersMap[this.currentUser.uid]) {
-            this.userProfile = { ...this.userProfile, ...this.usersMap[this.currentUser.uid] };
-            this.updateUserHeaderUI();
-          }
-          this.renderCommunityMembers();
-          this.renderAll();
-        });
-
-        const chaptersRef = ref(db, 'chapters');
-        this.unsubChapters = onValue(chaptersRef, async (snapshot) => {
-          const raw = snapshot.val();
-          if (!raw) {
-            await set(ref(db, 'chapters'), DEFAULT_CHAPTERS);
-            this.chapters = Object.values(DEFAULT_CHAPTERS);
-          } else {
-            this.chapters = Object.values(raw);
-          }
+          this.renderMapsGallery();
           this.renderChaptersUI();
-
-          if (!this.hasShownInitialChapterSplash && !this.isProjectorMode) {
-            this.hasShownInitialChapterSplash = true;
-            setTimeout(() => {
-              this.openChapterIntroSplash();
-            }, 350);
-          }
         });
-
-        const charsRef = ref(db, 'characters');
-        this.unsubCharacters = onValue(charsRef, async (snapshot) => {
-          const rawVal = snapshot.val();
-          let loadedChars = rawVal ? Object.values(rawVal) : [];
-
-          if (loadedChars.length === 0 && this.currentUser) {
-            const firstId = `char_${this.currentUser.uid}_${Date.now()}`;
-            const starter = buildStarterCharacter(this.currentUser.uid, this.userProfile.name, firstId);
-            await set(ref(db, `characters/${firstId}`), starter);
-            loadedChars = [starter];
-          }
-
-          loadedChars.forEach(c => {
-            if (!c.attributes) c.attributes = { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10, luck: 10 };
-            if (c.attributes.luck === undefined) c.attributes.luck = 10;
-            if (!c.savingThrows) c.savingThrows = {};
-            if (c.savingThrows.luck === undefined) c.savingThrows.luck = false;
-            if (!c.skills) c.skills = {};
-            Object.keys(c.skills).forEach(sk => {
-              const val = c.skills[sk];
-              if (val === true) c.skills[sk] = 2;
-              else if (val === false || val === undefined || val === null) c.skills[sk] = 0;
-              else c.skills[sk] = Number(val) || 0;
-            });
-            if (!c.hp) c.hp = { current: 10, max: 10, temp: 0 };
-            if (!c.deathSaves) c.deathSaves = { successes: 0, failures: 0 };
-            if (!c.coins) c.coins = { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 };
-            if (!c.bio) c.bio = { traits: '', ideals: '', bonds: '', flaws: '', backstory: '' };
-            if (!c.spellcasting) c.spellcasting = { ability: 'int', slots: {}, spells: [] };
-          });
-
-          this.characters = loadedChars;
-
-          if (!this.activeCharId || !this.characters.some(c => c.id === this.activeCharId)) {
-            const ownChar = this.characters.find(c => c.ownerId === this.currentUser?.uid);
-            this.activeCharId = ownChar ? ownChar.id : this.characters[0]?.id;
-          }
-
-          this.renderAll();
-
-          if (this.isAnimPopOpen) {
-            const active = this.getActiveChar();
-            if (active) {
-              document.getElementById('animPopCharName').textContent = active.name || 'Herói';
-              document.getElementById('animPopCharSub').textContent = `${active.race || ''} • ${active.class || ''} (Nv ${active.level || 1})`;
-              this.renderAnimHeroSwitcher();
-              const currentAvatarUrl = active.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(active.name)}`;
-              if (this.animLastCharId !== active.id || this.animLastAvatar !== currentAvatarUrl) {
-                this.animLastCharId = active.id;
-                this.animLastAvatar = currentAvatarUrl;
-                this.loadAnimationImage(currentAvatarUrl);
-              }
-            }
-          }
-
-          if (!this.initialRestoreDone) {
-            this.restoreSavedNavigationState();
-          }
-        }, (err) => {
-          console.error("Erro Realtime DB characters:", err);
-          document.getElementById('syncStatusLabel').textContent = "Erro de Permissão RTDB";
-          document.getElementById('syncStatusLabel').className = "text-red-400";
-        });
-
-        const compRef = ref(db, 'compendium');
-        this.unsubCompendium = onValue(compRef, async (snapshot) => {
-          const rawVal = snapshot.val();
-          if (!rawVal) {
-            await set(ref(db, 'compendium'), DEFAULT_COMPENDIUM);
-            this.compendium = Object.values(DEFAULT_COMPENDIUM);
-          } else {
-            this.compendium = Object.values(rawVal);
-          }
-          this.renderCompendium();
-        });
-
-        this.subscribeToMapsAndProjector();
-      }
-
-      renderCommunityMembers() {
-        const container = document.getElementById('communityMembersList');
-        const badge = document.getElementById('membersCountBadge');
-        if (!container) return;
-        const members = Object.values(this.usersMap);
-        badge.textContent = members.length;
-
-        container.innerHTML = members.map(m => {
-          const isMe = m.uid === this.currentUser?.uid;
-          const avatar = m.photoURL || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(m.name || 'User')}`;
-          return `
-            <div class="flex flex-col items-center shrink-0 w-14 text-center" title="${m.name} (${m.role === 'dm' ? 'Mestre' : 'Jogador'})">
-              <div class="relative">
-                <img src="${avatar}" alt="${m.name}" class="w-11 h-11 rounded-full object-cover border-2 ${isMe ? 'border-[#e5c158]' : 'border-[#c59b27]/40'}" />
-                ${m.role === 'dm' ? '<span class="absolute -bottom-1 -right-1 text-[11px] bg-[#8b1e1e] rounded-full px-1 border border-[#e5c158]">👑</span>' : ''}
-              </div>
-              <span class="text-[10px] font-semibold text-[#f4ead5] truncate w-full mt-1">${m.name?.split(' ')[0] || 'User'}</span>
-            </div>
-          `;
-        }).join('');
       }
 
       canEditChar(char) {
-        if (!this.userProfile || !char) return false;
+        if (!this.currentUser || !this.userProfile || !char) return false;
         if (this.userProfile.role === 'dm') return true;
-        return char.ownerId === this.currentUser?.uid;
-      }
-
-      flushPendingCharSave() {
-        if (this.saveTimeout) {
-          clearTimeout(this.saveTimeout);
-          this.saveTimeout = null;
-        }
-        if (this.pendingDirtyCharId) {
-          const char = this.characters.find(c => c.id === this.pendingDirtyCharId);
-          this.pendingDirtyCharId = null;
-          if (char && this.canEditChar(char)) {
-            const payload = JSON.parse(JSON.stringify(char));
-            return set(ref(db, `characters/${char.id}`), payload).catch(err => {
-              console.error("Erro ao sincronizar ficha:", err);
-            });
-          }
-        }
-        return Promise.resolve();
-      }
-
-      saveActiveCharToCloud(char) {
-        if (!char || !this.canEditChar(char)) return;
-        const syncEl = document.getElementById('syncStatusLabel');
-        syncEl.textContent = "Salvando...";
-        syncEl.className = "text-amber-400";
-
-        this.pendingDirtyCharId = char.id;
-        clearTimeout(this.saveTimeout);
-        this.saveTimeout = setTimeout(async () => {
-          this.pendingDirtyCharId = null;
-          try {
-            const payload = JSON.parse(JSON.stringify(char));
-            await set(ref(db, `characters/${char.id}`), payload);
-            syncEl.textContent = "Sincronizado";
-            syncEl.className = "text-emerald-400";
-          } catch (err) {
-            console.error("Erro ao salvar ficha no Realtime DB:", err);
-            syncEl.textContent = "Erro ao Salvar";
-            syncEl.className = "text-red-400";
-          }
-        }, 320);
+        return char.ownerId === this.currentUser.uid;
       }
 
       getActiveChar() {
         return this.characters.find(c => c.id === this.activeCharId) || this.characters[0];
+      }
+
+      getAbilityMod(score) {
+        return 0;
       }
 
       getProficiencyBonus(level) {
@@ -4165,59 +4237,109 @@
         return num >= 0 ? `+${num}` : `${num}`;
       }
 
-      // ---------------------------------------------------------
-      // RETRATO DO PERSONAGEM (COM TRANSPARÊNCIA PNG PRESERVADA)
-      // ---------------------------------------------------------
-      async uploadCharacterAvatar(event) {
-        const file = event.target.files[0];
+      scheduleSaveActiveChar(immediate = false) {
         const char = this.getActiveChar();
-        if (!file || !char || !this.canEditChar(char)) return;
+        if (!char || !this.canEditChar(char)) return;
+        this.pendingDirtyCharId = char.id;
+        clearTimeout(this.saveTimeout);
 
-        try {
-          const dataUrl = await this.processCharacterPngToDataUrl(file, 720);
-          char.avatarUrl = dataUrl;
-          document.getElementById('charAvatarImg').src = dataUrl;
-
-          this.animLastCharId = char.id;
-          this.animLastAvatar = dataUrl;
-          this.loadAnimationImage(dataUrl);
-
-          this.renderCharacterList();
-          if (this.isAnimPopOpen) {
-            this.renderAnimHeroSwitcher();
+        const commitSave = async () => {
+          const targetId = char.id;
+          const payload = JSON.parse(JSON.stringify(char));
+          try {
+            await set(ref(db, `characters/${targetId}`), payload);
+          } catch (err) {
+            console.error("Erro ao salvar ficha no Firebase:", err);
+          } finally {
+            if (this.pendingDirtyCharId === targetId) {
+              this.pendingDirtyCharId = null;
+            }
           }
-          this.saveActiveCharToCloud(char);
-        } catch (err) {
-          alert("Erro ao atualizar retrato PNG do personagem: " + err.message);
+        };
+
+        if (immediate) {
+          commitSave();
+        } else {
+          this.saveTimeout = setTimeout(commitSave, 350);
+        }
+      }
+
+      async flushPendingCharSave() {
+        if (!this.pendingDirtyCharId) return;
+        clearTimeout(this.saveTimeout);
+        const char = this.characters.find(c => c.id === this.pendingDirtyCharId);
+        const targetId = this.pendingDirtyCharId;
+        this.pendingDirtyCharId = null;
+        if (char && this.canEditChar(char)) {
+          try {
+            await set(ref(db, `characters/${targetId}`), JSON.parse(JSON.stringify(char)));
+          } catch (e) {}
         }
       }
 
       // ---------------------------------------------------------
-      // GERENCIAMENTO DE PERSONAGENS
+      // RENDERIZAÇÃO DE INTEGRANTES E LISTA DE PERSONAGENS
       // ---------------------------------------------------------
-      async createNewCharacter() {
-        if (!this.currentUser) return;
-        await this.flushPendingCharSave();
-        const newId = `char_${this.currentUser.uid}_${Date.now()}`;
-        const newChar = buildStarterCharacter(this.currentUser.uid, this.userProfile.name, newId);
-        newChar.name = "Novo Aventureiro";
-        newChar.avatarUrl = `https://api.dicebear.com/7.x/adventurer/svg?seed=${Date.now()}`;
-        newChar.class = "Guerreiro (Campeão)";
-        newChar.race = "Humano";
-        newChar.level = 1;
-        newChar.hp = { current: 12, max: 12, temp: 0 };
-        newChar.attributes = { str: 16, dex: 14, con: 14, int: 10, wis: 12, cha: 10, luck: 12 };
+      renderCommunityMembers() {
+        const container = document.getElementById('communityMembersList');
+        const members = Object.values(this.usersMap);
+        document.getElementById('membersCountBadge').textContent = members.length;
 
-        await set(ref(db, `characters/${newId}`), newChar);
-        this.activeCharId = newId;
-        this.saveUiState({ activeCharId: newId });
+        container.innerHTML = members.map(m => {
+          const avatar = m.photoURL || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(m.name || 'User')}`;
+          const isDM = m.role === 'dm';
+          return `
+            <div class="flex flex-col items-center shrink-0 w-14 text-center" title="${m.name} (${isDM ? 'Mestre' : 'Jogador'})">
+              <div class="relative">
+                <img src="${avatar}" alt="${m.name}" class="w-10 h-10 rounded-full object-cover border-2 ${isDM ? 'border-[#e5c158]' : 'border-[#8b5a2b]'}" />
+                ${isDM ? '<span class="absolute -bottom-1 -right-1 text-[10px] bg-[#8b1e1e] rounded-full px-1 border border-[#e5c158]">👑</span>' : ''}
+              </div>
+              <span class="text-[10px] text-[#f4ead5] truncate w-full mt-1 font-semibold">${m.name}</span>
+            </div>
+          `;
+        }).join('');
+      }
+
+      renderCharacterList() {
+        const container = document.getElementById('characterList');
+        container.innerHTML = this.characters.map(c => {
+          const isActive = c.id === this.activeCharId;
+          const editable = this.canEditChar(c);
+          const ownerUser = this.usersMap[c.ownerId];
+          const ownerAvatar = ownerUser?.photoURL || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(c.ownerName || 'User')}`;
+          const charPortrait = c.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(c.name)}`;
+
+          return `
+            <button onclick="app.selectCharacter('${c.id}')"
+              class="w-full min-h-[60px] text-left p-2.5 rounded-lg border transition flex items-center justify-between gap-2.5 cursor-pointer ${isActive ? 'bg-[#8b1e1e]/40 border-[#e5c158] shadow-md' : 'bg-black/30 border-[#c59b27]/20 hover:border-[#c59b27]/50'}">
+              <div class="flex items-center gap-2.5 min-w-0">
+                <div class="relative shrink-0">
+                  <img src="${charPortrait}" alt="${c.name}" class="w-10 h-10 rounded-lg object-contain border border-[#c59b27]/60 bg-[#241710]" />
+                  <img src="${ownerAvatar}" alt="${c.ownerName}" class="w-4 h-4 rounded-full object-cover border border-[#e5c158] absolute -bottom-1 -right-1" title="Jogador: ${ownerUser?.name || c.ownerName}" />
+                </div>
+                <div class="min-w-0">
+                  <div class="font-heading font-bold text-sm text-[#f4ead5] truncate">${c.name}</div>
+                  <div class="text-[11px] text-[#d6c29f]/85 truncate">${c.race} • ${c.class} ${c.level}</div>
+                  <div class="text-[10px] text-[#e5c158]/80 truncate">Jogador: ${ownerUser?.name || c.ownerName || 'Membro'}</div>
+                </div>
+              </div>
+              <div class="flex flex-col items-end shrink-0 gap-1">
+                <span class="text-xs font-mono-num font-bold text-[#e5c158]">${c.hp.current}/${c.hp.max} HP</span>
+                <span class="text-[9px] uppercase font-heading px-1.5 py-0.5 rounded ${editable ? 'bg-emerald-900/60 text-emerald-300' : 'bg-black/50 text-[#d6c29f]'}">
+                  ${editable ? 'Sua Ficha' : 'Ver'}
+                </span>
+              </div>
+            </button>
+          `;
+        }).join('');
       }
 
       async selectCharacter(id) {
         await this.flushPendingCharSave();
         this.activeCharId = id;
         this.saveUiState({ activeCharId: id });
-        this.renderAll();
+        this.renderCharacterList();
+        this.renderSheet();
 
         if (this.isAnimPopOpen) {
           const char = this.getActiveChar();
@@ -4225,137 +4347,463 @@
             document.getElementById('animPopCharName').textContent = char.name || 'Herói';
             document.getElementById('animPopCharSub').textContent = `${char.race || ''} • ${char.class || ''} (Nv ${char.level || 1})`;
             this.renderAnimHeroSwitcher();
-            const currentAvatarUrl = char.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(char.name)}`;
+            const avatar = char.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(char.name)}`;
             this.animLastCharId = char.id;
-            this.animLastAvatar = currentAvatarUrl;
-            this.loadAnimationImage(currentAvatarUrl);
+            this.animLastAvatar = avatar;
+            this.loadAnimationImage(avatar);
           }
         }
+      }
 
-        if (window.innerWidth < 1024 && !this.isAnimPopOpen) {
-          this.switchView('sheet');
-          document.getElementById('characterSheetContainer')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
+      async createNewCharacter() {
+        if (!this.currentUser || !this.userProfile) return;
+        await this.flushPendingCharSave();
+        const newId = `char_${this.currentUser.uid}_${Date.now()}`;
+        const fresh = buildStarterCharacter(this.currentUser.uid, this.userProfile.name, newId);
+        fresh.name = `Herói de ${this.userProfile.name}`;
+        fresh.avatarUrl = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(fresh.name + Date.now())}`;
+        fresh.level = 1;
+        fresh.xp = 0;
+        fresh.hp = { current: 12, max: 12, temp: 0 };
+
+        await set(ref(db, `characters/${newId}`), fresh);
+        this.activeCharId = newId;
+        this.saveUiState({ activeCharId: newId });
       }
 
       async deleteCurrentCharacter() {
         const char = this.getActiveChar();
         if (!char || !this.canEditChar(char)) return;
         if (this.characters.length <= 1) {
-          alert("O Tomo precisa manter pelo menos um personagem ativo na mesa.");
+          alert("O Tomo precisa manter pelo menos 1 personagem registrado.");
           return;
         }
-        if (confirm(`Deseja realmente remover "${char.name}" do Tomo da Comunidade?`)) {
-          if (this.pendingDirtyCharId === char.id) {
-            this.pendingDirtyCharId = null;
-            clearTimeout(this.saveTimeout);
-          }
-          await remove(ref(db, `characters/${char.id}`));
-        }
+        if (!confirm(`Deseja realmente apagar a ficha de ${char.name}?`)) return;
+        this.pendingDirtyCharId = null;
+        await remove(ref(db, `characters/${char.id}`));
       }
 
       // ---------------------------------------------------------
-      // ATUALIZAÇÃO DE CAMPOS DA FICHA
+      // RENDERIZAÇÃO PRINCIPAL DA FICHA DO PERSONAGEM
       // ---------------------------------------------------------
-      updateField(field, value) {
+      renderSheet() {
+        const char = this.getActiveChar();
+        if (!char) return;
+
+        if (!char.attributes) char.attributes = { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10, luck: 10 };
+        if (char.attributes.luck === undefined) char.attributes.luck = 10;
+        if (!char.savingThrows) char.savingThrows = { str: false, dex: false, con: false, int: false, wis: false, cha: false, luck: false };
+        if (char.savingThrows.luck === undefined) char.savingThrows.luck = false;
+
+        const editable = this.canEditChar(char);
+        const isDM = this.userProfile?.role === 'dm';
+        const profBonus = this.getProficiencyBonus(char.level);
+
+        document.getElementById('readOnlyBanner').classList.toggle('hidden', editable);
+        document.getElementById('deleteCharBtn').classList.toggle('hidden', !editable);
+        document.getElementById('charAvatarUploadLabel').classList.toggle('hidden', !editable);
+        document.getElementById('charAvatarUploadBar').classList.toggle('hidden', !editable);
+        document.getElementById('rolePermissionBadge').textContent = isDM ? '👑 Mestre' : (editable ? '⚔️ Sua Ficha' : '👁️ Leitura');
+
+        const ownerUser = this.usersMap[char.ownerId];
+        document.getElementById('ownerTagName').textContent = `Jogador: ${ownerUser?.name || char.ownerName || 'Membro'}`;
+        const ownerAvatarEl = document.getElementById('ownerTagAvatar');
+        if (ownerUser?.photoURL) {
+          ownerAvatarEl.src = ownerUser.photoURL;
+          ownerAvatarEl.classList.remove('hidden');
+        } else {
+          ownerAvatarEl.classList.add('hidden');
+        }
+
+        const charPortrait = char.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(char.name)}`;
+        document.getElementById('charAvatarImg').src = charPortrait;
+
+        document.getElementById('charNameInput').value = char.name;
+        document.getElementById('charClassInput').value = char.class;
+        document.getElementById('charLevelInput').value = char.level;
+        document.getElementById('charRaceInput').value = char.race;
+        document.getElementById('charBgInput').value = char.background;
+        document.getElementById('charAlignInput').value = char.alignment;
+        document.getElementById('charXpInput').value = char.xp;
+
+        const inspBtn = document.getElementById('inspirationBtn');
+        const inspIcon = document.getElementById('inspirationIcon');
+        if (char.inspiration) {
+          inspBtn.classList.add('bg-amber-300/60', 'border-[#8b1e1e]');
+          inspIcon.textContent = '★';
+        } else {
+          inspBtn.classList.remove('bg-amber-300/60', 'border-[#8b1e1e]');
+          inspIcon.textContent = '☆';
+        }
+
+        document.getElementById('acInput').value = char.ac;
+        document.getElementById('initRollBtn').textContent = '0';
+        document.getElementById('speedInput').value = char.speed;
+        document.getElementById('hitDiceInput').value = char.hitDice;
+
+        document.getElementById('hpCurrentInput').value = char.hp.current;
+        document.getElementById('hpMaxInput').value = char.hp.max;
+        document.getElementById('hpTempInput').value = char.hp.temp || 0;
+
+        const hpPct = Math.max(0, Math.min(100, (char.hp.current / Math.max(1, char.hp.max)) * 100));
+        const hpBar = document.getElementById('hpProgressBar');
+        hpBar.style.width = `${hpPct}%`;
+        hpBar.className = `h-full transition-all duration-300 ${hpPct > 50 ? 'bg-emerald-700' : hpPct > 25 ? 'bg-amber-600' : 'bg-[#8b1e1e]'}`;
+
+        this.renderDeathSaves(char, editable);
+
+        const attrGrid = document.getElementById('attributesGrid');
+        attrGrid.innerHTML = ATTRIBUTES_META.map(attr => {
+          const score = char.attributes[attr.key] ?? 10;
+          return `
+            <div class="parchment-page rounded-xl p-2.5 flex flex-col items-center text-center">
+              <span class="text-[10px] font-heading font-bold uppercase tracking-wider text-[#5c4328] truncate w-full">${attr.label}</span>
+              <input type="number" min="1" max="30" value="${score}" ${!editable ? 'disabled' : ''}
+                oninput="app.updateAttribute('${attr.key}', this.value)"
+                class="w-16 h-12 my-1.5 text-center font-display text-2xl font-black text-[#2b1d0e] parchment-inset rounded-xl outline-none focus:border-[#8b1e1e]" />
+              <button onclick="app.rollCheck('Teste de ${attr.label}', 0)"
+                class="w-full min-h-[34px] px-2 py-1 rounded-lg bg-[#2b1d0e] hover:bg-[#8b1e1e] active:scale-95 text-[#e5c158] font-mono-num text-xs font-bold shadow transition cursor-pointer">
+                🎲 1d20
+              </button>
+            </div>
+          `;
+        }).join('');
+
+        const savesList = document.getElementById('savingThrowsList');
+        savesList.innerHTML = ATTRIBUTES_META.map(attr => {
+          const isProf = !!char.savingThrows[attr.key];
+          const total = isProf ? profBonus : 0;
+          return `
+            <div class="flex items-center justify-between gap-2 py-1 px-2 rounded hover:bg-[#e6d5b8]/70 min-h-[38px]">
+              <div class="flex items-center gap-2.5 min-w-0">
+                <input type="checkbox" ${isProf ? 'checked' : ''} ${!editable ? 'disabled' : ''} onchange="app.toggleSaveProf('${attr.key}')" class="w-4 h-4 accent-[#8b1e1e] cursor-pointer shrink-0" />
+                <span class="text-sm font-semibold text-[#2b1d0e] truncate">${attr.label}</span>
+              </div>
+              <button onclick="app.rollCheck('Resistência de ${attr.label}', ${total})"
+                class="h-8 px-2.5 rounded bg-[#e6d5b8] hover:bg-[#8b1e1e] hover:text-white active:scale-95 border border-[#8b5a2b]/40 font-mono-num text-xs font-bold transition shrink-0 cursor-pointer">
+                ${this.formatSigned(total)}
+              </button>
+            </div>
+          `;
+        }).join('');
+
+        document.getElementById('proficienciesText').value = char.otherProficiencies || '';
+
+        const skillsContainer = document.getElementById('skillsList');
+        skillsContainer.innerHTML = SKILLS_META.map(skill => {
+          const rawVal = Number(char.skills?.[skill.key]) || 0;
+          const totalBonus = rawVal === 1 ? profBonus : rawVal;
+          const attrShort = ATTRIBUTES_META.find(a => a.key === skill.attr)?.short || '';
+          return `
+            <div class="flex items-center justify-between gap-2 py-1 px-2 rounded hover:bg-[#e6d5b8]/70 border-b border-[#b89b6a]/25 min-h-[40px]">
+              <div class="flex items-center gap-1.5 min-w-0">
+                <select ${!editable ? 'disabled' : ''} onchange="app.setSkillProf('${skill.key}', this.value)"
+                  title="Bônus de Proficiência da Perícia (0 ou +2 até +6)"
+                  class="h-7 px-1 rounded bg-[#f4ead5] border border-[#8b5a2b]/60 font-mono-num text-[11px] font-bold text-[#8b1e1e] outline-none shrink-0 cursor-pointer">
+                  ${SKILL_PROF_OPTIONS.map(opt => `<option value="${opt}" ${totalBonus === opt ? 'selected' : ''}>${opt === 0 ? '0' : '+' + opt}</option>`).join('')}
+                </select>
+                <span class="text-xs font-semibold text-[#2b1d0e] truncate">${skill.label}</span>
+                <span class="text-[10px] font-heading text-[#5c4328] uppercase shrink-0">(${attrShort})</span>
+              </div>
+              <button onclick="app.rollCheck('Perícia: ${skill.label}', ${totalBonus})"
+                class="h-8 px-2.5 rounded bg-[#e6d5b8] hover:bg-[#8b1e1e] hover:text-white active:scale-95 border border-[#8b5a2b]/40 font-mono-num text-xs font-bold transition shrink-0 cursor-pointer">
+                ${this.formatSigned(totalBonus)}
+              </button>
+            </div>
+          `;
+        }).join('');
+
+        const rawPerc = Number(char.skills?.perception) || 0;
+        const percProfBonus = rawPerc === 1 ? profBonus : rawPerc;
+        const passivePerc = 10 + percProfBonus;
+        document.getElementById('passivePerceptionDisplay').textContent = passivePerc;
+        document.getElementById('profBonusDisplay').textContent = this.formatSigned(profBonus);
+
+        this.renderAttacks(char, profBonus, editable);
+        this.renderFeatures(char, editable);
+        this.renderSpellcasting(char, profBonus, editable);
+        this.renderInventory(char, editable);
+        this.renderBio(char);
+
+        document.querySelectorAll('#characterSheetContainer input, #characterSheetContainer textarea, #characterSheetContainer select').forEach(el => {
+          if (el.id === 'hpDeltaInput') return;
+          el.disabled = !editable;
+        });
+      }
+
+      renderDeathSaves(char, editable) {
+        const sBox = document.getElementById('deathSuccessBoxes');
+        const fBox = document.getElementById('deathFailBoxes');
+        sBox.innerHTML = [1, 2, 3].map(i => `
+          <button onclick="app.toggleDeathSave('successes', ${i})" ${!editable ? 'disabled' : ''}
+            class="w-6 h-6 rounded-full border-2 border-emerald-800 flex items-center justify-center ${char.deathSaves.successes >= i ? 'bg-emerald-700' : 'bg-transparent'}"></button>
+        `).join('');
+        fBox.innerHTML = [1, 2, 3].map(i => `
+          <button onclick="app.toggleDeathSave('failures', ${i})" ${!editable ? 'disabled' : ''}
+            class="w-6 h-6 rounded-full border-2 border-[#8b1e1e] flex items-center justify-center ${char.deathSaves.failures >= i ? 'bg-[#8b1e1e]' : 'bg-transparent'}"></button>
+        `).join('');
+      }
+
+      renderAttacks(char, profBonus, editable) {
+        const list = document.getElementById('attacksList');
+        list.innerHTML = (char.attacks || []).map((atk, idx) => {
+          const atkBonus = profBonus;
+          return `
+            <div class="parchment-inset rounded-lg p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 flex-1 min-w-0">
+                <input type="text" value="${atk.name}" oninput="app.updateAttack(${idx}, 'name', this.value)"
+                  class="font-bold text-sm text-[#2b1d0e] bg-transparent border-b border-[#8b5a2b]/40 outline-none" placeholder="Nome da Arma/Magia" />
+                <div class="flex items-center gap-1.5 text-xs">
+                  <span class="text-[#5c4328]">Atrib:</span>
+                  <select onchange="app.updateAttack(${idx}, 'ability', this.value)" class="h-8 bg-[#f4ead5] border border-[#b89b6a] rounded px-1.5 font-heading font-bold">
+                    ${ATTRIBUTES_META.map(a => `<option value="${a.key}" ${atk.ability === a.key ? 'selected' : ''}>${a.short}</option>`).join('')}
+                  </select>
+                </div>
+                <div class="flex items-center gap-1.5 text-xs">
+                  <span class="text-[#5c4328]">Dano:</span>
+                  <input type="text" value="${atk.damage}" oninput="app.updateAttack(${idx}, 'damage', this.value)"
+                    class="w-20 font-mono-num font-bold bg-[#f4ead5] border border-[#b89b6a] rounded px-1.5 py-1 text-center" />
+                  <input type="text" value="${atk.type}" oninput="app.updateAttack(${idx}, 'type', this.value)"
+                    class="flex-1 min-w-0 bg-transparent border-b border-[#8b5a2b]/40 text-xs" placeholder="Tipo" />
+                </div>
+              </div>
+              <div class="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                <button onclick="app.rollCheck('Ataque: ${atk.name}', ${atkBonus})"
+                  class="h-10 px-3 rounded-lg bg-[#8b1e1e] hover:bg-[#a62424] active:scale-95 text-[#f4ead5] font-mono-num text-xs font-bold transition cursor-pointer">
+                  🎯 ${this.formatSigned(atkBonus)}
+                </button>
+                <button onclick="app.rollDamageFormula('${atk.name}', '${atk.damage}')"
+                  class="h-10 px-3 rounded-lg bg-[#2b1d0e] hover:bg-[#3d2914] active:scale-95 text-[#e5c158] font-mono-num text-xs font-bold transition cursor-pointer">
+                  💥 ${atk.damage}
+                </button>
+                ${editable ? `<button onclick="app.removeAttack(${idx})" class="w-9 h-9 rounded-lg text-[#8b1e1e] hover:bg-[#8b1e1e]/15 flex items-center justify-center shrink-0">✕</button>` : ''}
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      renderFeatures(char, editable) {
+        const list = document.getElementById('featuresList');
+        list.innerHTML = (char.features || []).map((f, idx) => `
+          <div class="parchment-inset rounded-lg p-3 space-y-1.5">
+            <div class="flex items-center justify-between gap-2">
+              <input type="text" value="${f.name}" oninput="app.updateFeature(${idx}, 'name', this.value)"
+                class="font-heading font-bold text-sm text-[#8b1e1e] bg-transparent outline-none flex-1 min-w-0" />
+              <input type="text" value="${f.source}" oninput="app.updateFeature(${idx}, 'source', this.value)"
+                class="text-[11px] font-mono-num text-[#5c4328] bg-transparent text-right w-28 outline-none shrink-0" />
+              ${editable ? `<button onclick="app.removeFeature(${idx})" class="w-8 h-8 rounded text-[#8b1e1e] hover:bg-[#8b1e1e]/15 text-xs shrink-0">✕</button>` : ''}
+            </div>
+            <textarea rows="3" oninput="app.updateFeature(${idx}, 'desc', this.value)"
+              class="w-full bg-transparent text-xs text-[#2b1d0e] outline-none leading-relaxed">${f.desc}</textarea>
+          </div>
+        `).join('');
+      }
+
+      renderSpellcasting(char, profBonus, editable) {
+        const sc = char.spellcasting || { ability: 'int', slots: {}, spells: [] };
+        document.getElementById('spellAbilitySelect').value = sc.ability;
+        const dc = 8 + profBonus;
+        const atk = profBonus;
+        document.getElementById('spellSaveDcDisplay').textContent = dc;
+        document.getElementById('spellAttackDisplay').textContent = this.formatSigned(atk);
+
+        const slotsGrid = document.getElementById('spellSlotsGrid');
+        slotsGrid.innerHTML = [1, 2, 3, 4, 5, 6, 7, 8, 9].map(lvl => {
+          const slot = sc.slots?.[lvl] || { total: 0, used: 0 };
+          const avail = Math.max(0, slot.total - slot.used);
+          return `
+            <div class="parchment-inset p-2 rounded-lg text-center">
+              <span class="block text-[10px] font-heading font-bold text-[#8b1e1e]">${lvl}º Círc.</span>
+              <div class="flex items-center justify-center gap-1 my-1">
+                <span class="font-mono-num font-bold text-sm">${avail}</span>
+                <span class="text-xs text-[#5c4328]">/</span>
+                <input type="number" min="0" max="9" value="${slot.total}" oninput="app.updateSlotTotal(${lvl}, this.value)"
+                  class="w-8 text-center font-mono-num font-bold text-xs bg-[#f4ead5] border border-[#b89b6a] rounded" />
+              </div>
+              <button onclick="app.toggleUseSlot(${lvl})" ${!editable ? 'disabled' : ''} class="w-full h-7 rounded bg-[#2b1d0e] text-[#e5c158] text-[10px] font-heading uppercase">
+                Gastar
+              </button>
+            </div>
+          `;
+        }).join('');
+
+        const spellsList = document.getElementById('spellsList');
+        spellsList.innerHTML = (sc.spells || []).map((sp, idx) => `
+          <div class="parchment-inset rounded-lg p-3 space-y-1.5">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center gap-2 flex-1 min-w-0">
+                <input type="checkbox" ${sp.prepared ? 'checked' : ''} onchange="app.updateSpell(${idx}, 'prepared', this.checked)" class="w-4 h-4 accent-[#8b1e1e] shrink-0" title="Magia Preparada" />
+                <input type="text" value="${sp.name}" oninput="app.updateSpell(${idx}, 'name', this.value)"
+                  class="font-heading font-bold text-sm text-[#2b1d0e] bg-transparent outline-none flex-1 min-w-0" />
+              </div>
+              <div class="flex items-center gap-1.5 text-xs shrink-0">
+                <select onchange="app.updateSpell(${idx}, 'level', parseInt(this.value))" class="h-8 bg-[#f4ead5] border border-[#b89b6a] rounded px-1.5 font-mono-num">
+                  <option value="0" ${sp.level === 0 ? 'selected' : ''}>Truque</option>
+                  ${[1,2,3,4,5,6,7,8,9].map(l => `<option value="${l}" ${sp.level === l ? 'selected' : ''}>${l}º Círculo</option>`).join('')}
+                </select>
+                <button onclick="app.castSpell(${idx})" class="h-8 px-2.5 rounded bg-[#8b1e1e] text-[#f4ead5] font-heading text-[11px] font-bold uppercase cursor-pointer">
+                  Conjurar
+                </button>
+                ${editable ? `<button onclick="app.removeSpell(${idx})" class="w-8 h-8 rounded text-[#8b1e1e] hover:bg-[#8b1e1e]/15">✕</button>` : ''}
+              </div>
+            </div>
+            <textarea rows="2" oninput="app.updateSpell(${idx}, 'desc', this.value)"
+              class="w-full bg-transparent text-xs text-[#2b1d0e] outline-none leading-relaxed">${sp.desc}</textarea>
+          </div>
+        `).join('');
+      }
+
+      renderInventory(char, editable) {
+        const coins = char.coins || { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 };
+        ['cp', 'sp', 'ep', 'gp', 'pp'].forEach(c => {
+          document.getElementById(`coin-${c}`).value = coins[c] || 0;
+        });
+
+        let totalWeight = 0;
+        const list = document.getElementById('inventoryList');
+        list.innerHTML = (char.inventory || []).map((item, idx) => {
+          totalWeight += (parseFloat(item.weight) || 0) * (parseInt(item.qty) || 1);
+          return `
+            <div class="parchment-inset rounded-lg p-2.5 flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center gap-2 flex-1 min-w-0">
+                <input type="checkbox" ${item.equipped ? 'checked' : ''} onchange="app.updateItem(${idx}, 'equipped', this.checked)" class="w-4 h-4 accent-emerald-800 shrink-0" title="Equipado" />
+                <input type="text" value="${item.name}" oninput="app.updateItem(${idx}, 'name', this.value)"
+                  class="font-semibold text-sm text-[#2b1d0e] bg-transparent outline-none flex-1 min-w-0" />
+              </div>
+              <div class="flex items-center gap-2 text-xs shrink-0">
+                <label class="flex items-center gap-1 cursor-pointer">
+                  <input type="checkbox" ${item.attuned ? 'checked' : ''} onchange="app.updateItem(${idx}, 'attuned', this.checked)" class="w-4 h-4 accent-[#8b1e1e]" />
+                  <span class="text-[10px] font-heading uppercase text-[#8b1e1e]">Sint.</span>
+                </label>
+                <div class="flex items-center gap-1">
+                  <span class="text-[#5c4328]">Qtd:</span>
+                  <input type="number" min="0" value="${item.qty}" oninput="app.updateItem(${idx}, 'qty', parseInt(this.value)||0)"
+                    class="w-12 h-8 text-center font-mono-num bg-[#f4ead5] border border-[#b89b6a] rounded" />
+                </div>
+                <div class="flex items-center gap-1">
+                  <input type="number" step="0.1" min="0" value="${item.weight}" oninput="app.updateItem(${idx}, 'weight', parseFloat(this.value)||0)"
+                    class="w-14 h-8 text-center font-mono-num bg-[#f4ead5] border border-[#b89b6a] rounded" />
+                  <span class="text-[#5c4328]">kg</span>
+                </div>
+                ${editable ? `<button onclick="app.removeItem(${idx})" class="w-8 h-8 rounded text-[#8b1e1e] hover:bg-[#8b1e1e]/15">✕</button>` : ''}
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        const maxCarry = Math.round((char.attributes?.str || 10) * 7.5);
+        document.getElementById('carryWeightDisplay').textContent = `${totalWeight.toFixed(1)} / ${maxCarry} kg`;
+      }
+
+      renderBio(char) {
+        const bio = char.bio || {};
+        document.getElementById('bioTraits').value = bio.traits || '';
+        document.getElementById('bioIdeals').value = bio.ideals || '';
+        document.getElementById('bioBonds').value = bio.bonds || '';
+        document.getElementById('bioFlaws').value = bio.flaws || '';
+        document.getElementById('bioBackstory').value = bio.backstory || '';
+      }
+
+      // ---------------------------------------------------------
+      // MUTAÇÕES DE DADOS DA FICHA
+      // ---------------------------------------------------------
+      updateField(field, val) {
         const char = this.getActiveChar();
         if (!char || !this.canEditChar(char)) return;
-        char[field] = value;
-        if (field === 'name' || field === 'class' || field === 'race') {
-          this.renderCharacterList();
-        }
-        this.saveActiveCharToCloud(char);
+        char[field] = val;
+        this.renderCharacterList();
+        this.scheduleSaveActiveChar();
       }
 
       updateLevel(val) {
         const char = this.getActiveChar();
         if (!char || !this.canEditChar(char)) return;
         char.level = Math.max(1, Math.min(20, parseInt(val) || 1));
-        this.renderCombatAndSkills();
         this.renderCharacterList();
-        this.saveActiveCharToCloud(char);
-      }
-
-      updateAttribute(attrKey, val) {
-        const char = this.getActiveChar();
-        if (!char || !this.canEditChar(char)) return;
-        char.attributes[attrKey] = Math.max(1, Math.min(30, parseInt(val) || 10));
-        this.renderCombatAndSkills();
-        this.renderSpells();
-        this.saveActiveCharToCloud(char);
-      }
-
-      toggleSaveProf(attrKey) {
-        const char = this.getActiveChar();
-        if (!char || !this.canEditChar(char)) return;
-        char.savingThrows[attrKey] = !char.savingThrows[attrKey];
-        this.renderCombatAndSkills();
-        this.saveActiveCharToCloud(char);
-      }
-
-      updateSkillProf(skillKey, val) {
-        const char = this.getActiveChar();
-        if (!char || !this.canEditChar(char)) return;
-        char.skills[skillKey] = parseInt(val) || 0;
-        this.renderCombatAndSkills();
-        this.saveActiveCharToCloud(char);
+        this.renderSheet();
+        this.scheduleSaveActiveChar();
       }
 
       toggleInspiration() {
         const char = this.getActiveChar();
         if (!char || !this.canEditChar(char)) return;
         char.inspiration = !char.inspiration;
-        this.renderHeaderStats();
-        this.saveActiveCharToCloud(char);
+        this.renderSheet();
+        this.scheduleSaveActiveChar(true);
+      }
+
+      updateAttribute(key, val) {
+        const char = this.getActiveChar();
+        if (!char || !this.canEditChar(char)) return;
+        char.attributes[key] = Math.max(1, Math.min(30, parseInt(val) || 10));
+        this.renderSheet();
+        this.scheduleSaveActiveChar();
+      }
+
+      toggleSaveProf(key) {
+        const char = this.getActiveChar();
+        if (!char || !this.canEditChar(char)) return;
+        char.savingThrows[key] = !char.savingThrows[key];
+        this.renderSheet();
+        this.scheduleSaveActiveChar(true);
+      }
+
+      setSkillProf(key, val) {
+        const char = this.getActiveChar();
+        if (!char || !this.canEditChar(char)) return;
+        if (!char.skills) char.skills = {};
+        char.skills[key] = parseInt(val) || 0;
+        this.renderSheet();
+        this.scheduleSaveActiveChar(true);
       }
 
       updateHp(part, val) {
         const char = this.getActiveChar();
         if (!char || !this.canEditChar(char)) return;
         char.hp[part] = Math.max(0, parseInt(val) || 0);
-        this.renderHpBar();
         this.renderCharacterList();
-        this.saveActiveCharToCloud(char);
+        this.renderSheet();
+        this.scheduleSaveActiveChar();
       }
 
       applyHpDelta(sign) {
         const char = this.getActiveChar();
         if (!char || !this.canEditChar(char)) return;
-        const delta = Math.max(1, parseInt(document.getElementById('hpDeltaInput').value) || 0);
+        const delta = Math.max(0, parseInt(document.getElementById('hpDeltaInput').value) || 0);
         if (sign < 0) {
-          let dmg = delta;
+          let remainingDmg = delta;
           if (char.hp.temp > 0) {
-            const absorbed = Math.min(char.hp.temp, dmg);
+            const absorbed = Math.min(char.hp.temp, remainingDmg);
             char.hp.temp -= absorbed;
-            dmg -= absorbed;
+            remainingDmg -= absorbed;
           }
-          char.hp.current = Math.max(0, char.hp.current - dmg);
+          char.hp.current = Math.max(0, char.hp.current - remainingDmg);
         } else {
           char.hp.current = Math.min(char.hp.max, char.hp.current + delta);
         }
-        this.renderHeaderStats();
         this.renderCharacterList();
-        this.saveActiveCharToCloud(char);
+        this.renderSheet();
+        this.scheduleSaveActiveChar(true);
       }
 
       toggleDeathSave(type, index) {
         const char = this.getActiveChar();
         if (!char || !this.canEditChar(char)) return;
-        const currentVal = char.deathSaves[type];
-        char.deathSaves[type] = (currentVal === index + 1) ? index : index + 1;
-        this.renderHeaderStats();
-        this.saveActiveCharToCloud(char);
+        char.deathSaves[type] = (char.deathSaves[type] === index) ? index - 1 : index;
+        this.renderSheet();
+        this.scheduleSaveActiveChar(true);
       }
 
       shortRest() {
         const char = this.getActiveChar();
         if (!char || !this.canEditChar(char)) return;
-        const heal = Math.floor(char.hp.max * 0.25) + 2;
+        const heal = Math.floor(Math.random() * 8) + 1;
         char.hp.current = Math.min(char.hp.max, char.hp.current + heal);
-        this.renderHeaderStats();
+        this.showDiceToast("Descanso Curto", `1d8 (${heal}) PV recuperados`, heal, "descanso");
         this.renderCharacterList();
-        this.saveActiveCharToCloud(char);
-        this.showRollToast(`Descanso Curto (${char.name})`, `Recuperou +${heal} PV`, char.hp.current, "Vitalidade Restaurada");
+        this.renderSheet();
+        this.scheduleSaveActiveChar(true);
       }
 
       longRest() {
@@ -4364,115 +4812,251 @@
         char.hp.current = char.hp.max;
         char.hp.temp = 0;
         char.deathSaves = { successes: 0, failures: 0 };
-        Object.keys(char.spellcasting.slots).forEach(lvl => {
+        Object.keys(char.spellcasting?.slots || {}).forEach(lvl => {
           char.spellcasting.slots[lvl].used = 0;
         });
-        this.renderAll();
-        this.saveActiveCharToCloud(char);
-        this.showRollToast(`Descanso Longo (${char.name})`, "HP & Espaços de Magia 100%", char.hp.max, "Energias Renovadas");
+        this.showDiceToast("Descanso Longo", "PV e Espaços de Magia restaurados", char.hp.max, "descanso");
+        this.renderCharacterList();
+        this.renderSheet();
+        this.scheduleSaveActiveChar(true);
+      }
+
+      addAttack() {
+        const char = this.getActiveChar();
+        if (!char || !this.canEditChar(char)) return;
+        if (!char.attacks) char.attacks = [];
+        char.attacks.push({ name: "Nova Arma", ability: "str", damage: "1d8", type: "Cortante" });
+        this.renderSheet();
+        this.scheduleSaveActiveChar(true);
+      }
+      updateAttack(idx, field, val) {
+        const char = this.getActiveChar();
+        if (!char || !this.canEditChar(char)) return;
+        char.attacks[idx][field] = val;
+        if (field === 'ability') this.renderSheet();
+        this.scheduleSaveActiveChar();
+      }
+      removeAttack(idx) {
+        const char = this.getActiveChar();
+        if (!char || !this.canEditChar(char)) return;
+        char.attacks.splice(idx, 1);
+        this.renderSheet();
+        this.scheduleSaveActiveChar(true);
+      }
+
+      addFeature() {
+        const char = this.getActiveChar();
+        if (!char || !this.canEditChar(char)) return;
+        if (!char.features) char.features = [];
+        char.features.push({ name: "Nova Característica", source: "Classe / Talento", desc: "Descrição do efeito..." });
+        this.renderSheet();
+        this.scheduleSaveActiveChar(true);
+      }
+      updateFeature(idx, field, val) {
+        const char = this.getActiveChar();
+        if (!char || !this.canEditChar(char)) return;
+        char.features[idx][field] = val;
+        this.scheduleSaveActiveChar();
+      }
+      removeFeature(idx) {
+        const char = this.getActiveChar();
+        if (!char || !this.canEditChar(char)) return;
+        char.features.splice(idx, 1);
+        this.renderSheet();
+        this.scheduleSaveActiveChar(true);
+      }
+
+      updateSpellcasting(field, val) {
+        const char = this.getActiveChar();
+        if (!char || !this.canEditChar(char)) return;
+        char.spellcasting[field] = val;
+        this.renderSheet();
+        this.scheduleSaveActiveChar(true);
+      }
+      updateSlotTotal(lvl, val) {
+        const char = this.getActiveChar();
+        if (!char || !this.canEditChar(char)) return;
+        if (!char.spellcasting.slots) char.spellcasting.slots = {};
+        if (!char.spellcasting.slots[lvl]) char.spellcasting.slots[lvl] = { total: 0, used: 0 };
+        char.spellcasting.slots[lvl].total = Math.max(0, Math.min(9, parseInt(val) || 0));
+        this.renderSheet();
+        this.scheduleSaveActiveChar();
+      }
+      toggleUseSlot(lvl) {
+        const char = this.getActiveChar();
+        if (!char || !this.canEditChar(char)) return;
+        const slot = char.spellcasting.slots?.[lvl];
+        if (!slot || slot.total <= 0) return;
+        slot.used = (slot.used + 1) > slot.total ? 0 : slot.used + 1;
+        this.renderSheet();
+        this.scheduleSaveActiveChar(true);
+      }
+      addSpell() {
+        const char = this.getActiveChar();
+        if (!char || !this.canEditChar(char)) return;
+        if (!char.spellcasting.spells) char.spellcasting.spells = [];
+        char.spellcasting.spells.push({ name: "Nova Magia", level: 1, school: "Evocação", prepared: true, desc: "Efeito da magia..." });
+        this.renderSheet();
+        this.scheduleSaveActiveChar(true);
+      }
+      updateSpell(idx, field, val) {
+        const char = this.getActiveChar();
+        if (!char || !this.canEditChar(char)) return;
+        char.spellcasting.spells[idx][field] = val;
+        this.scheduleSaveActiveChar();
+      }
+      removeSpell(idx) {
+        const char = this.getActiveChar();
+        if (!char || !this.canEditChar(char)) return;
+        char.spellcasting.spells.splice(idx, 1);
+        this.renderSheet();
+        this.scheduleSaveActiveChar(true);
+      }
+      castSpell(idx) {
+        const char = this.getActiveChar();
+        const sp = char.spellcasting.spells[idx];
+        if (sp.level > 0 && this.canEditChar(char)) {
+          const slot = char.spellcasting.slots?.[sp.level];
+          if (slot && slot.used < slot.total) {
+            slot.used += 1;
+            this.renderSheet();
+            this.scheduleSaveActiveChar(true);
+          }
+        }
+        this.showDiceToast(`Conjuração: ${sp.name}`, sp.level === 0 ? "Truque (Sem gasto)" : `${sp.level}º Círculo Conjurado`, "✨", "magia");
+      }
+
+      updateCoin(type, val) {
+        const char = this.getActiveChar();
+        if (!char || !this.canEditChar(char)) return;
+        char.coins[type] = Math.max(0, parseInt(val) || 0);
+        this.scheduleSaveActiveChar();
+      }
+      addItem() {
+        const char = this.getActiveChar();
+        if (!char || !this.canEditChar(char)) return;
+        if (!char.inventory) char.inventory = [];
+        char.inventory.push({ name: "Novo Item", qty: 1, weight: 0.5, equipped: false, attuned: false });
+        this.renderSheet();
+        this.scheduleSaveActiveChar(true);
+      }
+      updateItem(idx, field, val) {
+        const char = this.getActiveChar();
+        if (!char || !this.canEditChar(char)) return;
+        char.inventory[idx][field] = val;
+        if (field === 'qty' || field === 'weight') this.renderSheet();
+        this.scheduleSaveActiveChar();
+      }
+      removeItem(idx) {
+        const char = this.getActiveChar();
+        if (!char || !this.canEditChar(char)) return;
+        char.inventory.splice(idx, 1);
+        this.renderSheet();
+        this.scheduleSaveActiveChar(true);
+      }
+
+      updateBio(field, val) {
+        const char = this.getActiveChar();
+        if (!char || !this.canEditChar(char)) return;
+        char.bio[field] = val;
+        this.scheduleSaveActiveChar();
       }
 
       // ---------------------------------------------------------
-      // SISTEMA DE ROLAGEM DE DADOS (SEM MODIFICADOR DE ATRIBUTO)
+      // MOTOR DE ROLAGEM DE DADOS POLIÉDRICOS
       // ---------------------------------------------------------
       setRollMode(mode, persist = true) {
         this.rollMode = mode;
         if (persist) this.saveUiState({ rollMode: mode });
-        const modes = ['dis', 'norm', 'adv'];
-        modes.forEach(m => {
+        ['dis', 'norm', 'adv'].forEach(m => {
           const btn = document.getElementById(`mode${m.charAt(0).toUpperCase() + m.slice(1)}Btn`);
           if (!btn) return;
-          if (m === mode) {
-            btn.className = 'h-8 px-2.5 rounded text-[11px] font-heading uppercase font-bold bg-[#c59b27] text-[#120c09] transition';
-          } else {
-            btn.className = 'h-8 px-2.5 rounded text-[11px] font-heading uppercase font-bold text-[#d6c29f] hover:text-white transition';
-          }
+          btn.className = (m === mode)
+            ? 'h-8 px-2.5 rounded text-[11px] font-heading uppercase font-bold bg-[#c59b27] text-[#120c09] transition'
+            : 'h-8 px-2.5 rounded text-[11px] font-heading uppercase font-bold text-[#d6c29f] hover:text-white transition';
         });
       }
 
-      rollD20Check(label, modifier = 0) {
+      rollFreeDie(sides) {
+        const r = Math.floor(Math.random() * sides) + 1;
+        this.showDiceToast(`Dado Livre (d${sides})`, `1d${sides} = ${r}`, r, sides === 20 && r === 20 ? 'crit' : sides === 20 && r === 1 ? 'fumble' : '');
+      }
+
+      rollInitiative() {
+        this.rollCheck("Iniciativa de Combate", 0);
+      }
+
+      rollCheck(label, modifier) {
         const r1 = Math.floor(Math.random() * 20) + 1;
         const r2 = Math.floor(Math.random() * 20) + 1;
         let chosen = r1;
-        let detail = `1d20 (${r1})`;
+        let formula = `1d20 (${r1})`;
 
         if (this.rollMode === 'adv') {
           chosen = Math.max(r1, r2);
-          detail = `2d20 Vant. [${r1}, ${r2}] → ${chosen}`;
+          formula = `2d20kh1 [${r1}, ${r2}]`;
         } else if (this.rollMode === 'dis') {
           chosen = Math.min(r1, r2);
-          detail = `2d20 Desv. [${r1}, ${r2}] → ${chosen}`;
+          formula = `2d20kl1 [${r1}, ${r2}]`;
         }
 
         const total = chosen + modifier;
-        const modStr = modifier !== 0 ? ` ${this.formatSigned(modifier)}` : '';
-        let badge = '';
-        if (chosen === 20) badge = '🔥 SUCESSO CRÍTICO (20 NATURAL)!';
-        else if (chosen === 1) badge = '💀 FALHA CRÍTICA (1 NATURAL)!';
-
-        const charName = this.getActiveChar()?.name || 'Mesa';
-        this.recordAndToast(`${charName} • ${label}`, `${detail}${modStr}`, total, badge);
+        const modStr = modifier !== 0 ? ` ${modifier >= 0 ? '+' : '-'} ${Math.abs(modifier)}` : '';
+        const status = chosen === 20 ? 'crit' : chosen === 1 ? 'fumble' : '';
+        this.showDiceToast(label, `${formula}${modStr}`, total, status);
       }
 
-      rollFreeDie(sides) {
-        const res = Math.floor(Math.random() * sides) + 1;
-        let badge = '';
-        if (sides === 20 && res === 20) badge = '🔥 CRÍTICO NATURAL!';
-        if (sides === 20 && res === 1) badge = '💀 FALHA CRÍTICA!';
-        this.recordAndToast(`Dado Livre (d${sides})`, `1d${sides} (${res})`, res, badge);
-      }
-
-      rollDamage(attackName, formula) {
-        const clean = (formula || '1d6').replace(/\s+/g, '').toLowerCase();
-        const match = clean.match(/^(\d+)d(\d+)([+-]\d+)?$/);
+      rollDamageFormula(label, formulaStr) {
+        const match = formulaStr.trim().match(/^(\d+)d(\d+)([+-]\d+)?$/i);
         if (!match) {
-          this.rollFreeDie(20);
+          this.showDiceToast(`Dano: ${label}`, formulaStr, formulaStr, '');
           return;
         }
         const count = parseInt(match[1]);
         const sides = parseInt(match[2]);
-        const bonus = parseInt(match[3] || '0');
+        const bonus = match[3] ? parseInt(match[3]) : 0;
         let rolls = [];
-        let sum = 0;
         for (let i = 0; i < count; i++) {
-          const r = Math.floor(Math.random() * sides) + 1;
-          rolls.push(r);
-          sum += r;
+          rolls.push(Math.floor(Math.random() * sides) + 1);
         }
-        const total = sum + bonus;
-        const bonusStr = bonus !== 0 ? ` ${this.formatSigned(bonus)}` : '';
-        const charName = this.getActiveChar()?.name || 'Herói';
-        this.recordAndToast(`${charName} • Dano: ${attackName}`, `${count}d${sides} [${rolls.join('+')}]${bonusStr}`, total, '⚔️ Impacto de Dano');
+        const sum = rolls.reduce((a, b) => a + b, 0) + bonus;
+        const bonusStr = bonus !== 0 ? ` ${bonus >= 0 ? '+' : '-'} ${Math.abs(bonus)}` : '';
+        this.showDiceToast(`Dano: ${label}`, `${count}d${sides} [${rolls.join('+')}]${bonusStr}`, sum, 'dano');
       }
 
-      rollInitiative() {
-        this.rollD20Check('Iniciativa', 0);
-      }
-
-      recordAndToast(title, formula, total, badge) {
+      showDiceToast(title, formula, total, status) {
+        const charName = this.getActiveChar()?.name || 'Mesa';
         this.rollHistory.unshift({
-          title, formula, total, badge,
-          time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+          char: charName,
+          title,
+          formula,
+          total,
+          status,
+          time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
         });
-        if (this.rollHistory.length > 40) this.rollHistory.pop();
+        document.getElementById('rollCountBadge').textContent = this.rollHistory.length;
+        document.getElementById('rollCountBadgeMobile').textContent = this.rollHistory.length;
         this.renderRollHistory();
-        this.showRollToast(title, formula, total, badge);
-      }
 
-      showRollToast(title, formula, total, badge) {
         const toast = document.getElementById('diceToast');
-        document.getElementById('diceToastTitle').textContent = title;
+        document.getElementById('diceToastTitle').textContent = `${charName} • ${title}`;
         document.getElementById('diceToastFormula').textContent = formula;
         document.getElementById('diceToastTotal').textContent = total;
-        const badgeEl = document.getElementById('diceToastBadge');
-        badgeEl.textContent = badge || '';
-        badgeEl.className = badge.includes('FALHA')
-          ? 'mt-1.5 text-[11px] font-heading uppercase tracking-widest font-bold text-red-400'
-          : 'mt-1.5 text-[11px] font-heading uppercase tracking-widest font-bold text-[#e5c158]';
+
+        const badge = document.getElementById('diceToastBadge');
+        if (status === 'crit') {
+          badge.textContent = '🔥 ACERTO CRÍTICO NATURAL (20)!';
+          badge.className = 'mt-1.5 text-[11px] font-heading uppercase tracking-widest font-bold text-emerald-400';
+        } else if (status === 'fumble') {
+          badge.textContent = '💀 FALHA CRÍTICA NATURAL (1)!';
+          badge.className = 'mt-1.5 text-[11px] font-heading uppercase tracking-widest font-bold text-red-400';
+        } else {
+          badge.textContent = '';
+        }
 
         toast.classList.remove('hidden');
         clearTimeout(this.toastTimer);
-        this.toastTimer = setTimeout(() => toast.classList.add('hidden'), 5000);
+        this.toastTimer = setTimeout(() => toast.classList.add('hidden'), 6000);
       }
 
       toggleRollHistory() {
@@ -4481,38 +5065,35 @@
         drawer.classList.toggle('flex');
       }
 
-      clearRollHistory() {
-        this.rollHistory = [];
-        this.renderRollHistory();
-      }
-
       renderRollHistory() {
-        document.getElementById('rollCountBadge').textContent = this.rollHistory.length;
-        const mobBadge = document.getElementById('rollCountBadgeMobile');
-        if (mobBadge) mobBadge.textContent = this.rollHistory.length;
-
         const list = document.getElementById('rollHistoryList');
         if (!this.rollHistory.length) {
-          list.innerHTML = `<p class="text-sm text-[#d6c29f]/70 text-center py-8 italic">Nenhuma rolagem registrada nesta sessão.</p>`;
+          list.innerHTML = `<p class="text-xs text-[#d6c29f]/70 text-center py-8">Nenhum dado rolado ainda nesta sessão.</p>`;
           return;
         }
         list.innerHTML = this.rollHistory.map(r => `
-          <div class="bg-black/40 border border-[#c59b27]/30 rounded-lg p-3">
-            <div class="flex justify-between text-[11px] text-[#e5c158] font-heading gap-2">
-              <span class="truncate">${r.title}</span>
-              <span class="font-mono-num text-[#d6c29f]/70 shrink-0">${r.time}</span>
+          <div class="p-3 rounded-lg bg-black/40 border border-[#c59b27]/25 flex items-center justify-between gap-2">
+            <div class="min-w-0">
+              <div class="text-[10px] font-heading uppercase text-[#e5c158] truncate">${r.time} • ${r.char}</div>
+              <div class="text-xs font-bold text-[#f4ead5] truncate">${r.title}</div>
+              <div class="text-[11px] font-mono-num text-[#d6c29f] truncate">${r.formula}</div>
             </div>
-            <div class="flex items-baseline justify-between mt-1 gap-2">
-              <span class="text-xs font-mono-num text-[#d6c29f] truncate">${r.formula}</span>
-              <span class="text-xl font-display font-bold text-[#f4ead5] shrink-0">${r.total}</span>
+            <div class="text-2xl font-display font-black shrink-0 ${r.status === 'crit' ? 'text-emerald-400' : r.status === 'fumble' ? 'text-red-400' : 'text-[#f4ead5]'}">
+              ${r.total}
             </div>
-            ${r.badge ? `<div class="text-[10px] font-heading uppercase text-amber-400 mt-1">${r.badge}</div>` : ''}
           </div>
         `).join('');
       }
 
+      clearRollHistory() {
+        this.rollHistory = [];
+        document.getElementById('rollCountBadge').textContent = '0';
+        document.getElementById('rollCountBadgeMobile').textContent = '0';
+        this.renderRollHistory();
+      }
+
       // ---------------------------------------------------------
-      // NAVEGAÇÃO ENTRE VISÕES E ABAS
+      // NAVEGAÇÃO & LIVRO DA COMUNIDADE
       // ---------------------------------------------------------
       switchView(view, persist = true) {
         this.currentView = view;
@@ -4522,34 +5103,33 @@
         document.getElementById('chaptersView').classList.toggle('hidden', view !== 'chapters');
         document.getElementById('compendiumView').classList.toggle('hidden', view !== 'compendium');
 
-        const activeDesktopCls = 'h-9 px-3 rounded-md font-heading text-xs font-bold tracking-wider uppercase transition bg-[#8b1e1e] text-[#f4ead5] border border-[#e5c158]/50 flex items-center gap-1';
-        const inactiveDesktopCls = 'h-9 px-3 rounded-md font-heading text-xs font-bold tracking-wider uppercase transition text-[#d6c29f] hover:text-white flex items-center gap-1';
+        const activeBtnCls = 'h-9 px-3 rounded-md font-heading text-xs font-bold tracking-wider uppercase transition bg-[#8b1e1e] text-[#f4ead5] border border-[#e5c158]/50 flex items-center gap-1';
+        const idleBtnCls = 'h-9 px-3 rounded-md font-heading text-xs font-bold tracking-wider uppercase transition text-[#d6c29f] hover:text-white flex items-center gap-1';
 
-        document.getElementById('navSheetBtn').className = view === 'sheet' ? activeDesktopCls : inactiveDesktopCls;
-        document.getElementById('navChaptersBtn').className = view === 'chapters' ? activeDesktopCls : inactiveDesktopCls;
-        document.getElementById('navCompendiumBtn').className = view === 'compendium' ? activeDesktopCls : inactiveDesktopCls;
-      }
+        document.getElementById('navSheetBtn').className = view === 'sheet' ? activeBtnCls : idleBtnCls;
+        document.getElementById('navChaptersBtn').className = view === 'chapters' ? activeBtnCls : idleBtnCls;
+        document.getElementById('navCompendiumBtn').className = view === 'compendium' ? activeBtnCls : idleBtnCls;
 
-      mobileNav(target) {
-        ['sheet', 'chapters', 'compendium'].forEach(id => {
-          const btn = document.getElementById(`mobNav-${id}`);
-          if (!btn) return;
-          if (id === target) {
-            btn.className = 'flex flex-col items-center justify-center gap-0.5 text-[#e5c158] bg-[#8b1e1e]/30 border-t-2 border-[#e5c158]';
-          } else {
-            btn.className = 'flex flex-col items-center justify-center gap-0.5 text-[#d6c29f] hover:text-[#e5c158]';
+        ['sheet', 'chapters', 'compendium'].forEach(v => {
+          const mobBtn = document.getElementById(`mobNav-${v}`);
+          if (mobBtn) {
+            mobBtn.className = v === view
+              ? 'flex flex-col items-center justify-center gap-0.5 text-[#e5c158] bg-[#8b1e1e]/30 border-t-2 border-[#e5c158]'
+              : 'flex flex-col items-center justify-center gap-0.5 text-[#d6c29f] hover:text-[#e5c158]';
           }
         });
+      }
 
-        this.switchView(target);
+      mobileNav(view) {
+        this.switchView(view);
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
 
       switchSubTab(tab, persist = true) {
         this.currentSubTab = tab;
         if (persist) this.saveUiState({ subTab: tab });
-        const tabs = ['combat', 'spells', 'inventory', 'bio'];
-        tabs.forEach(t => {
+
+        ['combat', 'spells', 'inventory', 'bio'].forEach(t => {
           const panel = document.getElementById(`panel-${t}`);
           const btn = document.getElementById(`subTab-${t}`);
           if (t === tab) {
@@ -4564,479 +5144,34 @@
         });
       }
 
-      // ---------------------------------------------------------
-      // RENDERIZAÇÃO DA FICHA
-      // ---------------------------------------------------------
-      renderAll() {
-        const char = this.getActiveChar();
-        if (!char) return;
-        this.renderCharacterList();
-        this.renderHeaderStats();
-        this.renderCombatAndSkills();
-        this.renderAttacksAndFeatures();
-        this.renderSpells();
-        this.renderInventory();
-        this.renderBio();
-        this.applyPermissionsLock(char);
-      }
+      renderCompendium() {
+        const search = (document.getElementById('compendiumSearch')?.value || '').toLowerCase();
+        const cat = document.getElementById('compendiumCategory')?.value || 'all';
+        const isDM = this.userProfile?.role === 'dm';
+        const grid = document.getElementById('compendiumGrid');
+        if (!grid) return;
 
-      applyPermissionsLock(char) {
-        const editable = this.canEditChar(char);
-        document.getElementById('readOnlyBanner').classList.toggle('hidden', editable);
-        document.getElementById('deleteCharBtn').classList.toggle('hidden', !editable);
-        document.getElementById('charAvatarUploadLabel').classList.toggle('hidden', !editable);
-        document.getElementById('charAvatarUploadBar').classList.toggle('hidden', !editable);
-        document.getElementById('rolePermissionBadge').textContent = this.userProfile?.role === 'dm' ? '👑 Mestre' : (editable ? 'Sua Ficha' : 'Leitura');
-
-        const sheetEl = document.getElementById('characterSheetContainer');
-        sheetEl.querySelectorAll('input, textarea, select').forEach(el => {
-          if (el.id === 'hpDeltaInput') return;
-          el.disabled = !editable;
+        const filtered = this.compendium.filter(item => {
+          const matchCat = cat === 'all' || item.category === cat;
+          const matchText = (item.title || '').toLowerCase().includes(search) || (item.description || '').toLowerCase().includes(search);
+          return matchCat && matchText;
         });
-      }
 
-      renderCharacterList() {
-        const container = document.getElementById('characterList');
-        container.innerHTML = this.characters.map(c => {
-          const isActive = c.id === this.activeCharId;
-          const isMine = c.ownerId === this.currentUser?.uid;
-          const hpPct = Math.max(0, Math.min(100, Math.round((c.hp.current / (c.hp.max || 1)) * 100)));
-          const ownerUser = this.usersMap[c.ownerId];
-          const ownerDisplay = isMine ? 'Você' : (ownerUser?.name || c.ownerName || 'Jogador');
-          const charAvatar = c.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(c.name)}`;
-
-          return `
-            <div onclick="app.selectCharacter('${c.id}')"
-              class="p-3 rounded-lg border cursor-pointer transition active:scale-[0.99] flex items-center gap-3 ${isActive ? 'bg-[#8b1e1e]/40 border-[#e5c158] shadow-md' : 'bg-black/35 border-[#c59b27]/25 hover:border-[#c59b27]/60'}">
-              <img src="${charAvatar}" alt="${c.name}" class="w-11 h-11 rounded-lg object-contain border border-[#e5c158]/70 shrink-0 bg-[#1a110b]" />
-              <div class="min-w-0 flex-1">
-                <div class="flex justify-between items-center gap-1">
-                  <span class="font-heading font-bold text-sm text-[#f4ead5] truncate">${c.name}</span>
-                  <span class="text-[10px] font-mono-num px-1.5 py-0.5 rounded bg-black/50 text-[#e5c158] shrink-0">Nv ${c.level}</span>
-                </div>
-                <div class="text-[11px] text-[#d6c29f]/85 truncate mt-0.5">${c.race} • ${c.class}</div>
-                <div class="flex items-center justify-between text-[10px] text-[#e5c158]/80 mt-1">
-                  <span class="truncate">Dono: ${ownerDisplay}</span>
-                  <span class="font-mono-num text-[#f4ead5] shrink-0">${c.hp.current}/${c.hp.max} PV</span>
-                </div>
-                <div class="w-full h-1.5 bg-black/60 rounded-full overflow-hidden mt-1">
-                  <div class="h-full ${hpPct > 30 ? 'bg-emerald-500' : 'bg-red-500'}" style="width: ${hpPct}%"></div>
-                </div>
+        grid.innerHTML = filtered.map(item => `
+          <article class="parchment-page rounded-xl p-5 flex flex-col justify-between gap-3">
+            <div>
+              <div class="flex items-center justify-between gap-2 mb-1">
+                <span class="text-[11px] font-heading uppercase tracking-wider font-bold text-[#8b1e1e]">${item.category}</span>
+                ${isDM ? `<button onclick="app.deleteCompendiumEntry('${item.id}')" class="w-8 h-8 rounded text-xs text-[#8b1e1e] hover:bg-[#8b1e1e]/15 shrink-0">Excluir</button>` : ''}
               </div>
+              <h3 class="font-display text-lg font-black text-[#2b1d0e] mb-2">${item.title}</h3>
+              <p class="text-sm text-[#2b1d0e]/90 leading-relaxed whitespace-pre-line">${item.description}</p>
             </div>
-          `;
-        }).join('');
-      }
-
-      renderHeaderStats() {
-        const char = this.getActiveChar();
-        const ownerUser = this.usersMap[char.ownerId];
-        const ownerName = ownerUser?.name || char.ownerName || 'Jogador';
-        const ownerPhoto = ownerUser?.photoURL;
-
-        document.getElementById('charNameInput').value = char.name;
-        document.getElementById('charAvatarImg').src = char.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(char.name)}`;
-        document.getElementById('ownerTagName').textContent = `Jogador: ${ownerName}`;
-
-        const ownerAvatarEl = document.getElementById('ownerTagAvatar');
-        if (ownerPhoto) {
-          ownerAvatarEl.src = ownerPhoto;
-          ownerAvatarEl.classList.remove('hidden');
-        } else {
-          ownerAvatarEl.classList.add('hidden');
-        }
-
-        document.getElementById('charClassInput').value = char.class;
-        document.getElementById('charLevelInput').value = char.level;
-        document.getElementById('charRaceInput').value = char.race;
-        document.getElementById('charBgInput').value = char.background;
-        document.getElementById('charAlignInput').value = char.alignment;
-        document.getElementById('charXpInput').value = char.xp;
-
-        const inspBtn = document.getElementById('inspirationBtn');
-        const inspIcon = document.getElementById('inspirationIcon');
-        if (char.inspiration) {
-          inspBtn.className = 'h-11 px-3 rounded-lg border-2 border-[#c59b27] bg-amber-300/40 flex items-center gap-2 transition active:scale-95';
-          inspIcon.textContent = '★';
-          inspIcon.className = 'text-base text-amber-700';
-        } else {
-          inspBtn.className = 'h-11 px-3 rounded-lg border-2 border-[#8b5a2b]/50 bg-[#e6d5b8] flex items-center gap-2 transition active:scale-95';
-          inspIcon.textContent = '☆';
-          inspIcon.className = 'text-base text-[#5c4328]';
-        }
-
-        document.getElementById('acInput').value = char.ac;
-        document.getElementById('speedInput').value = char.speed;
-        document.getElementById('hitDiceInput').value = char.hitDice;
-        document.getElementById('hpCurrentInput').value = char.hp.current;
-        document.getElementById('hpMaxInput').value = char.hp.max;
-        document.getElementById('hpTempInput').value = char.hp.temp;
-        this.renderHpBar();
-
-        ['successes', 'failures'].forEach(type => {
-          const el = document.getElementById(type === 'successes' ? 'deathSuccessBoxes' : 'deathFailBoxes');
-          el.innerHTML = [0, 1, 2].map(i => {
-            const filled = i < char.deathSaves[type];
-            const color = type === 'successes' ? 'bg-emerald-700 border-emerald-900' : 'bg-[#8b1e1e] border-red-950';
-            return `<button onclick="app.toggleDeathSave('${type}', ${i})" aria-label="Marca de morte ${i+1}" class="w-6 h-6 rounded-full border-2 ${filled ? color : 'bg-transparent border-[#8b5a2b]'} transition active:scale-90"></button>`;
-          }).join('');
-        });
-      }
-
-      renderHpBar() {
-        const char = this.getActiveChar();
-        const pct = Math.max(0, Math.min(100, Math.round((char.hp.current / (char.hp.max || 1)) * 100)));
-        const bar = document.getElementById('hpProgressBar');
-        bar.style.width = `${pct}%`;
-        bar.className = `h-full transition-all duration-300 ${pct > 50 ? 'bg-emerald-700' : pct > 25 ? 'bg-amber-600' : 'bg-[#8b1e1e]'}`;
-      }
-
-      renderCombatAndSkills() {
-        const char = this.getActiveChar();
-        const prof = this.getProficiencyBonus(char.level);
-        document.getElementById('profBonusDisplay').textContent = this.formatSigned(prof);
-
-        document.getElementById('initRollBtn').textContent = '0';
-
-        const perceptionProf = Number(char.skills?.perception) || 0;
-        const passivePerc = 10 + perceptionProf;
-        document.getElementById('passivePerceptionDisplay').textContent = passivePerc;
-
-        const strScore = char.attributes.str || 10;
-        document.getElementById('carryWeightDisplay').textContent = `${this.calculateTotalWeight().toFixed(1)} / ${(strScore * 7.5).toFixed(0)} kg`;
-
-        const attrGrid = document.getElementById('attributesGrid');
-        attrGrid.innerHTML = ATTRIBUTES_META.map(a => {
-          const score = char.attributes[a.key] || 10;
-          return `
-            <div class="parchment-page rounded-xl p-3 flex flex-col items-center text-center">
-              <span class="text-[10px] font-heading font-bold uppercase tracking-wider text-[#5c4328]">${a.label}</span>
-              <button onclick="app.rollD20Check('Teste de ${a.label}', 0)"
-                class="my-1.5 w-full h-11 rounded-lg parchment-inset hover:border-[#8b1e1e] active:scale-95 font-display text-lg font-black text-[#2b1d0e] transition cursor-pointer"
-                title="Rolar 1d20 de ${a.label}">
-                ${a.short}
-              </button>
-              <input type="number" min="1" max="30" value="${score}" oninput="app.updateAttribute('${a.key}', this.value)"
-                class="w-16 h-9 text-center font-mono-num text-base font-bold rounded-lg bg-[#e6d5b8] border border-[#8b5a2b]/50 text-[#8b1e1e] outline-none" />
-            </div>
-          `;
-        }).join('');
-
-        const savesList = document.getElementById('savingThrowsList');
-        savesList.innerHTML = ATTRIBUTES_META.map(a => {
-          const isProf = !!char.savingThrows[a.key];
-          const total = isProf ? prof : 0;
-          return `
-            <div class="flex items-center justify-between gap-2 px-2 py-1.5 rounded hover:bg-[#8b5a2b]/10 transition">
-              <div class="flex items-center gap-2.5 min-w-0">
-                <input type="checkbox" ${isProf ? 'checked' : ''} onchange="app.toggleSaveProf('${a.key}')" class="w-4 h-4 accent-[#8b1e1e] cursor-pointer shrink-0" />
-                <button onclick="app.rollD20Check('Salvaguarda de ${a.label}', ${total})" class="text-sm font-semibold text-[#2b1d0e] hover:text-[#8b1e1e] text-left truncate cursor-pointer">
-                  ${a.label}
-                </button>
-              </div>
-              <button onclick="app.rollD20Check('Salvaguarda de ${a.label}', ${total})" class="font-mono-num font-bold text-xs px-2.5 py-1 rounded parchment-inset text-[#2b1d0e] hover:border-[#8b1e1e] shrink-0">
-                ${this.formatSigned(total)}
-              </button>
-            </div>
-          `;
-        }).join('');
-
-        document.getElementById('proficienciesText').value = char.otherProficiencies || '';
-
-        const editable = this.canEditChar(char);
-        const skillsList = document.getElementById('skillsList');
-        skillsList.innerHTML = SKILLS_META.map(s => {
-          const attrMeta = ATTRIBUTES_META.find(x => x.key === s.attr);
-          const skillBonus = Number(char.skills[s.key]) || 0;
-          return `
-            <div class="flex items-center justify-between gap-1.5 px-2 py-1.5 rounded hover:bg-[#8b5a2b]/10 transition border-b border-[#b89b6a]/25">
-              <div class="flex items-center gap-1.5 min-w-0 flex-1">
-                <select onchange="app.updateSkillProf('${s.key}', this.value)" ${!editable ? 'disabled' : ''}
-                  aria-label="Proficiência em ${s.label}"
-                  class="h-7 px-1 rounded bg-[#e6d5b8] border border-[#8b5a2b]/50 font-mono-num text-xs font-bold text-[#8b1e1e] outline-none shrink-0 cursor-pointer">
-                  ${SKILL_PROF_OPTIONS.map(opt => `<option value="${opt}" ${skillBonus === opt ? 'selected' : ''}>${opt === 0 ? '0' : '+' + opt}</option>`).join('')}
-                </select>
-                <button onclick="app.rollD20Check('Perícia: ${s.label}', ${skillBonus})" class="text-xs sm:text-sm font-semibold text-[#2b1d0e] hover:text-[#8b1e1e] text-left truncate cursor-pointer">
-                  ${s.label} <span class="text-[10px] text-[#5c4328] uppercase">(${attrMeta.short})</span>
-                </button>
-              </div>
-              <button onclick="app.rollD20Check('Perícia: ${s.label}', ${skillBonus})" class="font-mono-num font-bold text-xs px-2.5 py-1 rounded parchment-inset text-[#2b1d0e] hover:border-[#8b1e1e] shrink-0">
-                ${this.formatSigned(skillBonus)}
-              </button>
-            </div>
-          `;
-        }).join('');
-      }
-
-      // ---------------------------------------------------------
-      // ATAQUES, CARACTERÍSTICAS, MAGIAS, INVENTÁRIO E CRÔNICA
-      // ---------------------------------------------------------
-      renderAttacksAndFeatures() {
-        const char = this.getActiveChar();
-        const prof = this.getProficiencyBonus(char.level);
-        const editable = this.canEditChar(char);
-
-        const attacksList = document.getElementById('attacksList');
-        attacksList.innerHTML = (char.attacks || []).map((atk, idx) => {
-          const atkBonus = prof;
-          return `
-            <div class="parchment-inset p-3 rounded-lg space-y-2">
-              <div class="grid grid-cols-12 gap-2 items-center">
-                <input type="text" value="${atk.name}" oninput="app.updateArrayItem('attacks', ${idx}, 'name', this.value)"
-                  class="col-span-8 sm:col-span-4 h-9 bg-[#f4ead5] border border-[#b89b6a] rounded px-2.5 text-sm font-bold text-[#2b1d0e] outline-none" placeholder="Nome do Ataque" />
-                <select onchange="app.updateArrayItem('attacks', ${idx}, 'ability', this.value)"
-                  class="col-span-4 sm:col-span-2 h-9 bg-[#f4ead5] border border-[#b89b6a] rounded px-1.5 text-xs font-heading font-bold">
-                  ${ATTRIBUTES_META.map(a => `<option value="${a.key}" ${atk.ability === a.key ? 'selected' : ''}>${a.short}</option>`).join('')}
-                </select>
-                <input type="text" value="${atk.damage}" oninput="app.updateArrayItem('attacks', ${idx}, 'damage', this.value)"
-                  class="col-span-6 sm:col-span-2 h-9 bg-[#f4ead5] border border-[#b89b6a] rounded px-2 text-xs font-mono-num font-bold text-center" placeholder="1d8" />
-                <div class="col-span-6 sm:col-span-4 flex items-center justify-end gap-1.5">
-                  <button onclick="app.rollD20Check('Ataque: ${atk.name}', ${atkBonus})" class="h-9 px-2.5 rounded bg-[#2b1d0e] text-[#e5c158] font-mono-num text-xs font-bold shrink-0">
-                    🎯 ${this.formatSigned(atkBonus)}
-                  </button>
-                  <button onclick="app.rollDamage('${atk.name}', '${atk.damage}')" class="h-9 px-2.5 rounded bg-[#8b1e1e] text-[#f4ead5] font-mono-num text-xs font-bold shrink-0">
-                    💥 Dano
-                  </button>
-                  ${editable ? `<button onclick="app.removeArrayItem('attacks', ${idx})" class="h-9 w-8 rounded text-[#8b1e1e] hover:bg-red-900/15 flex items-center justify-center shrink-0">✕</button>` : ''}
-                </div>
-              </div>
-            </div>
-          `;
-        }).join('') || `<p class="text-sm text-[#5c4328] italic">Nenhum ataque cadastrado.</p>`;
-
-        const featuresList = document.getElementById('featuresList');
-        featuresList.innerHTML = (char.features || []).map((f, idx) => `
-          <div class="parchment-inset p-3 rounded-lg space-y-2">
-            <div class="flex items-center justify-between gap-2">
-              <input type="text" value="${f.name}" oninput="app.updateArrayItem('features', ${idx}, 'name', this.value)"
-                class="font-heading font-bold text-sm text-[#8b1e1e] bg-transparent border-b border-[#b89b6a]/60 outline-none flex-1 min-w-0" />
-              ${editable ? `<button onclick="app.removeArrayItem('features', ${idx})" class="w-8 h-8 flex items-center justify-center text-xs text-[#8b1e1e] shrink-0">✕</button>` : ''}
-            </div>
-            <input type="text" value="${f.source || ''}" oninput="app.updateArrayItem('features', ${idx}, 'source', this.value)"
-              class="text-[11px] font-heading uppercase text-[#5c4328] bg-transparent outline-none w-full" placeholder="Origem (Ex: Classe Nível 1)" />
-            <textarea rows="3" oninput="app.updateArrayItem('features', ${idx}, 'desc', this.value)"
-              class="w-full bg-[#f4ead5]/70 rounded p-2 text-xs text-[#2b1d0e] outline-none leading-relaxed">${f.desc}</textarea>
-          </div>
+          </article>
         `).join('');
       }
 
-      addAttack() {
-        const char = this.getActiveChar();
-        if (!char || !this.canEditChar(char)) return;
-        char.attacks = char.attacks || [];
-        char.attacks.push({ name: "Espada Longa", ability: "str", damage: "1d8", type: "Cortante" });
-        this.renderAttacksAndFeatures();
-        this.saveActiveCharToCloud(char);
-      }
-
-      addFeature() {
-        const char = this.getActiveChar();
-        if (!char || !this.canEditChar(char)) return;
-        char.features = char.features || [];
-        char.features.push({ name: "Nova Característica", source: "Classe / Raça", desc: "Descreva os benefícios mecânicos..." });
-        this.renderAttacksAndFeatures();
-        this.saveActiveCharToCloud(char);
-      }
-
-      updateSpellcasting(field, val) {
-        const char = this.getActiveChar();
-        if (!char || !this.canEditChar(char)) return;
-        char.spellcasting[field] = val;
-        this.renderSpells();
-        this.saveActiveCharToCloud(char);
-      }
-
-      toggleSpellSlot(level, slotIndex) {
-        const char = this.getActiveChar();
-        if (!char || !this.canEditChar(char)) return;
-        const slot = char.spellcasting.slots[level];
-        slot.used = (slotIndex < slot.used) ? slotIndex : slotIndex + 1;
-        this.renderSpells();
-        this.saveActiveCharToCloud(char);
-      }
-
-      updateSlotTotal(level, val) {
-        const char = this.getActiveChar();
-        if (!char || !this.canEditChar(char)) return;
-        const total = Math.max(0, Math.min(9, parseInt(val) || 0));
-        char.spellcasting.slots[level].total = total;
-        if (char.spellcasting.slots[level].used > total) char.spellcasting.slots[level].used = total;
-        this.renderSpells();
-        this.saveActiveCharToCloud(char);
-      }
-
-      renderSpells() {
-        const char = this.getActiveChar();
-        const prof = this.getProficiencyBonus(char.level);
-        const ability = char.spellcasting?.ability || 'int';
-        const editable = this.canEditChar(char);
-
-        document.getElementById('spellAbilitySelect').value = ability;
-        document.getElementById('spellSaveDcDisplay').textContent = 8 + prof;
-        document.getElementById('spellAttackDisplay').textContent = this.formatSigned(prof);
-
-        const slotsGrid = document.getElementById('spellSlotsGrid');
-        slotsGrid.innerHTML = [1,2,3,4,5,6,7,8,9].map(lvl => {
-          const s = char.spellcasting.slots[lvl] || { total: 0, used: 0 };
-          let dots = '';
-          for (let i = 0; i < s.total; i++) {
-            const isUsed = i < s.used;
-            dots += `<button onclick="app.toggleSpellSlot(${lvl}, ${i})" class="w-4 h-4 rounded-full border border-[#8b1e1e] ${isUsed ? 'bg-transparent opacity-40' : 'bg-[#8b1e1e]'} transition"></button>`;
-          }
-          return `
-            <div class="parchment-inset p-2 rounded-lg text-center">
-              <div class="text-[10px] font-heading font-bold text-[#5c4328]">${lvl}º Círc.</div>
-              <input type="number" min="0" max="9" value="${s.total}" oninput="app.updateSlotTotal(${lvl}, this.value)"
-                class="w-12 text-center font-mono-num text-xs font-bold bg-[#f4ead5] border border-[#b89b6a] rounded my-1 text-[#2b1d0e]" />
-              <div class="flex flex-wrap justify-center gap-1 min-h-[18px]">${dots || '<span class="text-[9px] text-[#5c4328]">—</span>'}</div>
-            </div>
-          `;
-        }).join('');
-
-        const spellsList = document.getElementById('spellsList');
-        spellsList.innerHTML = (char.spellcasting.spells || []).map((sp, idx) => `
-          <div class="parchment-inset p-3 rounded-lg space-y-2">
-            <div class="flex flex-wrap items-center justify-between gap-2">
-              <div class="flex items-center gap-2 flex-1 min-w-0">
-                <input type="checkbox" ${sp.prepared ? 'checked' : ''} onchange="app.updateSpellItem(${idx}, 'prepared', this.checked)" class="w-4 h-4 accent-[#8b1e1e] shrink-0" title="Preparada" />
-                <input type="text" value="${sp.name}" oninput="app.updateSpellItem(${idx}, 'name', this.value)"
-                  class="font-heading font-bold text-sm text-[#2b1d0e] bg-transparent border-b border-[#b89b6a] outline-none flex-1 min-w-0" />
-              </div>
-              <div class="flex items-center gap-1.5 shrink-0">
-                <select onchange="app.updateSpellItem(${idx}, 'level', parseInt(this.value))" class="h-8 bg-[#f4ead5] border border-[#b89b6a] rounded px-1.5 text-xs font-mono-num">
-                  <option value="0" ${sp.level === 0 ? 'selected' : ''}>Truque</option>
-                  ${[1,2,3,4,5,6,7,8,9].map(l => `<option value="${l}" ${sp.level === l ? 'selected' : ''}>${l}º Círc.</option>`).join('')}
-                </select>
-                <button onclick="app.rollD20Check('Magia: ${sp.name}', ${prof})" class="h-8 px-2.5 rounded bg-[#2b1d0e] text-[#e5c158] text-xs font-heading font-bold">✨ Conjurar</button>
-                ${editable ? `<button onclick="app.removeSpell(${idx})" class="w-8 h-8 flex items-center justify-center text-xs text-[#8b1e1e]">✕</button>` : ''}
-              </div>
-            </div>
-            <textarea rows="2" oninput="app.updateSpellItem(${idx}, 'desc', this.value)" class="w-full bg-[#f4ead5]/70 rounded p-2 text-xs text-[#2b1d0e] outline-none">${sp.desc}</textarea>
-          </div>
-        `).join('');
-      }
-
-      addSpell() {
-        const char = this.getActiveChar();
-        if (!char || !this.canEditChar(char)) return;
-        char.spellcasting.spells = char.spellcasting.spells || [];
-        char.spellcasting.spells.push({ name: "Nova Magia", level: 1, school: "Evocação", prepared: true, desc: "Efeito da magia..." });
-        this.renderSpells();
-        this.saveActiveCharToCloud(char);
-      }
-
-      updateSpellItem(idx, field, val) {
-        const char = this.getActiveChar();
-        if (!char || !this.canEditChar(char)) return;
-        char.spellcasting.spells[idx][field] = val;
-        this.saveActiveCharToCloud(char);
-      }
-
-      removeSpell(idx) {
-        const char = this.getActiveChar();
-        if (!char || !this.canEditChar(char)) return;
-        char.spellcasting.spells.splice(idx, 1);
-        this.renderSpells();
-        this.saveActiveCharToCloud(char);
-      }
-
-      updateCoin(coin, val) {
-        const char = this.getActiveChar();
-        if (!char || !this.canEditChar(char)) return;
-        char.coins[coin] = Math.max(0, parseInt(val) || 0);
-        this.saveActiveCharToCloud(char);
-      }
-
-      calculateTotalWeight() {
-        const char = this.getActiveChar();
-        return (char.inventory || []).reduce((acc, item) => acc + ((item.qty || 1) * (item.weight || 0)), 0);
-      }
-
-      renderInventory() {
-        const char = this.getActiveChar();
-        const editable = this.canEditChar(char);
-        ['cp', 'sp', 'ep', 'gp', 'pp'].forEach(c => {
-          document.getElementById(`coin-${c}`).value = char.coins[c] || 0;
-        });
-
-        const invList = document.getElementById('inventoryList');
-        invList.innerHTML = (char.inventory || []).map((item, idx) => `
-          <div class="parchment-inset p-3 rounded-lg space-y-2">
-            <div class="grid grid-cols-12 gap-2 items-center">
-              <input type="text" value="${item.name}" oninput="app.updateArrayItem('inventory', ${idx}, 'name', this.value)"
-                class="col-span-8 sm:col-span-5 h-9 bg-[#f4ead5] border border-[#b89b6a] rounded px-2.5 text-sm font-semibold text-[#2b1d0e] outline-none" />
-              <div class="col-span-4 sm:col-span-2 flex items-center gap-1">
-                <span class="text-[10px] text-[#5c4328]">Qtd</span>
-                <input type="number" min="0" value="${item.qty}" oninput="app.updateArrayItem('inventory', ${idx}, 'qty', parseInt(this.value)||0); app.renderCombatAndSkills();"
-                  class="w-full h-9 text-center font-mono-num text-xs bg-[#f4ead5] border border-[#b89b6a] rounded" />
-              </div>
-              <div class="col-span-4 sm:col-span-2 flex items-center gap-1">
-                <span class="text-[10px] text-[#5c4328]">Kg</span>
-                <input type="number" step="0.1" min="0" value="${item.weight}" oninput="app.updateArrayItem('inventory', ${idx}, 'weight', parseFloat(this.value)||0); app.renderCombatAndSkills();"
-                  class="w-full h-9 text-center font-mono-num text-xs bg-[#f4ead5] border border-[#b89b6a] rounded" />
-              </div>
-              <div class="col-span-8 sm:col-span-3 flex items-center justify-end gap-2">
-                <label class="flex items-center gap-1 text-[11px] font-heading cursor-pointer">
-                  <input type="checkbox" ${item.equipped ? 'checked' : ''} onchange="app.updateArrayItem('inventory', ${idx}, 'equipped', this.checked)" class="w-4 h-4 accent-[#8b1e1e]" />
-                  Equip.
-                </label>
-                <label class="flex items-center gap-1 text-[11px] font-heading cursor-pointer" title="Sintonizado">
-                  <input type="checkbox" ${item.attuned ? 'checked' : ''} onchange="app.updateArrayItem('inventory', ${idx}, 'attuned', this.checked)" class="w-4 h-4 accent-amber-700" />
-                  Sint.
-                </label>
-                ${editable ? `<button onclick="app.removeArrayItem('inventory', ${idx}); app.renderCombatAndSkills();" class="w-8 h-8 flex items-center justify-center text-xs text-[#8b1e1e]">✕</button>` : ''}
-              </div>
-            </div>
-          </div>
-        `).join('');
-      }
-
-      addItem() {
-        const char = this.getActiveChar();
-        if (!char || !this.canEditChar(char)) return;
-        char.inventory = char.inventory || [];
-        char.inventory.push({ name: "Novo Equipamento", qty: 1, weight: 1.0, equipped: false, attuned: false });
-        this.renderInventory();
-        this.renderCombatAndSkills();
-        this.saveActiveCharToCloud(char);
-      }
-
-      updateBio(field, val) {
-        const char = this.getActiveChar();
-        if (!char || !this.canEditChar(char)) return;
-        char.bio[field] = val;
-        this.saveActiveCharToCloud(char);
-      }
-
-      renderBio() {
-        const char = this.getActiveChar();
-        document.getElementById('bioTraits').value = char.bio?.traits || '';
-        document.getElementById('bioIdeals').value = char.bio?.ideals || '';
-        document.getElementById('bioBonds').value = char.bio?.bonds || '';
-        document.getElementById('bioFlaws').value = char.bio?.flaws || '';
-        document.getElementById('bioBackstory').value = char.bio?.backstory || '';
-      }
-
-      updateArrayItem(arrayName, idx, field, val) {
-        const char = this.getActiveChar();
-        if (!char || !this.canEditChar(char)) return;
-        char[arrayName][idx][field] = val;
-        this.saveActiveCharToCloud(char);
-      }
-
-      removeArrayItem(arrayName, idx) {
-        const char = this.getActiveChar();
-        if (!char || !this.canEditChar(char)) return;
-        char[arrayName].splice(idx, 1);
-        this.renderAll();
-        this.saveActiveCharToCloud(char);
-      }
-
-      // ---------------------------------------------------------
-      // LIVRO DA COMUNIDADE (COMPÊNDIO COMPARTILHADO)
-      // ---------------------------------------------------------
       openCompendiumModal() {
-        if (this.userProfile?.role !== 'dm') return;
         document.getElementById('compendiumModal').classList.remove('hidden');
         document.getElementById('compendiumModal').classList.add('flex');
       }
@@ -5045,45 +5180,25 @@
         if (this.userProfile?.role !== 'dm') return;
         const title = document.getElementById('newEntryTitle').value.trim();
         const category = document.getElementById('newEntryCategory').value;
-        const desc = document.getElementById('newEntryDesc').value.trim();
-        if (!title || !desc) return;
+        const description = document.getElementById('newEntryDesc').value.trim();
+        if (!title || !description) return;
 
-        const entryId = `comp_${Date.now()}`;
-        await set(ref(db, `compendium/${entryId}`), {
-          id: entryId,
+        const newId = `comp_${Date.now()}`;
+        await set(ref(db, `compendium/${newId}`), {
+          id: newId,
           title,
           category,
-          description: desc,
-          author: this.userProfile.name,
-          createdAt: new Date().toISOString()
+          description
         });
-
         document.getElementById('newEntryTitle').value = '';
         document.getElementById('newEntryDesc').value = '';
         document.getElementById('compendiumModal').classList.add('hidden');
       }
 
-      renderCompendium() {
-        const query = (document.getElementById('compendiumSearch')?.value || '').toLowerCase();
-        const cat = document.getElementById('compendiumCategory')?.value || 'all';
-        const filtered = this.compendium.filter(item => {
-          const matchCat = cat === 'all' || item.category === cat;
-          const matchText = item.title.toLowerCase().includes(query) || item.description.toLowerCase().includes(query);
-          return matchCat && matchText;
-        });
-
-        const grid = document.getElementById('compendiumGrid');
-        if (!grid) return;
-        grid.innerHTML = filtered.map(item => `
-          <article class="parchment-page rounded-xl p-5 space-y-2">
-            <div class="flex items-center justify-between gap-2">
-              <h3 class="font-display text-base sm:text-lg font-bold text-[#8b1e1e] break-words">${item.title}</h3>
-              <span class="text-[10px] font-heading uppercase font-bold px-2 py-0.5 rounded bg-[#2b1d0e] text-[#e5c158] shrink-0">${item.category}</span>
-            </div>
-            <hr class="dnd-divider" />
-            <p class="text-sm text-[#2b1d0e] leading-relaxed">${item.description}</p>
-          </article>
-        `).join('') || `<p class="text-center text-[#d6c29f] col-span-2 py-8">Nenhum registro encontrado no Livro da Comunidade.</p>`;
+      async deleteCompendiumEntry(id) {
+        if (this.userProfile?.role !== 'dm') return;
+        if (!confirm("Remover este registro do Livro da Comunidade?")) return;
+        await remove(ref(db, `compendium/${id}`));
       }
     }
 
