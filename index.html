@@ -244,10 +244,10 @@
     </div>
 
     <div id="projectorViewport" class="w-full h-full flex items-center justify-center relative overflow-hidden cursor-grab active:cursor-grabbing">
-      <div id="projectorStageContainer" class="hidden relative inline-flex items-center justify-center transition-transform duration-150 ease-out">
+      <div id="projectorStageContainer" class="hidden relative inline-flex items-center justify-center">
         <img id="projectorMapImage" src="" alt="Mapa da Campanha" class="max-w-screen max-h-screen w-auto h-auto object-contain block pointer-events-none select-none" />
         <div id="projectorGridLayer" class="hidden absolute inset-0 tactical-grid-overlay pointer-events-none"></div>
-        <div id="projectorFogLayer" class="hidden absolute inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center pointer-events-none transition-all duration-300">
+        <div id="projectorFogLayer" class="hidden absolute inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center pointer-events-none">
           <div class="text-center px-6 py-4 rounded-2xl bg-black/70 border border-[#c59b27]/40">
             <span class="text-3xl block mb-1">🌫️</span>
             <span class="font-display text-sm sm:text-base text-[#e5c158] tracking-widest uppercase">Território Oculto pelo Mestre</span>
@@ -1321,10 +1321,10 @@
 
         <!-- Viewport idêntico ao Receptor dos Jogadores (Zoom + Pan) -->
         <div id="dmLiveViewport" class="w-full h-full flex items-center justify-center relative overflow-hidden cursor-grab active:cursor-grabbing">
-          <div id="dmLiveStageContainer" class="relative inline-flex items-center justify-center transition-transform duration-75 ease-out">
+          <div id="dmLiveStageContainer" class="relative inline-flex items-center justify-center">
             <img id="dmLiveMapImage" src="" alt="Mapa ao Vivo" class="max-w-screen max-h-screen w-auto h-auto object-contain block pointer-events-none select-none" />
             <div id="dmLiveGridLayer" class="hidden absolute inset-0 tactical-grid-overlay pointer-events-none"></div>
-            <div id="dmLiveFogLayer" class="hidden absolute inset-0 bg-black/65 backdrop-blur-[2px] flex items-center justify-center pointer-events-none transition-all duration-300">
+            <div id="dmLiveFogLayer" class="hidden absolute inset-0 bg-black/65 backdrop-blur-[2px] flex items-center justify-center pointer-events-none">
               <div class="px-5 py-3 rounded-2xl bg-black/80 border border-[#e5c158]/60 text-center shadow-2xl">
                 <span class="text-2xl block">🌫️</span>
                 <span class="font-display text-xs sm:text-sm text-[#e5c158] uppercase tracking-widest">Névoa Ativa (Jogadores não veem o mapa)</span>
@@ -1884,6 +1884,8 @@
         this.roomAnimatedCast = null;
         this.lastBroadcastedImageMapId = null;
         this.liveDragLastSentAt = 0;
+        this.liveDragInFlight = false;
+        this.liveDragQueued = false;
         this.activeCharId = this.savedUiState.activeCharId || null;
         this.currentView = this.savedUiState.view || 'sheet';
         this.currentSubTab = this.savedUiState.subTab || 'combat';
@@ -2137,7 +2139,7 @@
       }
 
       // ---------------------------------------------------------
-      // SISTEMA DE SALAS FIREBASE (STREAMING LIVE DE COORDENADAS)
+      // SISTEMA DE SALAS FIREBASE (STREAMING INSTANTÂNEO)
       // ---------------------------------------------------------
       buildResolvedTokensMap(mapObj) {
         const result = {};
@@ -2231,6 +2233,14 @@
         } catch (err) {
           console.error("Erro ao sincronizar estado leve na Sala Firebase:", err);
         }
+      }
+
+      pushInstantLiveMarkerCoords(kind, itemId, x, y) {
+        if (this.userProfile?.role !== 'dm' || !this.roomCode) return;
+        const path = kind === 'token'
+          ? `rooms/${this.roomCode}/state/tokens/${itemId}`
+          : `rooms/${this.roomCode}/state/pins/${itemId}`;
+        update(ref(db, path), { x, y }).catch(() => {});
       }
 
       async syncBroadcastRoomFull(overrideState = null) {
@@ -2512,7 +2522,7 @@
                 <button type="button" onclick="app.toggleCharacterTokenOnMap('${mapObj.id}', '${c.id}'); app.renderDmLiveTabletop();"
                   class="flex items-center gap-1.5 pl-2 pr-2 py-1 text-xs font-semibold hover:bg-white/10 transition cursor-pointer"
                   title="Colocar ou remover token no mapa">
-                  <img src="${avatar}" alt="${c.name}" class="w-5 h-5 rounded-full object-contain bg-black" />
+                  <img src="${avatar}" alt="${c.name}" class="w-5 h-5 object-contain" />
                   <span>${c.name.split(' ')[0]}</span>
                   <span class="text-[10px]">${isOnMap ? '✓' : '+'}</span>
                 </button>
@@ -3324,7 +3334,7 @@
       }
 
       // ---------------------------------------------------------
-      // MODO RECEPTOR / PROJETOR (ESPELHAMENTO RÁPIDO VIA SALA)
+      // MODO RECEPTOR / PROJETOR (ESPELHAMENTO INSTANTÂNEO VIA SALA)
       // ---------------------------------------------------------
       initProjectorView() {
         document.body.className = "bg-[#050403] overflow-hidden m-0 p-0";
@@ -3382,42 +3392,83 @@
         }
       }
 
-      buildReceiverTokensHtml(stateData) {
-        let html = '';
+      patchReceiverMarkersInstant(layerEl, stateData) {
+        const activeIds = new Set();
         const tokens = Array.isArray(stateData?.tokens) ? stateData.tokens : Object.values(stateData?.tokens || {});
         const pins = Array.isArray(stateData?.pins) ? stateData.pins : Object.values(stateData?.pins || {});
 
-        tokens.forEach(tk => {
-          if (!tk) return;
-          html += `
-            <div style="left: ${tk.x}%; top: ${tk.y}%; transform: translate(-50%, -50%); transition: left 0.08s linear, top 0.08s linear;"
-              class="absolute z-20 flex flex-col items-center select-none pointer-events-none">
-              <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-[#e5c158] bg-[#1a110b] shadow-[0_0_14px_rgba(0,0,0,0.95)] overflow-hidden flex items-center justify-center">
-                <img src="${tk.avatarUrl}" alt="${tk.name}" class="w-full h-full object-contain pointer-events-none" />
-              </div>
+        tokens.forEach((tk, idx) => {
+          if (!tk || tk.x === undefined || tk.y === undefined) return;
+          const id = tk.charId || `idx_${idx}`;
+          const domId = `proj-rx-token-${id}`;
+          activeIds.add(domId);
+
+          const name = (tk.name || 'Herói').split(' ')[0];
+          const avatar = tk.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(name)}`;
+
+          let el = document.getElementById(domId);
+          if (!el) {
+            el = document.createElement('div');
+            el.id = domId;
+            el.style.cssText = 'transform: translate(-50%, -50%); will-change: left, top;';
+            el.className = 'absolute z-20 flex flex-col items-center select-none pointer-events-none';
+            el.innerHTML = `
+              <img src="${avatar}" alt="${name}" class="w-12 h-12 sm:w-16 sm:h-16 object-contain drop-shadow-[0_4px_8px_rgba(0,0,0,0.95)] pointer-events-none select-none" />
               <span class="mt-0.5 px-2 py-0.2 rounded bg-black/85 border border-[#c59b27]/70 text-[10px] sm:text-xs font-heading font-bold text-[#f4ead5] whitespace-nowrap shadow">
-                ${tk.name}
+                ${name}
               </span>
-            </div>
-          `;
+            `;
+            layerEl.appendChild(el);
+          } else {
+            const img = el.querySelector('img');
+            const span = el.querySelector('span');
+            if (img && img.src !== avatar) img.src = avatar;
+            if (span && span.textContent.trim() !== name) span.textContent = name;
+          }
+
+          el.style.left = `${tk.x}%`;
+          el.style.top = `${tk.y}%`;
         });
 
-        pins.forEach(pin => {
-          if (!pin) return;
-          html += `
-            <div style="left: ${pin.x}%; top: ${pin.y}%; transform: translate(-50%, -50%); transition: left 0.08s linear, top 0.08s linear;"
-              class="absolute z-10 flex flex-col items-center select-none pointer-events-none">
-              <div style="background-color: ${pin.color || '#16a34a'};" class="w-8 h-8 sm:w-9 sm:h-9 rounded-full border-2 border-white shadow-lg flex items-center justify-center text-sm sm:text-base">
-                <span>${pin.icon || '🚩'}</span>
+        pins.forEach((pin, idx) => {
+          if (!pin || pin.x === undefined || pin.y === undefined) return;
+          const id = pin.id || `pin_${idx}`;
+          const domId = `proj-rx-pin-${id}`;
+          activeIds.add(domId);
+
+          const icon = pin.icon || '🚩';
+          const color = pin.color || '#16a34a';
+          const label = pin.label || '';
+
+          let el = document.getElementById(domId);
+          if (!el) {
+            el = document.createElement('div');
+            el.id = domId;
+            el.style.cssText = 'transform: translate(-50%, -50%); will-change: left, top;';
+            el.className = 'absolute z-10 flex flex-col items-center select-none pointer-events-none';
+            el.innerHTML = `
+              <div style="background-color: ${color};" class="w-8 h-8 sm:w-9 sm:h-9 rounded-full border-2 border-white shadow-lg flex items-center justify-center text-sm sm:text-base">
+                <span>${icon}</span>
               </div>
               <span class="mt-0.5 px-2 py-0.2 rounded bg-black/85 text-[10px] font-heading font-bold text-white whitespace-nowrap shadow">
-                ${pin.label}
+                ${label}
               </span>
-            </div>
-          `;
+            `;
+            layerEl.appendChild(el);
+          } else {
+            const labelSpan = el.querySelectorAll('span')[1];
+            if (labelSpan && labelSpan.textContent.trim() !== label) labelSpan.textContent = label;
+          }
+
+          el.style.left = `${pin.x}%`;
+          el.style.top = `${pin.y}%`;
         });
 
-        return html;
+        Array.from(layerEl.children).forEach(child => {
+          if (!activeIds.has(child.id)) {
+            child.remove();
+          }
+        });
       }
 
       renderProjectorScreen() {
@@ -3446,7 +3497,7 @@
           titleEl.textContent = stateData.mapName || imgData.name || 'Mapa em Projeção';
 
           if (stateData.showTokensOnProjector !== false) {
-            tokensEl.innerHTML = this.buildReceiverTokensHtml(stateData);
+            this.patchReceiverMarkersInstant(tokensEl, stateData);
           } else {
             tokensEl.innerHTML = '';
           }
@@ -3841,58 +3892,55 @@
           : 'h-10 rounded-lg font-heading text-xs font-bold uppercase tracking-wider text-[#d6c29f] hover:text-white transition';
       }
 
+      async previewRegisterAvatar(event) {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        try {
+          const dataUrl = await this.compressImageToDataUrl(file, 220, 0.82);
+          this.pendingRegAvatarDataUrl = dataUrl;
+          document.getElementById('regAvatarPreview').src = dataUrl;
+        } catch (err) {
+          this.showAuthError(err.message);
+        }
+      }
+
       showAuthError(msg) {
         const box = document.getElementById('authErrorBox');
         box.textContent = msg;
         box.classList.remove('hidden');
       }
 
-      async previewRegisterAvatar(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        try {
-          const dataUrl = await this.compressImageToDataUrl(file, 220, 0.8);
-          this.pendingRegAvatarDataUrl = dataUrl;
-          document.getElementById('regAvatarPreview').src = dataUrl;
-        } catch (err) {
-          this.showAuthError("Não foi possível processar a imagem escolhida.");
-        }
-      }
-
       async handleAuthSubmit(event) {
         event.preventDefault();
         const email = document.getElementById('authEmailInput').value.trim();
         const password = document.getElementById('authPasswordInput').value;
+        const name = document.getElementById('authNameInput').value.trim();
+        const role = document.getElementById('authRoleInput').value;
         const btn = document.getElementById('authSubmitBtn');
+
+        document.getElementById('authErrorBox').classList.add('hidden');
         btn.disabled = true;
-        btn.textContent = 'Invocando...';
+        btn.textContent = 'Consultando os Arquivos...';
 
         try {
-          if (this.authMode === 'login') {
-            await signInWithEmailAndPassword(auth, email, password);
-          } else {
-            const name = document.getElementById('authNameInput').value.trim() || email.split('@')[0];
-            const role = document.getElementById('authRoleInput').value || 'player';
+          if (this.authMode === 'register') {
+            if (!name) throw new Error("Informe seu nome ou apelido de jogador.");
             const cred = await createUserWithEmailAndPassword(auth, email, password);
-
-            const photoURL = this.pendingRegAvatarDataUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(name)}`;
-
-            await updateProfile(cred.user, {
-              displayName: name,
-              photoURL: photoURL.startsWith('http') ? photoURL : null
-            });
-
+            await updateProfile(cred.user, { displayName: name });
+            const defaultAvatar = this.pendingRegAvatarDataUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(name)}`;
             await set(ref(db, `users/${cred.user.uid}`), {
               uid: cred.user.uid,
               name,
               email,
               role,
-              photoURL,
+              avatarUrl: defaultAvatar,
               createdAt: new Date().toISOString()
             });
+          } else {
+            await signInWithEmailAndPassword(auth, email, password);
           }
         } catch (err) {
-          this.showAuthError(this.translateFirebaseError(err.code, err.message));
+          this.showAuthError(this.translateFirebaseError(err));
         } finally {
           btn.disabled = false;
           btn.textContent = this.authMode === 'register' ? 'Forjar Conta & Entrar' : 'Abrir o Tomo';
@@ -3900,157 +3948,170 @@
       }
 
       async loginWithGoogle() {
+        document.getElementById('authErrorBox').classList.add('hidden');
         try {
           const provider = new GoogleAuthProvider();
           await signInWithPopup(auth, provider);
         } catch (err) {
-          this.showAuthError(this.translateFirebaseError(err.code, err.message));
+          this.showAuthError(this.translateFirebaseError(err));
         }
       }
 
-      translateFirebaseError(code, fallback) {
-        const map = {
-          'auth/invalid-credential': 'E-mail ou senha incorretos.',
-          'auth/user-not-found': 'Nenhuma conta encontrada com este e-mail.',
-          'auth/wrong-password': 'Senha incorreta.',
-          'auth/email-already-in-use': 'Este e-mail já está cadastrado na comunidade.',
-          'auth/weak-password': 'A senha deve ter pelo menos 6 caracteres.',
-          'auth/popup-closed-by-user': 'Login com Google cancelado.'
-        };
-        return map[code] || fallback;
-      }
-
       async logoutUser() {
-        if (this.unsubUsers) this.unsubUsers();
-        if (this.unsubCharacters) this.unsubCharacters();
-        if (this.unsubCompendium) this.unsubCompendium();
-        if (this.unsubMaps) this.unsubMaps();
-        if (this.unsubProjector) this.unsubProjector();
-        if (this.unsubChapters) this.unsubChapters();
-        if (this.unsubRoomAnimatedCast) this.unsubRoomAnimatedCast();
+        this.flushPendingCharSave();
+        this.cleanupRealtimeListeners();
+        this.initialRestoreDone = false;
+        this.hasShownInitialChapterSplash = false;
+        this.isAnimPopOpen = false;
+        this.isDmTabletopLiveOpen = false;
         localStorage.removeItem(SESSION_STATE_KEY);
         await signOut(auth);
       }
 
+      translateFirebaseError(err) {
+        const code = err?.code || '';
+        if (code.includes('invalid-credential') || code.includes('wrong-password') || code.includes('user-not-found')) {
+          return 'E-mail ou senha incorretos.';
+        }
+        if (code.includes('email-already-in-use')) {
+          return 'Este e-mail já está cadastrado. Tente entrar na aba "Entrar na Mesa".';
+        }
+        if (code.includes('weak-password')) {
+          return 'A senha deve conter pelo menos 6 caracteres.';
+        }
+        return err?.message || 'Erro ao autenticar com o Firebase.';
+      }
+
       initFirebaseAuthListener() {
         onAuthStateChanged(auth, async (user) => {
+          this.hideBootLoader();
+
           if (this.isProjectorMode) return;
 
           if (!user) {
             this.currentUser = null;
             this.userProfile = null;
-            this.hideBootLoader();
-            document.getElementById('authScreen').classList.remove('hidden');
+            this.cleanupRealtimeListeners();
             document.getElementById('mainAppContainer').classList.add('hidden');
+            document.getElementById('authScreen').classList.remove('hidden');
             return;
           }
 
           this.currentUser = user;
-          await this.ensureUserProfile(user);
-          this.updateHeaderUserUI();
-
           document.getElementById('authScreen').classList.add('hidden');
           document.getElementById('mainAppContainer').classList.remove('hidden');
-          this.hideBootLoader();
 
-          this.subscribeToCommunityData();
+          await this.ensureUserProfileAndSeedData(user);
+          this.subscribeToRealtimeData();
         });
       }
 
-      async ensureUserProfile(user) {
+      async ensureUserProfileAndSeedData(user) {
         const userRef = ref(db, `users/${user.uid}`);
         const snap = await get(userRef);
 
-        if (snap.exists()) {
-          this.userProfile = snap.val();
-        } else {
-          const fallbackName = user.displayName || (user.email ? user.email.split('@')[0] : 'Aventureiro');
+        if (!snap.exists()) {
+          const fallbackName = user.displayName || user.email?.split('@')[0] || 'Aventureiro';
           const fallbackAvatar = user.photoURL || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(fallbackName)}`;
           this.userProfile = {
             uid: user.uid,
             name: fallbackName,
             email: user.email || '',
             role: 'player',
-            photoURL: fallbackAvatar,
+            avatarUrl: fallbackAvatar,
             createdAt: new Date().toISOString()
           };
           await set(userRef, this.userProfile);
+        } else {
+          this.userProfile = snap.val();
+        }
+
+        this.updateHeaderUserUI();
+
+        const compSnap = await get(ref(db, 'compendium'));
+        if (!compSnap.exists()) {
+          await set(ref(db, 'compendium'), DEFAULT_COMPENDIUM);
+        }
+
+        const chapSnap = await get(ref(db, 'chapters'));
+        if (!chapSnap.exists()) {
+          await set(ref(db, 'chapters'), DEFAULT_CHAPTERS);
+          await update(ref(db, 'projectorState'), { activeChapterId: 'chap_1' });
         }
       }
 
       updateHeaderUserUI() {
         if (!this.userProfile) return;
-        const avatar = this.userProfile.photoURL || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(this.userProfile.name)}`;
+        const avatar = this.userProfile.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(this.userProfile.name)}`;
         document.getElementById('headerUserAvatar').src = avatar;
         document.getElementById('headerUserName').textContent = this.userProfile.name;
 
         const isDM = this.userProfile.role === 'dm';
-        document.getElementById('headerUserRoleBadge').textContent = isDM ? '👑 Mestre (DM)' : '⚔️ Jogador';
+        document.getElementById('headerUserRoleBadge').textContent = isDM ? '👑 Mestre / DM' : '⚔️ Jogador';
         document.getElementById('rolePermissionBadge').textContent = isDM ? '👑 Mestre' : '⚔️ Jogador';
         document.getElementById('addCompendiumBtn').classList.toggle('hidden', !isDM);
         document.getElementById('dmMapBtn').classList.toggle('hidden', !isDM);
-        document.getElementById('createChapterBtn').classList.toggle('hidden', !isDM);
       }
 
       openUserProfileModal() {
         if (!this.userProfile) return;
-        const avatar = this.userProfile.photoURL || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(this.userProfile.name)}`;
-        document.getElementById('profileModalAvatarPreview').src = avatar;
-        document.getElementById('profileNameInput').value = this.userProfile.name || '';
+        document.getElementById('profileModalAvatarPreview').src = this.userProfile.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(this.userProfile.name)}`;
+        document.getElementById('profileNameInput').value = this.userProfile.name;
         document.getElementById('profileRoleSelect').value = this.userProfile.role || 'player';
         document.getElementById('avatarUploadStatus').textContent = 'Otimizada automaticamente e visível para toda a mesa';
-
         const modal = document.getElementById('userProfileModal');
         modal.classList.remove('hidden');
         modal.classList.add('flex');
       }
 
       async uploadUserAvatar(event) {
-        const file = event.target.files[0];
+        const file = event.target.files?.[0];
         if (!file || !this.currentUser) return;
-
         const statusEl = document.getElementById('avatarUploadStatus');
-        statusEl.textContent = 'Processando imagem...';
+        statusEl.textContent = 'Otimizando e enviando imagem...';
 
         try {
-          const dataUrl = await this.compressImageToDataUrl(file, 220, 0.8);
-          await update(ref(db, `users/${this.currentUser.uid}`), { photoURL: dataUrl });
-          this.userProfile.photoURL = dataUrl;
-
+          const dataUrl = await this.compressImageToDataUrl(file, 220, 0.82);
+          await update(ref(db, `users/${this.currentUser.uid}`), { avatarUrl: dataUrl });
+          this.userProfile.avatarUrl = dataUrl;
           document.getElementById('profileModalAvatarPreview').src = dataUrl;
           this.updateHeaderUserUI();
-          this.renderCommunityMembers();
-          this.renderCharacterList();
-          statusEl.textContent = '✅ Foto de perfil salva com sucesso!';
+          statusEl.textContent = '✓ Foto atualizada no banco!';
         } catch (err) {
-          statusEl.textContent = '❌ Erro: ' + err.message;
+          statusEl.textContent = 'Erro: ' + err.message;
         }
       }
 
       async saveUserProfile() {
         if (!this.currentUser) return;
-        const newName = document.getElementById('profileNameInput').value.trim() || this.userProfile.name;
+        const newName = document.getElementById('profileNameInput').value.trim();
         const newRole = document.getElementById('profileRoleSelect').value;
+        if (!newName) return;
 
-        await update(ref(db, `users/${this.currentUser.uid}`), {
-          name: newName,
-          role: newRole
-        });
-
+        await update(ref(db, `users/${this.currentUser.uid}`), { name: newName, role: newRole });
         this.userProfile.name = newName;
         this.userProfile.role = newRole;
         this.updateHeaderUserUI();
+        this.renderCharacterList();
         this.renderSheet();
-        this.renderCompendium();
         this.renderChaptersUI();
         document.getElementById('userProfileModal').classList.add('hidden');
       }
 
-      // ---------------------------------------------------------
-      // SINCRONIZAÇÃO EM TEMPO REAL (RTDB)
-      // ---------------------------------------------------------
-      subscribeToCommunityData() {
-        this.subscribeToRoomAnimatedCast(this.roomCode);
+      cleanupRealtimeListeners() {
+        if (this.unsubUsers) { this.unsubUsers(); this.unsubUsers = null; }
+        if (this.unsubCharacters) { this.unsubCharacters(); this.unsubCharacters = null; }
+        if (this.unsubCompendium) { this.unsubCompendium(); this.unsubCompendium = null; }
+        if (this.unsubMaps) { this.unsubMaps(); this.unsubMaps = null; }
+        if (this.unsubProjector) { this.unsubProjector(); this.unsubProjector = null; }
+        if (this.unsubRoomImage) { this.unsubRoomImage(); this.unsubRoomImage = null; }
+        if (this.unsubRoomState) { this.unsubRoomState(); this.unsubRoomState = null; }
+        if (this.unsubRoomAnimatedCast) { this.unsubRoomAnimatedCast(); this.unsubRoomAnimatedCast = null; }
+        if (this.unsubChapters) { this.unsubChapters(); this.unsubChapters = null; }
+      }
+
+      subscribeToRealtimeData() {
+        this.cleanupRealtimeListeners();
 
         this.unsubUsers = onValue(ref(db, 'users'), (snapshot) => {
           this.usersMap = snapshot.val() || {};
@@ -4060,15 +4121,15 @@
         });
 
         this.unsubCharacters = onValue(ref(db, 'characters'), async (snapshot) => {
-          const data = snapshot.val();
-          if (!data || Object.keys(data).length === 0) {
-            const firstId = `char_${Date.now()}`;
+          const val = snapshot.val();
+          if (!val) {
+            const firstId = `char_${this.currentUser.uid}_${Date.now()}`;
             const starter = buildStarterCharacter(this.currentUser.uid, this.userProfile.name, firstId);
             await set(ref(db, `characters/${firstId}`), starter);
             return;
           }
 
-          this.characters = Object.values(data).map(c => this.normalizeCharacter(c));
+          this.characters = Object.values(val);
 
           if (!this.activeCharId || !this.characters.find(c => c.id === this.activeCharId)) {
             const ownChar = this.characters.find(c => c.ownerId === this.currentUser.uid);
@@ -4079,78 +4140,80 @@
           this.renderCharacterList();
           this.renderSheet();
           if (this.isAnimPopOpen) {
-            this.openAnimatedPop(false);
+            this.renderAnimHeroSwitcher();
           }
           if (this.isDmTabletopLiveOpen) {
             this.renderDmLiveTabletop();
-          } else if (!document.getElementById('mapManagerModal').classList.contains('hidden')) {
-            this.renderMapTacticalWorkspace();
           }
-
-          if (this.userProfile?.role === 'dm' && this.activeMapState?.activeMapId) {
-            this.syncBroadcastStateOnly();
-          }
-
           this.restoreSavedNavigationState();
         });
 
-        this.unsubCompendium = onValue(ref(db, 'compendium'), async (snapshot) => {
-          const data = snapshot.val();
-          if (!data || Object.keys(data).length === 0) {
-            await set(ref(db, 'compendium'), DEFAULT_COMPENDIUM);
-            return;
-          }
-          this.compendium = Object.values(data);
+        this.unsubCompendium = onValue(ref(db, 'compendium'), (snapshot) => {
+          const val = snapshot.val();
+          this.compendium = val ? Object.values(val) : [];
           this.renderCompendium();
         });
 
         this.unsubMaps = onValue(ref(db, 'maps'), (snapshot) => {
-          const data = snapshot.val() || {};
-          this.maps = Object.values(data);
-          if (!this.selectedEditorMapId && this.maps.length > 0) {
-            this.selectedEditorMapId = this.activeMapState?.activeMapId || this.maps[0].id;
+          const val = snapshot.val();
+          this.maps = val ? Object.values(val) : [];
+
+          if (!this.selectedEditorMapId || !this.maps.find(m => m.id === this.selectedEditorMapId)) {
+            this.selectedEditorMapId = this.activeMapState?.activeMapId || (this.maps[0]?.id || null);
           }
+
           this.renderMapsGallery();
           this.renderMapTacticalWorkspace();
           this.renderChaptersUI();
           if (this.isDmTabletopLiveOpen) {
             this.renderDmLiveTabletop();
           }
+
+          if (this.userProfile?.role === 'dm' && this.activeMapState?.activeMapId) {
+            const activeMapObj = this.maps.find(m => m.id === this.activeMapState.activeMapId);
+            if (activeMapObj && this.lastBroadcastedImageMapId !== activeMapObj.id) {
+              this.syncBroadcastRoomFull();
+            } else {
+              this.syncBroadcastStateOnly();
+            }
+          }
         });
 
-        this.unsubChapters = onValue(ref(db, 'chapters'), async (snapshot) => {
-          const data = snapshot.val();
-          if (!data || Object.keys(data).length === 0) {
-            await set(ref(db, 'chapters'), DEFAULT_CHAPTERS);
-            return;
-          }
-          this.chapters = Object.values(data);
+        this.unsubChapters = onValue(ref(db, 'chapters'), (snapshot) => {
+          const val = snapshot.val();
+          this.chapters = val ? Object.values(val) : [];
           this.renderChaptersUI();
 
-          if (!this.isProjectorMode && !this.hasShownInitialChapterSplash) {
+          if (!this.hasShownInitialChapterSplash && this.chapters.length > 0 && !this.isProjectorMode) {
             this.hasShownInitialChapterSplash = true;
             this.openChapterIntroSplash();
           }
         });
 
         this.unsubProjector = onValue(ref(db, 'projectorState'), (snapshot) => {
-          const state = snapshot.val() || {};
-          this.activeMapState = {
-            activeMapId: state.activeMapId || null,
-            showGrid: !!state.showGrid,
-            fogEnabled: !!state.fogEnabled,
-            showTokensOnProjector: state.showTokensOnProjector !== false,
-            tokenScale: state.tokenScale || 1,
-            activeChapterId: state.activeChapterId || null
+          const prevChapterId = this.activeChapterId;
+          this.activeMapState = snapshot.val() || {
+            activeMapId: null,
+            showGrid: false,
+            fogEnabled: false,
+            showTokensOnProjector: true,
+            tokenScale: 1,
+            activeChapterId: null
           };
 
-          if (state.activeChapterId) {
-            this.activeChapterId = state.activeChapterId;
-          }
+          this.activeChapterId = this.activeMapState.activeChapterId || null;
 
           const liveDot = document.getElementById('activeMapLiveDot');
           if (liveDot) {
             liveDot.classList.toggle('hidden', !this.activeMapState.activeMapId);
+          }
+          const stopBtn = document.getElementById('stopProjectionBtn');
+          if (stopBtn) {
+            stopBtn.classList.toggle('hidden', !this.activeMapState.activeMapId);
+          }
+
+          if (prevChapterId && this.activeChapterId && prevChapterId !== this.activeChapterId && !this.isProjectorMode) {
+            this.openChapterIntroSplash();
           }
 
           this.renderMapsGallery();
@@ -4160,20 +4223,16 @@
             this.renderDmLiveTabletop();
           }
 
-          if (this.userProfile?.role === 'dm' && this.activeMapState.activeMapId) {
-            const currentMapObj = this.maps.find(m => m.id === this.activeMapState.activeMapId);
-            if (currentMapObj) {
-              if (this.lastBroadcastedImageMapId !== currentMapObj.id) {
-                this.syncBroadcastImageOnly(currentMapObj);
-              }
-              this.syncBroadcastStateOnly();
-            }
+          if (this.userProfile?.role === 'dm') {
+            this.syncBroadcastStateOnly();
           }
         });
+
+        this.subscribeToRoomAnimatedCast(this.roomCode);
       }
 
       // ---------------------------------------------------------
-      // CARTOGRAFIA TÁTICA & SISTEMA DE SALAS (MESTRE)
+      // GERENCIAMENTO DE MAPAS AVANÇADOS, TOKENS & PINOS TÁTICOS
       // ---------------------------------------------------------
       openMapManagerModal() {
         if (this.userProfile?.role !== 'dm') return;
@@ -4183,10 +4242,6 @@
 
         const roomInput = document.getElementById('activeRoomCodeInput');
         if (roomInput) roomInput.value = this.roomCode;
-
-        if (!this.selectedEditorMapId && this.maps.length > 0) {
-          this.selectedEditorMapId = this.activeMapState?.activeMapId || this.maps[0].id;
-        }
         const modal = document.getElementById('mapManagerModal');
         modal.classList.remove('hidden');
         modal.classList.add('flex');
@@ -4194,10 +4249,15 @@
         this.renderMapTacticalWorkspace();
       }
 
-      selectEditorMap(mapId) {
-        this.selectedEditorMapId = mapId;
-        this.renderMapsGallery();
-        this.renderMapTacticalWorkspace();
+      launchProjectorWindow() {
+        const targetUrl = this.getReceiverUrlForRoom();
+        const win = window.open(targetUrl, 'TomoProjetorMesa', 'width=1280,height=720,menubar=no,toolbar=no,location=no,status=no');
+        if (!win) {
+          alert(`Permita pop-ups no navegador ou abra este link no dispositivo da mesa:\n${targetUrl}`);
+        }
+        if (this.userProfile?.role === 'dm') {
+          this.syncBroadcastRoomFull();
+        }
       }
 
       async handleMultiMapUpload(event) {
@@ -4206,46 +4266,50 @@
 
         const banner = document.getElementById('mapUploadProgressBanner');
         banner.classList.remove('hidden');
+        banner.textContent = `Otimizando e salvando ${files.length} mapa(s) na nuvem...`;
 
-        let lastCreatedId = null;
-
-        for (let i = 0; i < files.length; i++) {
-          const file = files[i];
-          banner.textContent = `⏳ Processando mapa ${i + 1} de ${files.length}: "${file.name}"...`;
-          try {
+        try {
+          let lastCreatedId = null;
+          for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            banner.textContent = `Processando mapa ${i + 1} de ${files.length}: ${file.name}...`;
             const dataUrl = await this.compressMapImageToDataUrl(file, 1280, 0.72);
             const mapId = `map_${Date.now()}_${i}`;
-            const cleanName = file.name.replace(/\.[^/.]+$/, "").replace(/[_-]+/g, " ");
+            const cleanName = file.name.replace(/\.[^/.]+$/, "");
+            lastCreatedId = mapId;
+
             await set(ref(db, `maps/${mapId}`), {
               id: mapId,
-              name: cleanName || `Mapa #${this.maps.length + i + 1}`,
+              name: cleanName,
               category: 'battlemap',
+              notes: '',
               imageUrl: dataUrl,
               tokens: {},
               pins: {},
               uploadedBy: this.userProfile.name,
               createdAt: new Date().toISOString()
             });
-            lastCreatedId = mapId;
-          } catch (err) {
-            alert(`Erro ao importar "${file.name}": ` + err.message);
           }
+          if (lastCreatedId) {
+            this.selectedEditorMapId = lastCreatedId;
+          }
+          event.target.value = '';
+        } catch (err) {
+          alert("Erro ao enviar mapas: " + err.message);
+        } finally {
+          banner.classList.add('hidden');
         }
-
-        if (lastCreatedId) {
-          this.selectedEditorMapId = lastCreatedId;
-        }
-
-        banner.classList.add('hidden');
-        event.target.value = '';
       }
 
-      async updateMapMetadata(mapId, field, value) {
+      selectEditorMap(mapId) {
+        this.selectedEditorMapId = mapId;
+        this.renderMapsGallery();
+        this.renderMapTacticalWorkspace();
+      }
+
+      async updateMapMeta(mapId, field, value) {
         if (this.userProfile?.role !== 'dm') return;
         await update(ref(db, `maps/${mapId}`), { [field]: value });
-        if (this.activeMapState?.activeMapId === mapId) {
-          await this.syncBroadcastStateOnly();
-        }
       }
 
       async projectMap(mapId) {
@@ -4257,36 +4321,63 @@
           updatedAt: new Date().toISOString()
         };
         this.activeMapState = nextState;
-        await set(ref(db, 'projectorState'), nextState);
+        await update(ref(db, 'projectorState'), {
+          activeMapId: mapId,
+          updatedAt: nextState.updatedAt
+        });
+        await this.syncBroadcastRoomFull(nextState);
+      }
+
+      async clearProjectedMap() {
+        if (this.userProfile?.role !== 'dm') return;
+        const nextState = {
+          ...this.activeMapState,
+          activeMapId: null,
+          updatedAt: new Date().toISOString()
+        };
+        this.activeMapState = nextState;
+        await update(ref(db, 'projectorState'), {
+          activeMapId: null,
+          updatedAt: nextState.updatedAt
+        });
         await this.syncBroadcastRoomFull(nextState);
       }
 
       async toggleProjectorGrid() {
         if (this.userProfile?.role !== 'dm') return;
-        const nextVal = !this.activeMapState?.showGrid;
-        this.activeMapState.showGrid = nextVal;
-        await update(ref(db, 'projectorState'), { showGrid: nextVal });
-        await this.syncBroadcastStateOnly();
-        if (this.isDmTabletopLiveOpen) this.renderDmLiveTabletop();
+        const next = !this.activeMapState?.showGrid;
+        this.activeMapState = { ...this.activeMapState, showGrid: next };
+        await update(ref(db, 'projectorState'), { showGrid: next });
+        await this.syncBroadcastStateOnly(this.activeMapState);
       }
 
       async toggleProjectorFog() {
         if (this.userProfile?.role !== 'dm') return;
-        const nextVal = !this.activeMapState?.fogEnabled;
-        this.activeMapState.fogEnabled = nextVal;
-        await update(ref(db, 'projectorState'), { fogEnabled: nextVal });
-        await this.syncBroadcastStateOnly();
-        if (this.isDmTabletopLiveOpen) this.renderDmLiveTabletop();
+        const next = !this.activeMapState?.fogEnabled;
+        this.activeMapState = { ...this.activeMapState, fogEnabled: next };
+        await update(ref(db, 'projectorState'), { fogEnabled: next });
+        await this.syncBroadcastStateOnly(this.activeMapState);
       }
 
       async toggleProjectorTokensVisibility() {
         if (this.userProfile?.role !== 'dm') return;
         const current = this.activeMapState?.showTokensOnProjector !== false;
-        const nextVal = !current;
-        this.activeMapState.showTokensOnProjector = nextVal;
-        await update(ref(db, 'projectorState'), { showTokensOnProjector: nextVal });
-        await this.syncBroadcastStateOnly();
-        if (this.isDmTabletopLiveOpen) this.renderDmLiveTabletop();
+        const next = !current;
+        this.activeMapState = { ...this.activeMapState, showTokensOnProjector: next };
+        await update(ref(db, 'projectorState'), { showTokensOnProjector: next });
+        await this.syncBroadcastStateOnly(this.activeMapState);
+      }
+
+      async deleteMap(mapId) {
+        if (this.userProfile?.role !== 'dm') return;
+        if (!confirm("Remover este mapa permanentemente da biblioteca da campanha?")) return;
+        if (this.activeMapState?.activeMapId === mapId) {
+          await this.clearProjectedMap();
+        }
+        if (this.selectedEditorMapId === mapId) {
+          this.selectedEditorMapId = null;
+        }
+        await remove(ref(db, `maps/${mapId}`));
       }
 
       async toggleCharacterTokenOnMap(mapId, charId) {
@@ -4296,16 +4387,17 @@
 
         const existingTokens = mapObj.tokens || {};
         if (existingTokens[charId]) {
+          const nextTokens = { ...existingTokens };
+          delete nextTokens[charId];
+          mapObj.tokens = nextTokens;
           await remove(ref(db, `maps/${mapId}/tokens/${charId}`));
-          if (mapObj.tokens) delete mapObj.tokens[charId];
         } else {
           const count = Object.keys(existingTokens).length;
-          const offsetX = Math.min(85, Math.max(15, 35 + (count % 5) * 8));
-          const offsetY = Math.min(85, Math.max(15, 40 + Math.floor(count / 5) * 10));
-          const tokenData = { charId, x: offsetX, y: offsetY };
-          await set(ref(db, `maps/${mapId}/tokens/${charId}`), tokenData);
-          if (!mapObj.tokens) mapObj.tokens = {};
-          mapObj.tokens[charId] = tokenData;
+          const x = Math.min(88, 20 + (count % 5) * 14);
+          const y = Math.min(85, 25 + Math.floor(count / 5) * 16);
+          const tokenPayload = { charId, x, y };
+          mapObj.tokens = { ...existingTokens, [charId]: tokenPayload };
+          await set(ref(db, `maps/${mapId}/tokens/${charId}`), tokenPayload);
         }
 
         if (this.activeMapState?.activeMapId === mapId) {
@@ -4318,18 +4410,28 @@
         const mapObj = this.maps.find(m => m.id === mapId);
         if (!mapObj) return;
 
-        const tokensPayload = {};
+        const tokensPayload = { ...(mapObj.tokens || {}) };
         this.characters.forEach((char, idx) => {
-          const prev = mapObj.tokens?.[char.id];
-          tokensPayload[char.id] = {
-            charId: char.id,
-            x: prev ? prev.x : Math.min(88, 25 + (idx % 6) * 10),
-            y: prev ? prev.y : Math.min(88, 45 + Math.floor(idx / 6) * 12)
-          };
+          if (!tokensPayload[char.id]) {
+            const x = Math.min(88, 18 + (idx % 6) * 12);
+            const y = Math.min(85, 24 + Math.floor(idx / 6) * 15);
+            tokensPayload[char.id] = { charId: char.id, x, y };
+          }
         });
-        await set(ref(db, `maps/${mapId}/tokens`), tokensPayload);
-        mapObj.tokens = tokensPayload;
 
+        mapObj.tokens = tokensPayload;
+        await set(ref(db, `maps/${mapId}/tokens`), tokensPayload);
+
+        if (this.activeMapState?.activeMapId === mapId) {
+          await this.syncBroadcastStateOnly();
+        }
+      }
+
+      async clearAllTokensFromMap(mapId) {
+        if (this.userProfile?.role !== 'dm') return;
+        const mapObj = this.maps.find(m => m.id === mapId);
+        if (mapObj) mapObj.tokens = {};
+        await remove(ref(db, `maps/${mapId}/tokens`));
         if (this.activeMapState?.activeMapId === mapId) {
           await this.syncBroadcastStateOnly();
         }
@@ -4338,108 +4440,88 @@
       async addTacticalPinToMap(mapId, pinType) {
         if (this.userProfile?.role !== 'dm') return;
         const meta = TACTICAL_PINS_META.find(p => p.id === pinType) || TACTICAL_PINS_META[0];
-        const customLabel = prompt(`Etiqueta para "${meta.label}":`, meta.label);
+        const customLabel = prompt(`Nome do marcador (${meta.label}):`, meta.label.split(' ')[0]);
         if (customLabel === null) return;
 
-        const mapObj = this.maps.find(m => m.id === mapId);
         const pinId = `pin_${Date.now()}`;
-        const pinData = {
+        const pinPayload = {
           id: pinId,
-          type: meta.id,
-          label: customLabel.trim() || meta.label,
+          type: pinType,
+          label: customLabel.trim() || meta.label.split(' ')[0],
           x: 50,
           y: 50
         };
-        await set(ref(db, `maps/${mapId}/pins/${pinId}`), pinData);
+
+        const mapObj = this.maps.find(m => m.id === mapId);
         if (mapObj) {
-          if (!mapObj.pins) mapObj.pins = {};
-          mapObj.pins[pinId] = pinData;
+          mapObj.pins = { ...(mapObj.pins || {}), [pinId]: pinPayload };
         }
+
+        await set(ref(db, `maps/${mapId}/pins/${pinId}`), pinPayload);
 
         if (this.activeMapState?.activeMapId === mapId) {
           await this.syncBroadcastStateOnly();
         }
       }
 
-      async removeTacticalPin(mapId, pinId) {
+      async removeTacticalPinFromMap(mapId, pinId) {
         if (this.userProfile?.role !== 'dm') return;
         const mapObj = this.maps.find(m => m.id === mapId);
-        await remove(ref(db, `maps/${mapId}/pins/${pinId}`));
         if (mapObj && mapObj.pins) {
-          delete mapObj.pins[pinId];
+          const nextPins = { ...mapObj.pins };
+          delete nextPins[pinId];
+          mapObj.pins = nextPins;
         }
-
+        await remove(ref(db, `maps/${mapId}/pins/${pinId}`));
         if (this.activeMapState?.activeMapId === mapId) {
           await this.syncBroadcastStateOnly();
         }
       }
 
-      async clearProjectedMap() {
+      startDraggingMapMarker(event, kind, mapId, itemId, context = 'setup') {
         if (this.userProfile?.role !== 'dm') return;
-        const nextState = {
-          ...this.activeMapState,
-          activeMapId: null,
-          updatedAt: new Date().toISOString()
+        event.preventDefault();
+        event.stopPropagation();
+
+        const stageId = context === 'live' ? 'dmLiveStageContainer' : 'dmTacticalMapStage';
+        const domPrefix = context === 'live' ? 'dm-live-marker' : 'dm-marker';
+        const stage = document.getElementById(stageId);
+        if (!stage) return;
+
+        this.draggingTokenInfo = {
+          kind,
+          mapId,
+          itemId,
+          stageId,
+          domPrefix,
+          x: 50,
+          y: 50
         };
-        this.activeMapState = nextState;
-        await set(ref(db, 'projectorState'), nextState);
-        await this.syncBroadcastRoomFull(nextState);
       }
 
-      async deleteMap(mapId) {
-        if (this.userProfile?.role !== 'dm') return;
-        if (!confirm("Remover este mapa permanentemente da biblioteca?")) return;
-        if (this.activeMapState?.activeMapId === mapId) {
-          await this.clearProjectedMap();
-        }
-        await remove(ref(db, `maps/${mapId}`));
-        if (this.selectedEditorMapId === mapId) {
-          const remaining = this.maps.filter(m => m.id !== mapId);
-          this.selectedEditorMapId = remaining.length ? remaining[0].id : null;
-        }
-      }
-
-      launchProjectorWindow() {
-        const url = this.getReceiverUrlForRoom();
-        window.open(url, 'TomoProjetorMapas', 'width=1280,height=720,menubar=no,toolbar=no,location=no,status=no');
-      }
-
-      // ---------------------------------------------------------
-      // ARRASTAR TOKENS & PINOS EM TEMPO REAL NO MAPA
-      // ---------------------------------------------------------
       initTacticalTokenDragListeners() {
         const handleMove = (clientX, clientY) => {
           if (!this.draggingTokenInfo) return;
-          const { stageEl, itemEl, mapId, kind, itemId } = this.draggingTokenInfo;
-          const rect = stageEl.getBoundingClientRect();
-          if (!rect.width || !rect.height) return;
+          const stage = document.getElementById(this.draggingTokenInfo.stageId);
+          if (!stage) return;
 
-          const xPct = Math.max(3, Math.min(97, ((clientX - rect.left) / rect.width) * 100));
-          const yPct = Math.max(3, Math.min(97, ((clientY - rect.top) / rect.height) * 100));
+          const rect = stage.getBoundingClientRect();
+          if (rect.width <= 0 || rect.height <= 0) return;
 
-          const roundedX = +xPct.toFixed(2);
-          const roundedY = +yPct.toFixed(2);
+          const relX = Math.max(2, Math.min(98, +(((clientX - rect.left) / rect.width) * 100).toFixed(2)));
+          const relY = Math.max(2, Math.min(98, +(((clientY - rect.top) / rect.height) * 100).toFixed(2)));
 
-          itemEl.style.left = `${roundedX}%`;
-          itemEl.style.top = `${roundedY}%`;
-          this.draggingTokenInfo.lastX = roundedX;
-          this.draggingTokenInfo.lastY = roundedY;
+          this.draggingTokenInfo.x = relX;
+          this.draggingTokenInfo.y = relY;
 
-          const mapObj = this.maps.find(m => m.id === mapId);
-          if (mapObj) {
-            if (kind === 'token' && mapObj.tokens?.[itemId]) {
-              mapObj.tokens[itemId].x = roundedX;
-              mapObj.tokens[itemId].y = roundedY;
-            } else if (kind === 'pin' && mapObj.pins?.[itemId]) {
-              mapObj.pins[itemId].x = roundedX;
-              mapObj.pins[itemId].y = roundedY;
-            }
+          const el = document.getElementById(`${this.draggingTokenInfo.domPrefix}-${this.draggingTokenInfo.kind}-${this.draggingTokenInfo.itemId}`);
+          if (el) {
+            el.style.left = `${relX}%`;
+            el.style.top = `${relY}%`;
           }
 
-          const now = Date.now();
-          if (this.activeMapState?.activeMapId === mapId && (now - this.liveDragLastSentAt) > 55) {
-            this.liveDragLastSentAt = now;
-            this.syncBroadcastStateOnly();
+          if (this.activeMapState?.activeMapId === this.draggingTokenInfo.mapId) {
+            this.pushInstantLiveMarkerCoords(this.draggingTokenInfo.kind, this.draggingTokenInfo.itemId, relX, relY);
           }
         };
 
@@ -4448,150 +4530,149 @@
           const info = this.draggingTokenInfo;
           this.draggingTokenInfo = null;
 
-          if (typeof info.lastX === 'number' && typeof info.lastY === 'number') {
-            const path = info.kind === 'token'
-              ? `maps/${info.mapId}/tokens/${info.itemId}`
-              : `maps/${info.mapId}/pins/${info.itemId}`;
-            try {
-              await update(ref(db, path), { x: info.lastX, y: info.lastY });
-              if (this.activeMapState?.activeMapId === info.mapId) {
-                await this.syncBroadcastStateOnly();
-              }
-            } catch (err) {
-              console.error("Erro ao salvar posição do token:", err);
+          const path = info.kind === 'token'
+            ? `maps/${info.mapId}/tokens/${info.itemId}`
+            : `maps/${info.mapId}/pins/${info.itemId}`;
+
+          const mapObj = this.maps.find(m => m.id === info.mapId);
+          if (mapObj) {
+            if (info.kind === 'token' && mapObj.tokens?.[info.itemId]) {
+              mapObj.tokens[info.itemId].x = info.x;
+              mapObj.tokens[info.itemId].y = info.y;
+            } else if (info.kind === 'pin' && mapObj.pins?.[info.itemId]) {
+              mapObj.pins[info.itemId].x = info.x;
+              mapObj.pins[info.itemId].y = info.y;
             }
+          }
+
+          try {
+            await update(ref(db, path), { x: info.x, y: info.y });
+            if (this.activeMapState?.activeMapId === info.mapId) {
+              this.pushInstantLiveMarkerCoords(info.kind, info.itemId, info.x, info.y);
+            }
+          } catch (err) {
+            console.error("Erro ao salvar posição do marcador:", err);
           }
         };
 
         window.addEventListener('mousemove', (e) => handleMove(e.clientX, e.clientY));
         window.addEventListener('mouseup', handleEnd);
+
         window.addEventListener('touchmove', (e) => {
           if (!this.draggingTokenInfo) return;
-          if (e.touches && e.touches[0]) {
-            e.preventDefault();
-            handleMove(e.touches[0].clientX, e.touches[0].clientY);
-          }
-        }, { passive: false });
+          const touch = e.touches[0];
+          if (touch) handleMove(touch.clientX, touch.clientY);
+        }, { passive: true });
         window.addEventListener('touchend', handleEnd);
       }
 
-      startDraggingMapElement(event, mapId, kind, itemId, stageMode = 'editor') {
-        if (this.userProfile?.role !== 'dm') return;
-        event.stopPropagation();
-        if (event.type === 'mousedown') event.preventDefault();
+      buildMapTokensHtml(mapObj, isInteractive = true, context = 'setup') {
+        const tokens = Object.values(mapObj?.tokens || {});
+        const pins = Object.values(mapObj?.pins || {});
+        const domPrefix = context === 'live' ? 'dm-live-marker' : 'dm-marker';
 
-        const stageId = stageMode === 'live' ? 'dmLiveStageContainer' : 'dmEditorStageContainer';
-        const stageEl = document.getElementById(stageId);
-        const itemEl = event.currentTarget;
-        if (!stageEl || !itemEl) return;
-
-        this.draggingTokenInfo = {
-          stageEl,
-          itemEl,
-          mapId,
-          kind,
-          itemId,
-          lastX: null,
-          lastY: null
-        };
-      }
-
-      buildMapTokensHtml(mapObj, isInteractiveEditor = false, stageMode = 'editor') {
-        if (!mapObj) return '';
-        let html = '';
-
-        const tokens = Object.values(mapObj.tokens || {});
-        tokens.forEach(tk => {
-          const char = this.characters.find(c => c.id === tk.charId);
-          if (!char) return;
-          const avatar = char.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(char.name)}`;
-          const firstName = (char.name || 'Herói').split(' ')[0];
-          const dragHandlers = isInteractiveEditor
-            ? `onmousedown="app.startDraggingMapElement(event, '${mapObj.id}', 'token', '${char.id}', '${stageMode}')" ontouchstart="app.startDraggingMapElement(event, '${mapObj.id}', 'token', '${char.id}', '${stageMode}')"`
-            : '';
-
-          html += `
-            <div ${dragHandlers}
-              style="left: ${tk.x}%; top: ${tk.y}%; transform: translate(-50%, -50%);"
-              class="absolute z-20 flex flex-col items-center select-none ${isInteractiveEditor ? 'cursor-grab active:cursor-grabbing group' : 'pointer-events-none'}">
-              <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-[#e5c158] bg-[#1a110b] shadow-[0_0_14px_rgba(0,0,0,0.95)] overflow-hidden flex items-center justify-center transition-transform ${isInteractiveEditor ? 'group-hover:scale-110' : ''}">
-                <img src="${avatar}" alt="${char.name}" class="w-full h-full object-contain pointer-events-none" />
-              </div>
-              <span class="mt-0.5 px-2 py-0.2 rounded bg-black/85 border border-[#c59b27]/70 text-[10px] sm:text-xs font-heading font-bold text-[#f4ead5] whitespace-nowrap shadow">
-                ${firstName}
-              </span>
-            </div>
-          `;
-        });
-
-        const pins = Object.values(mapObj.pins || {});
-        pins.forEach(pin => {
+        const pinsHtml = pins.map(pin => {
           const meta = TACTICAL_PINS_META.find(p => p.id === pin.type) || TACTICAL_PINS_META[0];
-          const dragHandlers = isInteractiveEditor
-            ? `onmousedown="app.startDraggingMapElement(event, '${mapObj.id}', 'pin', '${pin.id}', '${stageMode}')" ontouchstart="app.startDraggingMapElement(event, '${mapObj.id}', 'pin', '${pin.id}', '${stageMode}')"`
+          const dragHandlers = isInteractive
+            ? `onmousedown="app.startDraggingMapMarker(event, 'pin', '${mapObj.id}', '${pin.id}', '${context}')" ontouchstart="app.startDraggingMapMarker(event, 'pin', '${mapObj.id}', '${pin.id}', '${context}')"`
             : '';
+          const cursorClass = isInteractive ? 'cursor-grab active:cursor-grabbing pointer-events-auto' : 'pointer-events-none';
 
-          html += `
-            <div ${dragHandlers}
-              style="left: ${pin.x}%; top: ${pin.y}%; transform: translate(-50%, -50%);"
-              class="absolute z-10 flex flex-col items-center select-none ${isInteractiveEditor ? 'cursor-grab active:cursor-grabbing group' : 'pointer-events-none'}">
-              <div style="background-color: ${meta.color};" class="w-8 h-8 sm:w-9 sm:h-9 rounded-full border-2 border-white shadow-lg flex items-center justify-center text-sm sm:text-base transition-transform ${isInteractiveEditor ? 'group-hover:scale-110' : ''}">
+          return `
+            <div id="${domPrefix}-pin-${pin.id}"
+              style="left: ${pin.x}%; top: ${pin.y}%; transform: translate(-50%, -50%); will-change: left, top;"
+              ${dragHandlers}
+              class="absolute z-10 flex flex-col items-center select-none group ${cursorClass}">
+              <div style="background-color: ${meta.color};" class="w-8 h-8 sm:w-9 sm:h-9 rounded-full border-2 border-white shadow-lg flex items-center justify-center text-sm sm:text-base">
                 <span>${meta.icon}</span>
               </div>
-              <span class="mt-0.5 px-2 py-0.2 rounded bg-black/85 text-[10px] font-heading font-bold text-white whitespace-nowrap shadow flex items-center gap-1">
-                <span>${pin.label}</span>
-                ${isInteractiveEditor ? `<button type="button" onclick="event.stopPropagation(); app.removeTacticalPin('${mapObj.id}', '${pin.id}')" class="text-red-400 hover:text-red-200 ml-1 font-bold cursor-pointer">✕</button>` : ''}
+              <span class="mt-0.5 px-2 py-0.2 rounded bg-black/85 text-[10px] font-heading font-bold text-white whitespace-nowrap shadow">
+                ${pin.label}
+              </span>
+              ${isInteractive ? `
+                <button type="button" onclick="event.stopPropagation(); app.removeTacticalPinFromMap('${mapObj.id}', '${pin.id}')"
+                  class="hidden group-hover:flex absolute -top-2 -right-2 w-4 h-4 rounded-full bg-red-600 text-white text-[9px] items-center justify-center shadow cursor-pointer" title="Remover pino">
+                  ✕
+                </button>
+              ` : ''}
+            </div>
+          `;
+        }).join('');
+
+        const tokensHtml = tokens.map(tk => {
+          const char = this.characters.find(c => c.id === tk.charId);
+          if (!char) return '';
+          const avatar = char.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(char.name)}`;
+          const dragHandlers = isInteractive
+            ? `onmousedown="app.startDraggingMapMarker(event, 'token', '${mapObj.id}', '${char.id}', '${context}')" ontouchstart="app.startDraggingMapMarker(event, 'token', '${mapObj.id}', '${char.id}', '${context}')"`
+            : '';
+          const cursorClass = isInteractive ? 'cursor-grab active:cursor-grabbing pointer-events-auto' : 'pointer-events-none';
+
+          return `
+            <div id="${domPrefix}-token-${char.id}"
+              style="left: ${tk.x}%; top: ${tk.y}%; transform: translate(-50%, -50%); will-change: left, top;"
+              ${dragHandlers}
+              class="absolute z-20 flex flex-col items-center select-none ${cursorClass}">
+              <img src="${avatar}" alt="${char.name}" class="w-12 h-12 sm:w-16 sm:h-16 object-contain drop-shadow-[0_4px_8px_rgba(0,0,0,0.95)] pointer-events-none select-none" />
+              <span class="mt-0.5 px-2 py-0.2 rounded bg-black/85 border border-[#c59b27]/70 text-[10px] sm:text-xs font-heading font-bold text-[#f4ead5] whitespace-nowrap shadow">
+                ${char.name.split(' ')[0]}
               </span>
             </div>
           `;
-        });
+        }).join('');
 
-        return html;
+        return pinsHtml + tokensHtml;
       }
 
       renderMapsGallery() {
         const grid = document.getElementById('mapsGalleryGrid');
-        const stopBtn = document.getElementById('stopProjectionBtn');
         if (!grid) return;
 
-        const activeId = this.activeMapState?.activeMapId || null;
-        if (stopBtn) stopBtn.classList.toggle('hidden', !activeId);
-
         const filterCat = document.getElementById('mapCategoryFilter')?.value || 'all';
-        const filtered = this.maps.filter(m => filterCat === 'all' || (m.category || 'battlemap') === filterCat);
+        const filteredMaps = this.maps.filter(m => filterCat === 'all' || (m.category || 'battlemap') === filterCat);
 
-        if (filtered.length === 0) {
+        if (!filteredMaps.length) {
           grid.innerHTML = `
-            <div class="text-center py-8 px-4 rounded-xl bg-black/35 border border-dashed border-[#c59b27]/40 space-y-2">
-              <span class="text-3xl block">🧭</span>
-              <p class="font-heading text-xs text-[#e5c158]">Nenhum mapa nesta categoria</p>
-              <p class="text-[11px] text-[#d6c29f]/70">Clique em "Importar Mapas" acima para adicionar cenários.</p>
+            <div class="text-center py-8 px-4 rounded-xl bg-black/30 border border-dashed border-[#c59b27]/35">
+              <span class="text-3xl block mb-1">🗺️</span>
+              <p class="text-xs text-[#d6c29f]">Nenhum mapa encontrado nesta categoria.</p>
             </div>
           `;
           return;
         }
 
-        grid.innerHTML = filtered.map(map => {
-          const isLive = map.id === activeId;
-          const isSelected = map.id === this.selectedEditorMapId;
-          const typeMeta = MAP_TYPES_META[map.category || 'battlemap'] || MAP_TYPES_META.battlemap;
-          const tokenCount = Object.keys(map.tokens || {}).length;
+        const activeId = this.activeMapState?.activeMapId;
+        grid.innerHTML = filteredMaps.map(m => {
+          const isProjected = m.id === activeId;
+          const isSelected = m.id === this.selectedEditorMapId;
+          const meta = MAP_TYPES_META[m.category || 'battlemap'] || MAP_TYPES_META.battlemap;
+          const tokenCount = Object.keys(m.tokens || {}).length;
 
           return `
-            <div onclick="app.selectEditorMap('${map.id}')"
-              class="rounded-xl overflow-hidden border transition cursor-pointer flex gap-2.5 p-2 bg-black/45 hover:bg-black/70 ${isSelected ? 'border-2 border-[#e5c158] bg-black/80' : (isLive ? 'border-emerald-500/70' : 'border-[#c59b27]/25')}">
-              <div class="w-20 h-14 rounded-lg overflow-hidden bg-black shrink-0 relative">
-                <img src="${map.imageUrl}" alt="${map.name}" class="w-full h-full object-cover" />
-                ${isLive ? `<span class="absolute top-1 left-1 px-1.5 py-0.2 rounded bg-emerald-600 text-[9px] font-heading font-bold uppercase text-white">AO VIVO</span>` : ''}
+            <div onclick="app.selectEditorMap('${m.id}')"
+              class="rounded-xl overflow-hidden border transition cursor-pointer flex gap-3 p-2.5 ${isProjected ? 'border-emerald-400 bg-emerald-950/35 ring-1 ring-emerald-400/50' : (isSelected ? 'border-[#e5c158] bg-[#241710]' : 'border-[#c59b27]/25 bg-black/45 hover:border-[#c59b27]/60')}">
+              <div class="relative w-24 h-16 rounded-lg overflow-hidden bg-black shrink-0 border border-[#c59b27]/30">
+                <img src="${m.imageUrl}" alt="${m.name}" class="w-full h-full object-cover" />
+                ${isProjected ? `<span class="absolute top-1 left-1 px-1.5 py-0.2 rounded bg-emerald-600 text-[9px] font-heading font-bold uppercase text-white shadow">NO AR</span>` : ''}
               </div>
-              <div class="min-w-0 flex-1 flex flex-col justify-between">
+              <div class="flex-1 min-w-0 flex flex-col justify-between">
                 <div>
-                  <h4 class="font-heading text-xs font-bold text-[#f4ead5] truncate">${map.name}</h4>
-                  <span class="text-[10px] text-[#d6c29f]/80 block mt-0.5">${typeMeta.icon} ${typeMeta.label}</span>
+                  <h4 class="font-heading font-bold text-xs text-[#f4ead5] truncate">${m.name}</h4>
+                  <div class="flex items-center gap-2 text-[10px] text-[#d6c29f]/80 mt-0.5">
+                    <span>${meta.icon} ${meta.label}</span>
+                    <span>•</span>
+                    <span>👥 ${tokenCount}</span>
+                  </div>
                 </div>
-                <div class="flex items-center justify-between text-[10px] text-[#e5c158]">
-                  <span>👥 ${tokenCount} tokens</span>
-                  ${isSelected ? '<span class="font-bold">Editando ▸</span>' : ''}
+                <div class="flex items-center justify-between gap-1 pt-1">
+                  <button type="button" onclick="event.stopPropagation(); app.projectMap('${m.id}')"
+                    class="h-6 px-2.5 rounded text-[10px] font-heading font-bold uppercase tracking-wider cursor-pointer ${isProjected ? 'bg-emerald-700 text-white' : 'bg-[#8b1e1e] hover:bg-[#a62424] text-[#f4ead5]'}">
+                    ${isProjected ? '✓ Emitindo' : '📡 Emitir'}
+                  </button>
+                  <button type="button" onclick="event.stopPropagation(); app.deleteMap('${m.id}')"
+                    class="h-6 px-1.5 rounded bg-red-950/60 hover:bg-red-800 text-red-200 text-[10px] cursor-pointer" title="Excluir mapa">
+                    🗑️
+                  </button>
                 </div>
               </div>
             </div>
@@ -4606,113 +4687,131 @@
         const mapObj = this.maps.find(m => m.id === this.selectedEditorMapId) || this.maps[0];
         if (!mapObj) {
           ws.innerHTML = `
-            <div class="flex-1 flex flex-col items-center justify-center text-center p-8 rounded-2xl bg-black/30 border border-dashed border-[#c59b27]/35 space-y-3">
-              <span class="text-5xl">🗺️</span>
-              <h4 class="font-display text-lg text-[#e5c158]">Estúdio de Preparação Cartográfica</h4>
-              <p class="text-xs text-[#d6c29f]/80 max-w-md">Importe seus mapas (batalha, masmorras, cidades ou mundo), configure os tokens e clique em <strong>"Abrir Mesa ao Vivo"</strong> para jogar em tela cheia!</p>
+            <div class="flex-1 flex flex-col items-center justify-center text-center p-10 rounded-2xl border border-dashed border-[#c59b27]/35 bg-black/25">
+              <span class="text-5xl mb-3">🧭</span>
+              <h4 class="font-display text-xl text-[#e5c158]">Mesa Pronta para Cartografia</h4>
+              <p class="text-sm text-[#d6c29f]/80 max-w-md mt-1">
+                Importe mapas no painel à esquerda para posicionar os jogadores, marcar objetivos e abrir a Mesa ao Vivo.
+              </p>
             </div>
           `;
           return;
         }
 
-        const isLive = mapObj.id === this.activeMapState?.activeMapId;
+        const isProjected = this.activeMapState?.activeMapId === mapObj.id;
         const showGrid = !!this.activeMapState?.showGrid;
         const fogEnabled = !!this.activeMapState?.fogEnabled;
         const showTokensProj = this.activeMapState?.showTokensOnProjector !== false;
-        const tokensHtml = this.buildMapTokensHtml(mapObj, true, 'editor');
+        const tokensMap = mapObj.tokens || {};
+
+        const playersChipsHtml = this.characters.map(c => {
+          const isOnMap = Boolean(tokensMap[c.id]);
+          const avatar = c.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(c.name)}`;
+          return `
+            <button type="button" onclick="app.toggleCharacterTokenOnMap('${mapObj.id}', '${c.id}')"
+              class="flex items-center gap-2 pl-1.5 pr-3 py-1.5 rounded-full border text-xs font-semibold transition cursor-pointer ${isOnMap ? 'bg-emerald-950/85 border-emerald-400 text-[#f4ead5] shadow' : 'bg-black/50 hover:bg-black/75 border-[#c59b27]/35 text-[#d6c29f]'}">
+              <img src="${avatar}" alt="${c.name}" class="w-6 h-6 object-contain" />
+              <span class="truncate max-w-[100px]">${c.name}</span>
+              <span class="text-[10px] font-mono-num px-1.5 py-0.2 rounded ${isOnMap ? 'bg-emerald-600 text-white' : 'bg-white/10 text-[#d6c29f]'}">
+                ${isOnMap ? 'No Mapa' : '+ Colocar'}
+              </span>
+            </button>
+          `;
+        }).join('');
+
+        const pinButtonsHtml = TACTICAL_PINS_META.map(pin => `
+          <button type="button" onclick="app.addTacticalPinToMap('${mapObj.id}', '${pin.id}')"
+            class="h-9 px-3 rounded-xl bg-black/55 hover:bg-[#241710] border border-[#c59b27]/40 text-xs text-[#f4ead5] flex items-center gap-1.5 cursor-pointer transition">
+            <span>${pin.icon}</span>
+            <span>${pin.label.split(' ')[0]}</span>
+          </button>
+        `).join('');
 
         ws.innerHTML = `
-          <!-- Barra de Metadados do Mapa -->
-          <div class="flex flex-wrap items-center justify-between gap-2.5 bg-black/45 p-3 rounded-xl border border-[#c59b27]/30">
-            <div class="flex flex-wrap items-center gap-2 flex-1 min-w-[220px]">
+          <!-- BARRA DE IDENTIFICAÇÃO E TRANSMISSÃO DO MAPA -->
+          <div class="rounded-2xl bg-[#160e0a] border border-[#c59b27]/40 p-4 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex flex-wrap items-center gap-2.5 flex-1 min-w-[220px]">
               <input type="text" value="${mapObj.name}"
-                onchange="app.updateMapMetadata('${mapObj.id}', 'name', this.value)"
-                class="h-10 rounded-lg bg-black/60 border border-[#c59b27]/40 px-3 font-heading text-sm font-bold text-[#e5c158] outline-none focus:border-[#e5c158] flex-1 min-w-[160px]" />
+                onchange="app.updateMapMeta('${mapObj.id}', 'name', this.value)"
+                class="h-10 rounded-xl bg-black/60 border border-[#c59b27]/45 px-3.5 font-heading font-bold text-sm text-[#e5c158] outline-none focus:border-[#e5c158] flex-1 min-w-[180px]"
+                title="Nome do Mapa" />
 
-              <select onchange="app.updateMapMetadata('${mapObj.id}', 'category', this.value)"
-                class="h-10 rounded-lg bg-[#1a110b] border border-[#c59b27]/40 px-2.5 text-xs font-heading font-bold text-[#f4ead5] outline-none">
-                <option value="battlemap" ${(mapObj.category || 'battlemap') === 'battlemap' ? 'selected' : ''}>⚔️ Batalha</option>
+              <select onchange="app.updateMapMeta('${mapObj.id}', 'category', this.value)"
+                class="h-10 rounded-xl bg-[#1a110b] border border-[#c59b27]/45 px-3 text-xs font-heading font-bold text-[#f4ead5] outline-none">
+                <option value="battlemap" ${mapObj.category === 'battlemap' ? 'selected' : ''}>⚔️ Batalha / Grid</option>
                 <option value="dungeon" ${mapObj.category === 'dungeon' ? 'selected' : ''}>🕯️ Masmorra</option>
-                <option value="city" ${mapObj.category === 'city' ? 'selected' : ''}>🏰 Cidade</option>
+                <option value="city" ${mapObj.category === 'city' ? 'selected' : ''}>🏰 Cidade / Local</option>
                 <option value="world" ${mapObj.category === 'world' ? 'selected' : ''}>🧭 Mapa Mundi</option>
               </select>
             </div>
 
-            <div class="flex items-center gap-2 shrink-0">
-              <button onclick="app.projectMap('${mapObj.id}')"
-                class="h-10 px-4 rounded-lg ${isLive ? 'bg-emerald-700 border-emerald-300' : 'bg-[#8b1e1e] hover:bg-[#a62424] border-[#e5c158]'} border text-[#f4ead5] font-heading text-xs font-bold uppercase tracking-wider transition cursor-pointer shadow">
-                ${isLive ? '📡 Transmitindo' : '📡 Enviar p/ Sala'}
+            <div class="flex flex-wrap items-center gap-2">
+              <button type="button" onclick="app.projectMap('${mapObj.id}')"
+                class="h-10 px-4 rounded-xl font-heading text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow cursor-pointer transition ${isProjected ? 'bg-emerald-700 border border-emerald-300 text-white' : 'bg-[#8b1e1e] hover:bg-[#a62424] border border-[#e5c158] text-[#f4ead5]'}">
+                <span>📡</span>
+                <span>${isProjected ? 'Transmitindo na Sala' : 'Transmitir na Sala'}</span>
               </button>
-              <button onclick="app.deleteMap('${mapObj.id}')" class="h-10 w-10 rounded-lg bg-red-950/70 hover:bg-red-800 border border-red-500/40 text-red-200 flex items-center justify-center transition cursor-pointer" title="Excluir Mapa">
-                🗑️
+
+              <button type="button" onclick="app.enterDmTabletopView()"
+                class="h-10 px-4 rounded-xl bg-[#2b1d0e] hover:bg-[#3d2914] border border-[#e5c158]/70 text-[#e5c158] font-heading text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer transition">
+                <span>⛶</span>
+                <span>Tela Cheia Mesa</span>
               </button>
             </div>
           </div>
 
-          <!-- Painel de Controles Táticos + Jogadores -->
-          <div class="grid grid-cols-1 xl:grid-cols-2 gap-3 bg-black/35 p-3 rounded-xl border border-[#c59b27]/25">
-            <div class="space-y-2">
-              <div class="flex items-center justify-between">
-                <span class="text-[11px] font-heading font-bold uppercase tracking-wider text-[#e5c158]">👥 Tokens dos Jogadores no Mapa</span>
-                <button onclick="app.placeAllPartyOnMap('${mapObj.id}')" class="text-[11px] font-heading font-bold text-emerald-400 hover:underline cursor-pointer">
-                  + Colocar Todos
-                </button>
+          <!-- PRÉ-VISUALIZAÇÃO INTERATIVA DO TABULEIRO (ARRASTAR TOKENS) -->
+          <div class="rounded-2xl bg-black border-2 border-[#c59b27]/45 p-3 flex flex-col items-center justify-center relative min-h-[280px] sm:min-h-[360px] overflow-hidden shadow-2xl">
+            <div id="dmTacticalMapStage" class="relative inline-block max-w-full select-none">
+              <img src="${mapObj.imageUrl}" alt="${mapObj.name}" class="max-h-[42vh] w-auto max-w-full block rounded pointer-events-none select-none" />
+              <div class="${showGrid ? '' : 'hidden'} absolute inset-0 tactical-grid-overlay pointer-events-none"></div>
+              <div class="${fogEnabled ? '' : 'hidden'} absolute inset-0 bg-black/60 backdrop-blur-[1px] flex items-center justify-center pointer-events-none">
+                <span class="px-3.5 py-1.5 rounded-full bg-black/85 border border-[#e5c158] text-xs font-heading uppercase text-[#e5c158]">
+                  🌫️ Névoa Ativa no Receptor
+                </span>
               </div>
-              <div class="flex flex-wrap gap-1.5">
-                ${this.characters.map(c => {
-                  const isOnMap = Boolean(mapObj.tokens && mapObj.tokens[c.id]);
-                  const avatar = c.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(c.name)}`;
-                  return `
-                    <button type="button" onclick="app.toggleCharacterTokenOnMap('${mapObj.id}', '${c.id}')"
-                      class="flex items-center gap-1.5 pl-1.5 pr-2.5 py-1 rounded-full border text-xs font-semibold transition cursor-pointer ${isOnMap ? 'bg-emerald-900/60 border-emerald-400 text-white' : 'bg-black/50 border-[#c59b27]/30 text-[#d6c29f] hover:border-[#e5c158]'}">
-                      <img src="${avatar}" alt="${c.name}" class="w-5 h-5 rounded-full object-contain bg-black" />
-                      <span>${c.name.split(' ')[0]}</span>
-                      <span class="text-[10px]">${isOnMap ? '✓' : '+'}</span>
-                    </button>
-                  `;
-                }).join('')}
+              <div class="absolute inset-0 overflow-hidden">
+                ${this.buildMapTokensHtml(mapObj, true, 'setup')}
+              </div>
+            </div>
+          </div>
+
+          <!-- CONTROLES DE CAMADA E MARCADORES -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="rounded-2xl bg-[#160e0a] border border-[#c59b27]/35 p-4 space-y-2.5">
+              <div class="flex items-center justify-between gap-2">
+                <h4 class="font-heading text-xs font-bold uppercase tracking-wider text-[#e5c158]">👥 Jogadores no Mapa</h4>
+                <div class="flex items-center gap-2">
+                  <button type="button" onclick="app.placeAllPartyOnMap('${mapObj.id}')" class="text-[11px] font-heading uppercase text-emerald-400 hover:underline cursor-pointer">+ Todos</button>
+                  <button type="button" onclick="app.clearAllTokensFromMap('${mapObj.id}')" class="text-[11px] font-heading uppercase text-red-400 hover:underline cursor-pointer">Limpar</button>
+                </div>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                ${playersChipsHtml || '<span class="text-xs text-[#d6c29f]">Nenhum personagem cadastrado na mesa.</span>'}
               </div>
             </div>
 
-            <div class="space-y-2">
-              <span class="block text-[11px] font-heading font-bold uppercase tracking-wider text-[#e5c158]">🧭 Pinos & Ferramentas da Sala</span>
-              <div class="flex flex-wrap gap-1.5">
-                ${TACTICAL_PINS_META.map(pin => `
-                  <button type="button" onclick="app.addTacticalPinToMap('${mapObj.id}', '${pin.id}')"
-                    class="h-8 px-2.5 rounded-lg bg-black/55 hover:bg-[#2b1d0e] border border-[#c59b27]/40 text-xs text-[#f4ead5] flex items-center gap-1 cursor-pointer transition">
-                    <span>${pin.icon}</span>
-                    <span>${pin.label.split(' ')[0]}</span>
+            <div class="rounded-2xl bg-[#160e0a] border border-[#c59b27]/35 p-4 space-y-3">
+              <div>
+                <h4 class="font-heading text-xs font-bold uppercase tracking-wider text-[#e5c158] mb-2">🎛️ Camadas & Pinos Táticos</h4>
+                <div class="flex flex-wrap gap-2">
+                  <button type="button" onclick="app.toggleProjectorGrid()"
+                    class="h-9 px-3 rounded-xl border font-heading text-xs font-bold uppercase cursor-pointer transition ${showGrid ? 'bg-[#e5c158] text-[#120c09] border-[#e5c158]' : 'bg-black/55 border-[#c59b27]/40 text-[#d6c29f]'}">
+                    # Grade
                   </button>
-                `).join('')}
-
-                <button type="button" onclick="app.toggleProjectorGrid()"
-                  class="h-8 px-2.5 rounded-lg border text-xs font-heading font-bold uppercase cursor-pointer transition ${showGrid ? 'bg-[#e5c158] text-[#120c09] border-[#e5c158]' : 'bg-black/55 text-[#d6c29f] border-[#c59b27]/40'}">
-                  # Grade
-                </button>
-
-                <button type="button" onclick="app.toggleProjectorFog()"
-                  class="h-8 px-2.5 rounded-lg border text-xs font-heading font-bold uppercase cursor-pointer transition ${fogEnabled ? 'bg-[#8b1e1e] text-[#f4ead5] border-[#e5c158]' : 'bg-black/55 text-[#d6c29f] border-[#c59b27]/40'}">
-                  🌫️ Névoa
-                </button>
-
-                <button type="button" onclick="app.toggleProjectorTokensVisibility()"
-                  class="h-8 px-2.5 rounded-lg border text-xs font-heading font-bold uppercase cursor-pointer transition ${showTokensProj ? 'bg-emerald-900/60 text-emerald-200 border-emerald-400/60' : 'bg-black/55 text-[#d6c29f] border-[#c59b27]/40'}">
-                  ${showTokensProj ? '👁️ Visível' : '🙈 Ocultos'}
-                </button>
+                  <button type="button" onclick="app.toggleProjectorFog()"
+                    class="h-9 px-3 rounded-xl border font-heading text-xs font-bold uppercase cursor-pointer transition ${fogEnabled ? 'bg-[#8b1e1e] text-[#f4ead5] border-[#e5c158]' : 'bg-black/55 border-[#c59b27]/40 text-[#d6c29f]'}">
+                    🌫️ Névoa
+                  </button>
+                  <button type="button" onclick="app.toggleProjectorTokensVisibility()"
+                    class="h-9 px-3 rounded-xl border font-heading text-xs font-bold uppercase cursor-pointer transition ${showTokensProj ? 'bg-emerald-900/70 text-emerald-200 border-emerald-400/60' : 'bg-black/55 border-[#c59b27]/40 text-[#d6c29f]'}">
+                    ${showTokensProj ? '👁️ Tokens Visíveis' : '🙈 Tokens Ocultos'}
+                  </button>
+                </div>
               </div>
-            </div>
-          </div>
 
-          <!-- Pré-visualização Interativa de Preparação -->
-          <div class="flex-1 min-h-[300px] rounded-xl bg-black border border-[#c59b27]/40 flex items-center justify-center p-2 overflow-hidden relative">
-            <div id="dmEditorStageContainer" class="relative inline-flex items-center justify-center max-w-full max-h-[52vh]">
-              <img src="${mapObj.imageUrl}" alt="${mapObj.name}" class="max-w-full max-h-[52vh] w-auto h-auto object-contain block pointer-events-none select-none rounded-lg" />
-              <div class="${showGrid ? '' : 'hidden'} absolute inset-0 tactical-grid-overlay pointer-events-none rounded-lg"></div>
-              <div class="${fogEnabled ? '' : 'hidden'} absolute inset-0 bg-black/55 backdrop-blur-[2px] flex items-center justify-center pointer-events-none rounded-lg">
-                <span class="px-3 py-1 rounded-full bg-black/80 border border-[#e5c158] text-xs font-heading text-[#e5c158]">🌫️ Névoa Ativa no Receptor</span>
-              </div>
-              <div class="absolute inset-0 overflow-hidden rounded-lg">
-                ${tokensHtml}
+              <div class="flex flex-wrap gap-1.5 pt-1 border-t border-[#c59b27]/20">
+                ${pinButtonsHtml}
               </div>
             </div>
           </div>
@@ -4720,10 +4819,63 @@
       }
 
       // ---------------------------------------------------------
-      // RETRATO DO PERSONAGEM (PNG TRANSPARENTE SEM CORTES)
+      // PERMISSÕES DE EDIÇÃO POR PAPEL (MESTRE VS JOGADOR)
       // ---------------------------------------------------------
+      canEditChar(char) {
+        if (!this.userProfile || !char) return false;
+        if (this.userProfile.role === 'dm') return true;
+        return char.ownerId === this.currentUser?.uid;
+      }
+
+      getActiveChar() {
+        return this.characters.find(c => c.id === this.activeCharId) || this.characters[0];
+      }
+
+      scheduleCharSave(char) {
+        if (!char || !this.canEditChar(char)) return;
+        this.pendingDirtyCharId = char.id;
+        const statusEl = document.getElementById('syncStatusLabel');
+        if (statusEl) {
+          statusEl.textContent = 'Salvando...';
+          statusEl.className = 'text-amber-400';
+        }
+
+        clearTimeout(this.saveTimeout);
+        this.saveTimeout = setTimeout(async () => {
+          this.pendingDirtyCharId = null;
+          try {
+            await set(ref(db, `characters/${char.id}`), char);
+            if (this.activeMapState?.activeMapId) {
+              const activeMap = this.maps.find(m => m.id === this.activeMapState.activeMapId);
+              if (activeMap?.tokens?.[char.id]) {
+                await this.syncBroadcastStateOnly();
+              }
+            }
+            if (statusEl) {
+              statusEl.textContent = 'Sincronizado';
+              statusEl.className = 'text-emerald-400';
+            }
+          } catch (err) {
+            if (statusEl) {
+              statusEl.textContent = 'Erro de Rede';
+              statusEl.className = 'text-red-400';
+            }
+          }
+        }, 350);
+      }
+
+      flushPendingCharSave() {
+        if (!this.pendingDirtyCharId) return;
+        const char = this.characters.find(c => c.id === this.pendingDirtyCharId);
+        this.pendingDirtyCharId = null;
+        clearTimeout(this.saveTimeout);
+        if (char && this.canEditChar(char)) {
+          set(ref(db, `characters/${char.id}`), char).catch(() => {});
+        }
+      }
+
       async uploadCharacterAvatar(event) {
-        const file = event.target.files[0];
+        const file = event.target.files?.[0];
         const char = this.getActiveChar();
         if (!file || !char || !this.canEditChar(char)) return;
 
@@ -4731,267 +4883,216 @@
           const dataUrl = await this.processCharacterPngToDataUrl(file, 720);
           char.avatarUrl = dataUrl;
           document.getElementById('charAvatarImg').src = dataUrl;
-          await update(ref(db, `characters/${char.id}`), { avatarUrl: dataUrl });
           this.renderCharacterList();
           if (this.isAnimPopOpen) {
-            this.animLastAvatar = null;
-            this.openAnimatedPop(false);
+            this.animLastAvatar = dataUrl;
+            this.loadAnimationImage(dataUrl);
+            this.renderAnimHeroSwitcher();
+          }
+          await set(ref(db, `characters/${char.id}/avatarUrl`), dataUrl);
+          if (this.activeMapState?.activeMapId) {
+            const activeMap = this.maps.find(m => m.id === this.activeMapState.activeMapId);
+            if (activeMap?.tokens?.[char.id]) {
+              await this.syncBroadcastStateOnly();
+            }
           }
           if (this.roomAnimatedCast?.active && this.roomAnimatedCast.charId === char.id) {
             await this.broadcastCharacterToReceiver(char.id);
           }
-          if (this.userProfile?.role === 'dm' && this.activeMapState?.activeMapId) {
-            await this.syncBroadcastStateOnly();
-          }
         } catch (err) {
-          alert("Erro ao enviar imagem PNG do personagem: " + err.message);
+          alert("Erro ao enviar imagem do personagem: " + err.message);
+        } finally {
+          event.target.value = '';
         }
       }
 
       // ---------------------------------------------------------
-      // RENDERIZAÇÃO DE INTEGRANTES & PERMISSÕES
+      // CÁLCULOS DE REGRAS ADAPTADAS
       // ---------------------------------------------------------
-      renderCommunityMembers() {
-        const container = document.getElementById('communityMembersList');
-        const members = Object.values(this.usersMap);
-        document.getElementById('membersCountBadge').textContent = members.length;
-
-        container.innerHTML = members.map(m => {
-          const isMe = m.uid === this.currentUser?.uid;
-          const isDM = m.role === 'dm';
-          const avatar = m.photoURL || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(m.name || 'User')}`;
-          return `
-            <div class="flex flex-col items-center shrink-0 w-14 text-center" title="${m.name} (${isDM ? 'Mestre' : 'Jogador'})">
-              <div class="relative">
-                <img src="${avatar}" alt="${m.name}" class="w-10 h-10 rounded-full object-cover border-2 ${isDM ? 'border-[#e5c158]' : (isMe ? 'border-emerald-400' : 'border-[#8b5a2b]')}" />
-                ${isDM ? '<span class="absolute -bottom-1 -right-1 text-[10px] bg-[#120c09] rounded-full px-0.5">👑</span>' : ''}
-              </div>
-              <span class="text-[10px] text-[#f4ead5] truncate w-full mt-1 font-semibold">${m.name.split(' ')[0]}</span>
-            </div>
-          `;
-        }).join('');
-      }
-
-      canEditChar(char) {
-        if (!this.userProfile || !char) return false;
-        if (this.userProfile.role === 'dm') return true;
-        return char.ownerId === this.currentUser?.uid;
-      }
-
-      normalizeCharacter(c) {
-        const defaultSlots = {};
-        for (let lvl = 1; lvl <= 9; lvl++) {
-          defaultSlots[lvl] = c.spellcasting?.slots?.[lvl] || { total: 0, used: 0 };
-        }
-        const rawAttrs = c.attributes || {};
-        const rawSaves = c.savingThrows || {};
-        const rawSkills = c.skills || {};
-        const normalizedSkills = {};
-
-        SKILLS_META.forEach(sk => {
-          const val = rawSkills[sk.key];
-          if (typeof val === 'number') {
-            normalizedSkills[sk.key] = val;
-          } else if (val === 1 || val === true) {
-            normalizedSkills[sk.key] = 2;
-          } else if (val === 2) {
-            normalizedSkills[sk.key] = 4;
-          } else {
-            normalizedSkills[sk.key] = 0;
-          }
-        });
-
-        return {
-          ...c,
-          avatarUrl: c.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(c.name || 'Heroi')}`,
-          hp: c.hp || { current: 10, max: 10, temp: 0 },
-          deathSaves: c.deathSaves || { successes: 0, failures: 0 },
-          attributes: {
-            str: rawAttrs.str ?? 10,
-            dex: rawAttrs.dex ?? 10,
-            con: rawAttrs.con ?? 10,
-            int: rawAttrs.int ?? 10,
-            wis: rawAttrs.wis ?? 10,
-            cha: rawAttrs.cha ?? 10,
-            luck: rawAttrs.luck ?? 10
-          },
-          savingThrows: {
-            str: !!rawSaves.str,
-            dex: !!rawSaves.dex,
-            con: !!rawSaves.con,
-            int: !!rawSaves.int,
-            wis: !!rawSaves.wis,
-            cha: !!rawSaves.cha,
-            luck: !!rawSaves.luck
-          },
-          skills: normalizedSkills,
-          attacks: c.attacks || [],
-          features: c.features || [],
-          spellcasting: {
-            ability: c.spellcasting?.ability || 'int',
-            slots: defaultSlots,
-            spells: c.spellcasting?.spells || []
-          },
-          coins: c.coins || { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 },
-          inventory: c.inventory || [],
-          bio: c.bio || { traits: '', ideals: '', bonds: '', flaws: '', backstory: '' }
-        };
-      }
-
-      getActiveChar() {
-        return this.characters.find(c => c.id === this.activeCharId) || this.characters[0];
+      formatMod(val) {
+        const n = Number(val) || 0;
+        return n >= 0 ? `+${n}` : `${n}`;
       }
 
       getProficiencyBonus(level) {
-        return Math.floor(((parseInt(level) || 1) - 1) / 4) + 2;
+        const lvl = Math.max(1, Math.min(20, parseInt(level) || 1));
+        return Math.floor((lvl - 1) / 4) + 2;
       }
 
-      getSkillProfBonus(char, skillKey) {
-        const val = parseInt(char.skills?.[skillKey]) || 0;
-        return val;
+      getSkillProfValue(char, skillKey) {
+        const raw = char?.skills?.[skillKey];
+        if (typeof raw === 'number') return raw;
+        if (raw === true) return this.getProficiencyBonus(char?.level || 1);
+        return 0;
       }
 
-      getSkillTotal(char, skillKey) {
-        return this.getSkillProfBonus(char, skillKey);
+      getSkillTotalBonus(char, skillObj) {
+        return this.getSkillProfValue(char, skillObj.key);
       }
 
-      getSaveTotal(char, attrKey) {
-        const prof = this.getProficiencyBonus(char.level);
-        return char.savingThrows?.[attrKey] ? prof : 0;
-      }
-
-      formatSigned(num) {
-        return num >= 0 ? `+${num}` : `${num}`;
-      }
-
-      scheduleCharSave(charId) {
-        if (this.saveTimeout && this.pendingDirtyCharId && this.pendingDirtyCharId !== charId) {
-          this.flushPendingCharSave();
-        }
-        this.pendingDirtyCharId = charId;
-        clearTimeout(this.saveTimeout);
-        this.saveTimeout = setTimeout(() => {
-          this.flushPendingCharSave();
-        }, 250);
-      }
-
-      flushPendingCharSave() {
-        if (!this.saveTimeout || !this.pendingDirtyCharId) return;
-        clearTimeout(this.saveTimeout);
-        this.saveTimeout = null;
-        const targetId = this.pendingDirtyCharId;
-        this.pendingDirtyCharId = null;
-        const target = this.characters.find(c => c.id === targetId);
-        if (target && this.canEditChar(target)) {
-          set(ref(db, `characters/${targetId}`), target).catch(err => {
-            console.error("Erro ao sincronizar ficha:", err);
-          });
-        }
+      getSaveTotalBonus(char, attrKey) {
+        const isProf = !!char?.savingThrows?.[attrKey];
+        return isProf ? this.getProficiencyBonus(char.level) : 0;
       }
 
       // ---------------------------------------------------------
-      // GERENCIAMENTO DE FICHAS
+      // ROLADOR DE DADOS POLIÉDRICOS
       // ---------------------------------------------------------
-      async createNewCharacter() {
-        if (!this.currentUser) return;
-        this.flushPendingCharSave();
-        const newId = `char_${Date.now()}`;
-        const fresh = {
-          id: newId,
-          ownerId: this.currentUser.uid,
-          ownerName: this.userProfile.name,
-          name: "Novo Aventureiro",
-          avatarUrl: `https://api.dicebear.com/7.x/adventurer/svg?seed=${newId}`,
-          class: "Guerreiro (Campeão)",
-          level: 1,
-          race: "Humano",
-          background: "Soldado",
-          alignment: "Leal e Neutro",
-          xp: 0,
-          inspiration: false,
-          ac: 14,
-          speed: "9m",
-          hitDice: "1d10",
-          hp: { current: 12, max: 12, temp: 0 },
-          deathSaves: { successes: 0, failures: 0 },
-          attributes: { str: 15, dex: 12, con: 14, int: 10, wis: 10, cha: 8, luck: 11 },
-          savingThrows: { str: true, dex: false, con: true, int: false, wis: false, cha: false, luck: false },
-          skills: {},
-          otherProficiencies: "Idiomas: Comum.\nArmas: Simples e Marciais.\nArmaduras: Todas e Escudos.",
-          attacks: [{ name: "Espada Longa", ability: "str", damage: "1d8", type: "Cortante" }],
-          features: [{ name: "Retomar o Fôlego", source: "Guerreiro (Nível 1)", desc: "Usa ação bônus para recuperar 1d10 + nível de guerreiro em PV." }],
-          spellcasting: { ability: "int", slots: {}, spells: [] },
-          coins: { cp: 0, sp: 0, ep: 0, gp: 15, pp: 0 },
-          inventory: [{ name: "Cota de Malha", qty: 1, weight: 25, equipped: true, attuned: false }],
-          bio: { traits: "", ideals: "", bonds: "", flaws: "", backstory: "" }
-        };
-        this.activeCharId = newId;
-        this.saveUiState({ activeCharId: newId });
-        await set(ref(db, `characters/${newId}`), fresh);
+      setRollMode(mode, persist = true) {
+        this.rollMode = mode;
+        if (persist) this.saveUiState({ rollMode: mode });
+
+        ['dis', 'norm', 'adv'].forEach(m => {
+          const btn = document.getElementById(`mode${m.charAt(0).toUpperCase() + m.slice(1)}Btn`);
+          if (!btn) return;
+          btn.className = (m === mode)
+            ? 'h-8 px-2.5 rounded text-[11px] font-heading uppercase font-bold bg-[#c59b27] text-[#120c09] transition'
+            : 'h-8 px-2.5 rounded text-[11px] font-heading uppercase font-bold text-[#d6c29f] hover:text-white transition';
+        });
       }
 
-      selectCharacter(id) {
-        this.flushPendingCharSave();
-        this.activeCharId = id;
-        this.saveUiState({ activeCharId: id });
-        this.renderCharacterList();
-        this.renderSheet();
-        if (this.isAnimPopOpen) {
-          this.openAnimatedPop(false);
+      rollD20Check(label, modifier = 0) {
+        const d1 = Math.floor(Math.random() * 20) + 1;
+        const d2 = Math.floor(Math.random() * 20) + 1;
+        let chosen = d1;
+        let formulaStr = `1d20 (${d1})`;
+
+        if (this.rollMode === 'adv') {
+          chosen = Math.max(d1, d2);
+          formulaStr = `2d20 Vant. [${d1}, ${d2}] → ${chosen}`;
+        } else if (this.rollMode === 'dis') {
+          chosen = Math.min(d1, d2);
+          formulaStr = `2d20 Desv. [${d1}, ${d2}] → ${chosen}`;
         }
+
+        const total = chosen + modifier;
+        const modText = modifier !== 0 ? ` ${modifier >= 0 ? '+' : '-'} ${Math.abs(modifier)}` : '';
+        let badge = '';
+        if (chosen === 20) badge = '✨ ACERTO CRÍTICO NATURAL!';
+        if (chosen === 1) badge = '💀 FALHA CRÍTICA NATURAL!';
+
+        this.recordAndShowRoll(label, `${formulaStr}${modText}`, total, badge);
       }
 
-      async deleteCurrentCharacter() {
-        const char = this.getActiveChar();
-        if (!char || !this.canEditChar(char)) return;
-        if (this.characters.length <= 1) {
-          alert("A comunidade precisa manter pelo menos uma ficha ativa.");
+      rollFreeDie(sides) {
+        const result = Math.floor(Math.random() * sides) + 1;
+        let badge = '';
+        if (sides === 20 && result === 20) badge = '✨ 20 NATURAL!';
+        if (sides === 20 && result === 1) badge = '💀 1 NATURAL!';
+        this.recordAndShowRoll(`Dado Livre d${sides}`, `1d${sides}`, result, badge);
+      }
+
+      rollDamageDice(label, diceExpr) {
+        const clean = (diceExpr || '').replace(/\s+/g, '').toLowerCase();
+        const match = clean.match(/^(\d+)d(\d+)([+-]\d+)?$/);
+        if (!match) {
+          this.rollFreeDie(20);
           return;
         }
-        if (confirm(`Deseja realmente apagar a ficha de "${char.name}" para toda a mesa?`)) {
-          clearTimeout(this.saveTimeout);
-          this.saveTimeout = null;
-          this.pendingDirtyCharId = null;
-          await remove(ref(db, `characters/${char.id}`));
+        const count = Math.min(20, parseInt(match[1]));
+        const sides = parseInt(match[2]);
+        const flat = match[3] ? parseInt(match[3]) : 0;
+
+        let rolls = [];
+        let sum = 0;
+        for (let i = 0; i < count; i++) {
+          const r = Math.floor(Math.random() * sides) + 1;
+          rolls.push(r);
+          sum += r;
         }
+        const total = sum + flat;
+        const flatStr = flat !== 0 ? ` ${flat >= 0 ? '+' : '-'} ${Math.abs(flat)}` : '';
+        this.recordAndShowRoll(label, `${count}d${sides} [${rolls.join('+')}]${flatStr}`, total, '⚔️ Dano Rolado');
+      }
+
+      recordAndShowRoll(title, formula, total, badge) {
+        const char = this.getActiveChar();
+        const entry = {
+          charName: char ? char.name : 'Mesa',
+          title,
+          formula,
+          total,
+          badge,
+          time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+        };
+        this.rollHistory.unshift(entry);
+        if (this.rollHistory.length > 40) this.rollHistory.pop();
+
+        document.getElementById('rollCountBadge').textContent = this.rollHistory.length;
+        document.getElementById('rollCountBadgeMobile').textContent = this.rollHistory.length;
+        this.renderRollHistory();
+
+        const toast = document.getElementById('diceToast');
+        document.getElementById('diceToastTitle').textContent = `${entry.charName} • ${title}`;
+        document.getElementById('diceToastFormula').textContent = formula;
+        document.getElementById('diceToastTotal').textContent = total;
+        const badgeEl = document.getElementById('diceToastBadge');
+        badgeEl.textContent = badge;
+        badgeEl.className = badge.includes('FALHA') || badge.includes('1 ')
+          ? 'mt-1.5 text-[11px] font-heading uppercase tracking-widest font-bold text-red-400'
+          : 'mt-1.5 text-[11px] font-heading uppercase tracking-widest font-bold text-[#e5c158]';
+
+        toast.classList.remove('hidden');
+        clearTimeout(this.toastTimer);
+        this.toastTimer = setTimeout(() => toast.classList.add('hidden'), 5000);
+      }
+
+      // ---------------------------------------------------------
+      // RENDERIZAÇÃO DE INTEGRANTES & LISTA DE PERSONAGENS
+      // ---------------------------------------------------------
+      renderCommunityMembers() {
+        const list = document.getElementById('communityMembersList');
+        const members = Object.values(this.usersMap);
+        document.getElementById('membersCountBadge').textContent = members.length;
+
+        list.innerHTML = members.map(m => {
+          const avatar = m.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(m.name || 'User')}`;
+          const isDM = m.role === 'dm';
+          return `
+            <div class="flex flex-col items-center shrink-0 w-14 text-center" title="${m.name} (${isDM ? 'Mestre' : 'Jogador'})">
+              <div class="relative">
+                <img src="${avatar}" alt="${m.name}" class="w-10 h-10 rounded-full object-cover border-2 ${isDM ? 'border-[#e5c158]' : 'border-[#c59b27]/50'}" />
+                ${isDM ? '<span class="absolute -bottom-1 -right-1 text-[10px] bg-[#8b1e1e] rounded-full px-1 border border-[#e5c158]">👑</span>' : ''}
+              </div>
+              <span class="text-[10px] text-[#f4ead5] truncate w-full mt-1">${m.name}</span>
+            </div>
+          `;
+        }).join('');
       }
 
       renderCharacterList() {
-        const container = document.getElementById('characterList');
-        container.innerHTML = this.characters.map(c => {
+        const list = document.getElementById('characterList');
+        list.innerHTML = this.characters.map(c => {
           const isActive = c.id === this.activeCharId;
           const isMine = c.ownerId === this.currentUser?.uid;
-          const ownerUser = this.usersMap[c.ownerId];
-          const ownerName = ownerUser?.name || c.ownerName || 'Jogador';
+          const ownerProfile = this.usersMap[c.ownerId];
+          const ownerAvatar = ownerProfile?.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(c.ownerName || 'User')}`;
           const charAvatar = c.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(c.name)}`;
-          const hpPct = Math.max(0, Math.min(100, Math.round((c.hp.current / (c.hp.max || 1)) * 100)));
+          const ownerLabel = isMine ? 'Sua Ficha' : (ownerProfile?.name || c.ownerName || 'Jogador');
 
           return `
             <div onclick="app.selectCharacter('${c.id}')"
-              class="p-2.5 rounded-xl border transition cursor-pointer flex items-center gap-2.5 ${isActive ? 'bg-[#8b1e1e]/40 border-[#e5c158] shadow-md' : 'bg-black/30 border-[#c59b27]/20 hover:border-[#c59b27]/60'}">
-              <img src="${charAvatar}" alt="${c.name}" class="w-11 h-11 rounded-lg object-contain border border-[#c59b27]/60 shrink-0 bg-[#1a110b]" />
-              <div class="min-w-0 flex-1">
-                <div class="flex justify-between items-center gap-1">
-                  <span class="font-heading font-bold text-sm text-[#f4ead5] truncate">${c.name}</span>
-                  <span class="font-mono-num text-[11px] px-1.5 py-0.5 rounded bg-black/50 text-[#e5c158] shrink-0">Nv ${c.level}</span>
+              class="min-h-[56px] p-3 rounded-lg cursor-pointer transition border flex items-center justify-between gap-2.5 ${isActive ? 'bg-[#8b1e1e]/45 border-[#e5c158]' : 'bg-black/30 hover:bg-black/50 border-[#c59b27]/25'}">
+              <div class="flex items-center gap-2.5 min-w-0">
+                <img src="${charAvatar}" alt="${c.name}" class="w-10 h-10 rounded-lg object-contain border border-[#e5c158]/70 shrink-0 bg-[#1a110b]" />
+                <div class="min-w-0">
+                  <div class="font-heading font-bold text-sm text-[#f4ead5] truncate">${c.name}</div>
+                  <div class="text-[11px] text-[#d6c29f] truncate">Nv ${c.level} • ${c.class}</div>
+                  <div class="flex items-center gap-1.5 text-[10px] text-[#e5c158]/90 mt-0.5 truncate">
+                    <img src="${ownerAvatar}" alt="${ownerLabel}" class="w-3.5 h-3.5 rounded-full object-cover border border-[#c59b27]/60 shrink-0" />
+                    <span class="truncate">${ownerLabel}</span>
+                  </div>
                 </div>
-                <div class="text-[11px] text-[#d6c29f]/80 truncate">${c.race} • ${c.class}</div>
-                <div class="flex items-center justify-between text-[10px] text-[#d6c29f]/70 mt-0.5">
-                  <span class="truncate">${isMine ? '⭐ Sua Ficha' : `👤 ${ownerName}`}</span>
-                  <span class="font-mono-num">PV ${c.hp.current}/${c.hp.max}</span>
-                </div>
-                <div class="w-full h-1 bg-black/60 rounded-full overflow-hidden mt-1">
-                  <div class="h-full ${hpPct > 50 ? 'bg-emerald-500' : hpPct > 25 ? 'bg-amber-500' : 'bg-red-500'}" style="width: ${hpPct}%"></div>
-                </div>
+              </div>
+              <div class="text-right shrink-0">
+                <span class="text-xs font-mono-num font-bold text-emerald-400">${c.hp.current}/${c.hp.max}</span>
+                <span class="block text-[9px] uppercase text-[#d6c29f]">HP</span>
               </div>
             </div>
           `;
         }).join('');
       }
 
-      // ---------------------------------------------------------
-      // RENDERIZAÇÃO DA FICHA COMPLETA + BLOQUEIO DE LEITURA
-      // ---------------------------------------------------------
       renderSheet() {
         const char = this.getActiveChar();
         if (!char) return;
@@ -5000,594 +5101,507 @@
         document.getElementById('readOnlyBanner').classList.toggle('hidden', editable);
         document.getElementById('deleteCharBtn').classList.toggle('hidden', !editable);
         document.getElementById('charAvatarUploadLabel').classList.toggle('hidden', !editable);
-        const uploadBar = document.getElementById('charAvatarUploadBar');
-        if (uploadBar) uploadBar.classList.toggle('hidden', !editable);
+        document.getElementById('charAvatarUploadBar').classList.toggle('hidden', !editable);
 
-        const prof = this.getProficiencyBonus(char.level);
-        const ownerUser = this.usersMap[char.ownerId];
-        const ownerDisplayName = ownerUser?.name || char.ownerName || 'Jogador';
-        const ownerPhoto = ownerUser?.photoURL || '';
-
-        document.getElementById('charAvatarImg').src = char.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(char.name)}`;
-        document.getElementById('ownerTagName').textContent = `Jogador: ${ownerDisplayName}`;
-        const ownerAvatarEl = document.getElementById('ownerTagAvatar');
-        if (ownerPhoto) {
-          ownerAvatarEl.src = ownerPhoto;
-          ownerAvatarEl.classList.remove('hidden');
+        const ownerProfile = this.usersMap[char.ownerId];
+        const ownerName = ownerProfile?.name || char.ownerName || 'Jogador';
+        const ownerAvatar = ownerProfile?.avatarUrl || '';
+        document.getElementById('ownerTagName').textContent = `Dono: ${ownerName}`;
+        const ownerAvatarImg = document.getElementById('ownerTagAvatar');
+        if (ownerAvatar) {
+          ownerAvatarImg.src = ownerAvatar;
+          ownerAvatarImg.classList.remove('hidden');
         } else {
-          ownerAvatarEl.classList.add('hidden');
+          ownerAvatarImg.classList.add('hidden');
         }
 
-        document.getElementById('charNameInput').value = char.name;
-        document.getElementById('charClassInput').value = char.class;
-        document.getElementById('charLevelInput').value = char.level;
-        document.getElementById('charRaceInput').value = char.race;
-        document.getElementById('charBgInput').value = char.background;
-        document.getElementById('charAlignInput').value = char.alignment;
-        document.getElementById('charXpInput').value = char.xp;
+        document.getElementById('charAvatarImg').src = char.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(char.name)}`;
+
+        const prof = this.getProficiencyBonus(char.level);
+        const setVal = (id, val) => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          if (document.activeElement !== el) el.value = val;
+          el.disabled = !editable;
+        };
+
+        setVal('charNameInput', char.name);
+        setVal('charClassInput', char.class);
+        setVal('charLevelInput', char.level);
+        setVal('charRaceInput', char.race);
+        setVal('charBgInput', char.background);
+        setVal('charAlignInput', char.alignment);
+        setVal('charXpInput', char.xp);
+        setVal('acInput', char.ac);
+        setVal('speedInput', char.speed);
+        setVal('hitDiceInput', char.hitDice);
+        setVal('hpCurrentInput', char.hp.current);
+        setVal('hpMaxInput', char.hp.max);
+        setVal('hpTempInput', char.hp.temp);
+        setVal('proficienciesText', char.otherProficiencies || '');
+
+        document.getElementById('profBonusDisplay').textContent = this.formatMod(prof);
 
         const inspBtn = document.getElementById('inspirationBtn');
         const inspIcon = document.getElementById('inspirationIcon');
+        inspBtn.disabled = !editable;
         if (char.inspiration) {
-          inspBtn.classList.add('bg-amber-200', 'border-[#8b1e1e]');
+          inspBtn.className = 'h-11 px-3 rounded-lg border-2 border-[#c59b27] bg-[#8b1e1e] text-[#f4ead5] flex items-center gap-2 shadow transition';
           inspIcon.textContent = '★';
-          inspIcon.classList.add('text-[#8b1e1e]');
         } else {
-          inspBtn.classList.remove('bg-amber-200', 'border-[#8b1e1e]');
+          inspBtn.className = 'h-11 px-3 rounded-lg border-2 border-[#8b5a2b] bg-[#e6d5b8] text-[#2b1d0e] flex items-center gap-2 transition';
           inspIcon.textContent = '☆';
-          inspIcon.classList.remove('text-[#8b1e1e]');
         }
 
-        document.getElementById('acInput').value = char.ac;
         document.getElementById('initRollBtn').textContent = 'd20';
-        document.getElementById('speedInput').value = char.speed;
-        document.getElementById('hitDiceInput').value = char.hitDice;
 
-        document.getElementById('hpCurrentInput').value = char.hp.current;
-        document.getElementById('hpMaxInput').value = char.hp.max;
-        document.getElementById('hpTempInput').value = char.hp.temp;
-        const hpPct = Math.max(0, Math.min(100, Math.round((char.hp.current / (char.hp.max || 1)) * 100)));
+        const hpPct = Math.max(0, Math.min(100, (char.hp.current / Math.max(1, char.hp.max)) * 100));
         const hpBar = document.getElementById('hpProgressBar');
         hpBar.style.width = `${hpPct}%`;
-        hpBar.className = `h-full transition-all duration-300 ${hpPct > 50 ? 'bg-emerald-700' : hpPct > 25 ? 'bg-amber-600' : 'bg-[#8b1e1e]'}`;
+        hpBar.className = hpPct > 50 ? 'h-full bg-emerald-700 transition-all duration-300' : (hpPct > 25 ? 'h-full bg-amber-600 transition-all duration-300' : 'h-full bg-[#8b1e1e] transition-all duration-300');
 
-        this.renderDeathSaves(char, editable);
+        const renderBoxes = (containerId, count, type) => {
+          const el = document.getElementById(containerId);
+          el.innerHTML = [1, 2, 3].map(idx => `
+            <button ${!editable ? 'disabled' : ''} onclick="app.toggleDeathSave('${type}', ${idx})"
+              class="w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-bold transition ${idx <= count ? (type === 'successes' ? 'bg-emerald-700 border-emerald-900 text-white' : 'bg-[#8b1e1e] border-red-950 text-white') : 'bg-[#f4ead5] border-[#8b5a2b]'}">
+              ${idx <= count ? '✓' : ''}
+            </button>
+          `).join('');
+        };
+        renderBoxes('deathSuccessBoxes', char.deathSaves?.successes || 0, 'successes');
+        renderBoxes('deathFailBoxes', char.deathSaves?.failures || 0, 'failures');
 
-        document.getElementById('profBonusDisplay').textContent = this.formatSigned(prof);
-        const percTotal = this.getSkillTotal(char, 'perception');
-        document.getElementById('passivePerceptionDisplay').textContent = 10 + percTotal;
-
-        this.renderAttributes(char, editable);
-        this.renderSavingThrows(char, editable);
-        this.renderSkills(char, editable);
-        document.getElementById('proficienciesText').value = char.otherProficiencies || '';
-
-        this.renderAttacks(char, editable);
-        this.renderFeatures(char, editable);
-        this.renderSpells(char, editable);
-        this.renderInventory(char, editable);
-        this.renderBio(char);
-
-        const sheetEl = document.getElementById('characterSheetContainer');
-        sheetEl.querySelectorAll('input, textarea, select').forEach(el => {
-          if (el.id === 'hpDeltaInput') return;
-          el.disabled = !editable;
-        });
-      }
-
-      renderDeathSaves(char, editable) {
-        const sBox = document.getElementById('deathSuccessBoxes');
-        const fBox = document.getElementById('deathFailBoxes');
-        sBox.innerHTML = [1, 2, 3].map(n => `
-          <button type="button" ${editable ? `onclick="app.toggleDeathSave('successes', ${n})"` : 'disabled'}
-            class="w-6 h-6 rounded-full border border-emerald-800 flex items-center justify-center text-[11px] font-bold transition ${char.deathSaves.successes >= n ? 'bg-emerald-700 text-white' : 'bg-[#e6d5b8]'}">
-            ${char.deathSaves.successes >= n ? '✓' : ''}
-          </button>
-        `).join('');
-
-        fBox.innerHTML = [1, 2, 3].map(n => `
-          <button type="button" ${editable ? `onclick="app.toggleDeathSave('failures', ${n})"` : 'disabled'}
-            class="w-6 h-6 rounded-full border border-[#8b1e1e] flex items-center justify-center text-[11px] font-bold transition ${char.deathSaves.failures >= n ? 'bg-[#8b1e1e] text-white' : 'bg-[#e6d5b8]'}">
-            ${char.deathSaves.failures >= n ? '✕' : ''}
-          </button>
-        `).join('');
-      }
-
-      renderAttributes(char, editable) {
-        const grid = document.getElementById('attributesGrid');
-        grid.innerHTML = ATTRIBUTES_META.map(attr => {
-          const score = char.attributes[attr.key] ?? 10;
+        const attrGrid = document.getElementById('attributesGrid');
+        attrGrid.innerHTML = ATTRIBUTES_META.map(attr => {
+          const score = char.attributes?.[attr.key] ?? 10;
           return `
-            <div class="parchment-page rounded-xl p-2.5 flex flex-col items-center text-center">
-              <span class="text-[10px] font-heading font-bold uppercase tracking-wider text-[#5c4328]">${attr.label}</span>
-              <button type="button" onclick="app.rollAbilityCheck('${attr.key}')"
-                class="w-full py-2 my-1 rounded-lg parchment-inset hover:border-[#8b1e1e] active:scale-95 transition cursor-pointer" title="Rolar teste puro de ${attr.label} (1d20)">
-                <span class="font-display text-2xl font-black text-[#8b1e1e]">${score}</span>
+            <div class="parchment-page rounded-xl p-3 flex flex-col items-center text-center">
+              <span class="font-heading text-[11px] font-bold uppercase tracking-wider text-[#8b1e1e]">${attr.label}</span>
+              <button onclick="app.rollD20Check('Teste de ${attr.label}', 0)"
+                class="my-2 px-3 h-11 rounded-xl bg-[#2b1d0e] hover:bg-[#8b1e1e] active:scale-95 text-[#e5c158] font-heading text-xs font-bold uppercase tracking-wider shadow transition cursor-pointer"
+                title="Rolar d20 puro de ${attr.label}">
+                🎲 ${attr.short}
               </button>
-              <div class="flex items-center justify-center gap-1 bg-[#e6d5b8] border border-[#8b5a2b]/50 rounded-full px-2 py-0.5">
-                <span class="text-[9px] font-heading uppercase text-[#5c4328]">Valor</span>
-                <input type="number" min="1" max="30" value="${score}" ${editable ? `oninput="app.updateAttribute('${attr.key}', this.value)"` : 'disabled'}
-                  class="w-8 text-center font-mono-num text-xs font-bold text-[#2b1d0e] bg-transparent outline-none" />
+              <div class="w-16 h-9 rounded-lg parchment-inset flex items-center justify-center">
+                <input ${!editable ? 'disabled' : ''} type="number" min="1" max="30" value="${score}"
+                  onchange="app.updateAttribute('${attr.key}', this.value)"
+                  class="w-full text-center font-mono-num font-bold text-base text-[#2b1d0e] bg-transparent outline-none" />
               </div>
             </div>
           `;
         }).join('');
-      }
 
-      renderSavingThrows(char, editable) {
-        const list = document.getElementById('savingThrowsList');
-        list.innerHTML = ATTRIBUTES_META.map(attr => {
-          const isProf = !!char.savingThrows[attr.key];
-          const total = this.getSaveTotal(char, attr.key);
+        const savesList = document.getElementById('savingThrowsList');
+        savesList.innerHTML = ATTRIBUTES_META.map(attr => {
+          const isProf = !!char.savingThrows?.[attr.key];
+          const total = this.getSaveTotalBonus(char, attr.key);
           return `
-            <div class="flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg hover:bg-[#e6d5b8]/70 transition">
+            <div class="flex items-center justify-between gap-2 py-1 px-2 rounded hover:bg-[#e6d5b8]/70">
               <div class="flex items-center gap-2 min-w-0">
-                <button type="button" ${editable ? `onclick="app.toggleSaveProf('${attr.key}')"` : 'disabled'}
-                  class="w-6 h-6 rounded-full border border-[#8b5a2b] flex items-center justify-center text-[11px] shrink-0 ${isProf ? 'bg-[#8b1e1e] text-[#f4ead5]' : 'bg-transparent'}">
-                  ${isProf ? '●' : ''}
-                </button>
-                <button type="button" onclick="app.rollSavingThrow('${attr.key}')" class="text-sm font-semibold text-[#2b1d0e] hover:text-[#8b1e1e] text-left truncate">
+                <input ${!editable ? 'disabled' : ''} type="checkbox" ${isProf ? 'checked' : ''} onchange="app.toggleSaveProf('${attr.key}')" class="w-4 h-4 accent-[#8b1e1e] cursor-pointer shrink-0" />
+                <button onclick="app.rollD20Check('Salvaguarda de ${attr.label}', ${total})" class="text-sm font-semibold text-[#2b1d0e] hover:text-[#8b1e1e] text-left truncate cursor-pointer">
                   ${attr.label}
                 </button>
               </div>
-              <button type="button" onclick="app.rollSavingThrow('${attr.key}')" class="font-mono-num text-xs font-bold px-2.5 py-1 rounded parchment-inset text-[#2b1d0e] shrink-0">
-                ${this.formatSigned(total)}
+              <button onclick="app.rollD20Check('Salvaguarda de ${attr.label}', ${total})" class="font-mono-num font-bold text-sm text-[#8b1e1e] px-2.5 py-1 rounded parchment-inset shrink-0 cursor-pointer">
+                ${this.formatMod(total)}
               </button>
             </div>
           `;
         }).join('');
-      }
 
-      renderSkills(char, editable) {
-        const list = document.getElementById('skillsList');
-        list.innerHTML = SKILLS_META.map(skill => {
-          const profBonus = this.getSkillProfBonus(char, skill.key);
-          const total = this.getSkillTotal(char, skill.key);
-          const attrShort = ATTRIBUTES_META.find(a => a.key === skill.attr).short;
+        const skillsList = document.getElementById('skillsList');
+        skillsList.innerHTML = SKILLS_META.map(sk => {
+          const profVal = this.getSkillProfValue(char, sk.key);
+          const total = this.getSkillTotalBonus(char, sk);
+
+          if (sk.key === 'perception') {
+            document.getElementById('passivePerceptionDisplay').textContent = 10 + total;
+          }
+
+          const optionsHtml = SKILL_PROF_OPTIONS.map(opt => `
+            <option value="${opt}" ${profVal === opt ? 'selected' : ''}>${opt === 0 ? '0' : `+${opt}`}</option>
+          `).join('');
 
           return `
-            <div class="flex items-center justify-between gap-1.5 px-2 py-1.5 rounded-lg hover:bg-[#e6d5b8]/70 transition">
-              <div class="flex items-center gap-1.5 min-w-0">
-                <select ${editable ? `onchange="app.setSkillProf('${skill.key}', this.value)"` : 'disabled'}
-                  aria-label="Proficiência em ${skill.label}"
-                  class="h-7 px-1 rounded border border-[#8b5a2b] font-mono-num text-[11px] font-bold shrink-0 outline-none ${profBonus > 0 ? 'bg-[#8b1e1e] text-[#f4ead5]' : 'bg-[#e6d5b8] text-[#2b1d0e]'}">
-                  ${SKILL_PROF_OPTIONS.map(opt => `<option value="${opt}" ${profBonus === opt ? 'selected' : ''}>${opt === 0 ? '0' : '+' + opt}</option>`).join('')}
+            <div class="flex items-center justify-between gap-2 py-1 px-2 rounded hover:bg-[#e6d5b8]/70">
+              <div class="flex items-center gap-2 min-w-0 flex-1">
+                <select ${!editable ? 'disabled' : ''} onchange="app.updateSkillProf('${sk.key}', this.value)"
+                  class="h-7 px-1 rounded border border-[#8b5a2b]/60 bg-[#f4ead5] font-mono-num font-bold text-xs text-[#8b1e1e] outline-none shrink-0 cursor-pointer"
+                  title="Bônus de Proficiência da Perícia (0 ou +2 até +6)">
+                  ${optionsHtml}
                 </select>
-                <button type="button" onclick="app.rollSkill('${skill.key}')" class="text-xs sm:text-sm text-[#2b1d0e] hover:text-[#8b1e1e] text-left truncate">
-                  ${skill.label} <span class="text-[10px] text-[#5c4328]">(${attrShort})</span>
+                <button onclick="app.rollD20Check('Perícia: ${sk.label}', ${total})" class="text-sm text-[#2b1d0e] hover:text-[#8b1e1e] text-left truncate cursor-pointer">
+                  ${sk.label} <span class="text-[10px] uppercase text-[#5c4328]">(${sk.attr.toUpperCase()})</span>
                 </button>
               </div>
-              <button type="button" onclick="app.rollSkill('${skill.key}')" class="font-mono-num text-xs font-bold px-2 py-1 rounded parchment-inset text-[#2b1d0e] shrink-0">
-                ${this.formatSigned(total)}
+              <button onclick="app.rollD20Check('Perícia: ${sk.label}', ${total})" class="font-mono-num font-bold text-xs text-[#2b1d0e] px-2.5 py-1 rounded parchment-inset shrink-0 cursor-pointer">
+                ${this.formatMod(total)}
               </button>
             </div>
           `;
         }).join('');
+
+        this.renderCombatSubTab(char, editable);
+        this.renderSpellsSubTab(char, editable);
+        this.renderInventorySubTab(char, editable);
+        this.renderBioSubTab(char, editable);
       }
 
-      renderAttacks(char, editable) {
-        const list = document.getElementById('attacksList');
-        if (!char.attacks.length) {
-          list.innerHTML = `<p class="text-sm italic text-[#5c4328]">Nenhum ataque cadastrado. Clique em "+ Ataque" para adicionar armas ou truques ofensivos.</p>`;
-          return;
-        }
-        list.innerHTML = char.attacks.map((atk, idx) => {
-          const prof = this.getProficiencyBonus(char.level);
-          const hitBonus = prof;
+      renderCombatSubTab(char, editable) {
+        const prof = this.getProficiencyBonus(char.level);
+        const attacksEl = document.getElementById('attacksList');
+        const attacks = char.attacks || [];
+
+        attacksEl.innerHTML = attacks.length ? attacks.map((atk, idx) => {
+          const atkBonus = prof;
           return `
             <div class="parchment-inset p-3 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-              <div class="grid grid-cols-1 sm:grid-cols-4 gap-2 flex-1 min-w-0">
-                <input type="text" value="${atk.name}" ${editable ? `oninput="app.updateAttack(${idx}, 'name', this.value)"` : 'disabled'}
-                  class="font-bold text-sm text-[#2b1d0e] bg-transparent border-b border-[#8b5a2b]/40 outline-none" placeholder="Nome da Arma" />
-                <select ${editable ? `onchange="app.updateAttack(${idx}, 'ability', this.value)"` : 'disabled'}
-                  class="text-xs font-heading font-bold bg-[#f4ead5] border border-[#b89b6a] rounded px-2 h-9 outline-none">
-                  ${ATTRIBUTES_META.map(a => `<option value="${a.key}" ${atk.ability === a.key ? 'selected' : ''}>Atributo: ${a.short}</option>`).join('')}
-                </select>
-                <input type="text" value="${atk.damage}" ${editable ? `oninput="app.updateAttack(${idx}, 'damage', this.value)"` : 'disabled'}
-                  class="font-mono-num text-xs font-bold text-[#8b1e1e] bg-transparent border-b border-[#8b5a2b]/40 outline-none h-9" placeholder="Dano (ex: 1d8+3)" />
-                <input type="text" value="${atk.type}" ${editable ? `oninput="app.updateAttack(${idx}, 'type', this.value)"` : 'disabled'}
-                  class="text-xs text-[#5c4328] bg-transparent border-b border-[#8b5a2b]/40 outline-none h-9" placeholder="Tipo (Cortante/Fogo)" />
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 flex-1 min-w-0">
+                <input ${!editable ? 'disabled' : ''} type="text" value="${atk.name}" onchange="app.updateAttack(${idx}, 'name', this.value)" class="font-bold text-sm bg-transparent border-b border-[#8b5a2b]/40 outline-none" placeholder="Nome da Arma/Ataque" />
+                <div class="flex items-center gap-1.5 text-xs">
+                  <span class="text-[#5c4328]">Atributo:</span>
+                  <select ${!editable ? 'disabled' : ''} onchange="app.updateAttack(${idx}, 'ability', this.value)" class="bg-[#f4ead5] border border-[#b89b6a] rounded px-1.5 py-1 font-heading font-bold">
+                    ${ATTRIBUTES_META.map(a => `<option value="${a.key}" ${atk.ability === a.key ? 'selected' : ''}>${a.short}</option>`).join('')}
+                  </select>
+                </div>
+                <div class="flex items-center gap-1.5 text-xs">
+                  <input ${!editable ? 'disabled' : ''} type="text" value="${atk.damage}" onchange="app.updateAttack(${idx}, 'damage', this.value)" class="w-20 font-mono-num font-bold bg-[#f4ead5] border border-[#b89b6a] rounded px-1.5 py-1 text-center" placeholder="1d8+3" />
+                  <input ${!editable ? 'disabled' : ''} type="text" value="${atk.type}" onchange="app.updateAttack(${idx}, 'type', this.value)" class="flex-1 min-w-0 bg-transparent border-b border-[#8b5a2b]/40 outline-none" placeholder="Tipo" />
+                </div>
               </div>
-              <div class="flex items-center gap-2 self-end sm:self-center shrink-0">
-                <button type="button" onclick="app.rollAttack(${idx})" class="h-10 px-3 rounded-lg bg-[#8b1e1e] hover:bg-[#a62424] active:scale-95 text-[#f4ead5] font-mono-num text-xs font-bold transition">
-                  🎯 Acerto (${this.formatSigned(hitBonus)})
+              <div class="flex items-center gap-1.5 self-end sm:self-center shrink-0">
+                <button onclick="app.rollD20Check('Ataque: ${atk.name}', ${atkBonus})" class="h-10 px-3 rounded-lg bg-[#8b1e1e] hover:bg-[#a62424] text-[#f4ead5] font-mono-num text-xs font-bold transition cursor-pointer">
+                  🎯 ${this.formatMod(atkBonus)}
                 </button>
-                <button type="button" onclick="app.rollDamage(${idx})" class="h-10 px-3 rounded-lg bg-[#2b1d0e] hover:bg-[#3d2914] active:scale-95 text-[#e5c158] font-mono-num text-xs font-bold transition">
-                  💥 Dano
+                <button onclick="app.rollDamageDice('Dano: ${atk.name}', '${atk.damage}')" class="h-10 px-3 rounded-lg bg-[#2b1d0e] hover:bg-[#3d2914] text-[#e5c158] font-mono-num text-xs font-bold transition cursor-pointer">
+                  💥 ${atk.damage}
                 </button>
-                ${editable ? `<button type="button" onclick="app.removeAttack(${idx})" class="w-9 h-9 flex items-center justify-center text-[#8b1e1e] hover:bg-red-900/10 rounded-lg text-sm">✕</button>` : ''}
+                ${editable ? `<button onclick="app.removeAttack(${idx})" class="w-9 h-10 text-[#8b1e1e] hover:bg-red-900/10 rounded-lg text-sm flex items-center justify-center">✕</button>` : ''}
+              </div>
+            </div>
+          `;
+        }).join('') : `<p class="text-sm italic text-[#5c4328]">Nenhum ataque registrado.</p>`;
+
+        const featEl = document.getElementById('featuresList');
+        const features = char.features || [];
+        featEl.innerHTML = features.map((f, idx) => `
+          <div class="parchment-inset p-3.5 rounded-lg flex flex-col justify-between gap-2">
+            <div>
+              <div class="flex items-center justify-between gap-2 mb-1">
+                <input ${!editable ? 'disabled' : ''} type="text" value="${f.name}" onchange="app.updateFeature(${idx}, 'name', this.value)" class="font-heading font-bold text-sm text-[#8b1e1e] bg-transparent outline-none flex-1 min-w-0" />
+                ${editable ? `<button onclick="app.removeFeature(${idx})" class="w-8 h-8 text-xs text-[#5c4328] hover:text-[#8b1e1e] shrink-0">✕</button>` : ''}
+              </div>
+              <input ${!editable ? 'disabled' : ''} type="text" value="${f.source}" onchange="app.updateFeature(${idx}, 'source', this.value)" class="text-[11px] font-heading uppercase text-[#5c4328] bg-transparent outline-none w-full mb-1.5" />
+              <textarea ${!editable ? 'disabled' : ''} rows="2" onchange="app.updateFeature(${idx}, 'desc', this.value)" class="w-full text-sm bg-transparent outline-none leading-relaxed">${f.desc}</textarea>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      renderSpellsSubTab(char, editable) {
+        const sc = char.spellcasting || { ability: 'int', slots: {}, spells: [] };
+        const prof = this.getProficiencyBonus(char.level);
+        const saveDc = 8 + prof;
+        const spellAtk = prof;
+
+        const abilitySel = document.getElementById('spellAbilitySelect');
+        abilitySel.value = sc.ability || 'int';
+        abilitySel.disabled = !editable;
+        document.getElementById('spellSaveDcDisplay').textContent = saveDc;
+        document.getElementById('spellAttackDisplay').textContent = this.formatMod(spellAtk);
+
+        const slotsGrid = document.getElementById('spellSlotsGrid');
+        slotsGrid.innerHTML = [1, 2, 3, 4, 5, 6, 7, 8, 9].map(lvl => {
+          const slot = sc.slots?.[lvl] || { total: 0, used: 0 };
+          return `
+            <div class="parchment-inset p-2 rounded-lg text-center">
+              <span class="block text-[10px] font-heading font-bold text-[#8b1e1e]">${lvl}º Círc.</span>
+              <div class="flex items-center justify-center gap-1 mt-1 text-xs font-mono-num">
+                <input ${!editable ? 'disabled' : ''} type="number" min="0" max="9" value="${slot.used}" onchange="app.updateSpellSlot(${lvl}, 'used', this.value)" class="w-8 text-center bg-[#f4ead5] border border-[#b89b6a] rounded text-[#8b1e1e] font-bold" title="Usados" />
+                <span>/</span>
+                <input ${!editable ? 'disabled' : ''} type="number" min="0" max="9" value="${slot.total}" onchange="app.updateSpellSlot(${lvl}, 'total', this.value)" class="w-8 text-center bg-transparent font-bold" title="Totais" />
               </div>
             </div>
           `;
         }).join('');
-      }
 
-      renderFeatures(char, editable) {
-        const list = document.getElementById('featuresList');
-        if (!char.features.length) {
-          list.innerHTML = `<p class="text-sm italic text-[#5c4328]">Nenhuma característica registrada.</p>`;
-          return;
-        }
-        list.innerHTML = char.features.map((feat, idx) => `
-          <div class="parchment-inset p-3 rounded-lg space-y-1.5">
-            <div class="flex items-center justify-between gap-2">
-              <input type="text" value="${feat.name}" ${editable ? `oninput="app.updateFeature(${idx}, 'name', this.value)"` : 'disabled'}
-                class="font-heading font-bold text-sm text-[#8b1e1e] bg-transparent outline-none flex-1 min-w-0" />
-              <input type="text" value="${feat.source}" ${editable ? `oninput="app.updateFeature(${idx}, 'source', this.value)"` : 'disabled'}
-                class="text-[11px] font-semibold text-[#5c4328] bg-transparent text-right outline-none w-28 shrink-0" />
-              ${editable ? `<button type="button" onclick="app.removeFeature(${idx})" class="w-8 h-8 flex items-center justify-center text-[#8b1e1e] text-xs shrink-0">✕</button>` : ''}
-            </div>
-            <textarea rows="2" ${editable ? `oninput="app.updateFeature(${idx}, 'desc', this.value)"` : 'disabled'}
-              class="w-full bg-transparent text-xs text-[#2b1d0e] outline-none leading-relaxed">${feat.desc}</textarea>
-          </div>
-        `).join('');
-      }
-
-      renderSpells(char, editable) {
-        const sc = char.spellcasting;
-        const prof = this.getProficiencyBonus(char.level);
-        document.getElementById('spellAbilitySelect').value = sc.ability;
-        document.getElementById('spellSaveDcDisplay').textContent = 8 + prof;
-        document.getElementById('spellAttackDisplay').textContent = this.formatSigned(prof);
-
-        const slotsGrid = document.getElementById('spellSlotsGrid');
-        let slotsHtml = '';
-        for (let lvl = 1; lvl <= 9; lvl++) {
-          const slot = sc.slots[lvl] || { total: 0, used: 0 };
-          const avail = Math.max(0, slot.total - slot.used);
-          slotsHtml += `
-            <div class="parchment-inset p-2 rounded-lg text-center">
-              <div class="text-[10px] font-heading font-bold text-[#8b1e1e]">${lvl}º Círculo</div>
-              <div class="font-mono-num text-sm font-bold text-[#2b1d0e] my-1">${avail}/${slot.total}</div>
-              <div class="flex items-center justify-center gap-1 text-[10px]">
-                <span class="text-[#5c4328]">Máx:</span>
-                <input type="number" min="0" max="9" value="${slot.total}" ${editable ? `oninput="app.updateSpellSlotTotal(${lvl}, this.value)"` : 'disabled'}
-                  class="w-8 text-center font-mono-num font-bold bg-[#f4ead5] border border-[#b89b6a] rounded" />
+        const spellsEl = document.getElementById('spellsList');
+        const spells = sc.spells || [];
+        spellsEl.innerHTML = spells.length ? spells.map((sp, idx) => `
+          <div class="parchment-inset p-3.5 rounded-lg space-y-2">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center gap-2 flex-1 min-w-0">
+                <input ${!editable ? 'disabled' : ''} type="checkbox" ${sp.prepared ? 'checked' : ''} onchange="app.toggleSpellPrepared(${idx})" class="w-4 h-4 accent-[#8b1e1e] shrink-0" title="Preparada" />
+                <input ${!editable ? 'disabled' : ''} type="text" value="${sp.name}" onchange="app.updateSpell(${idx}, 'name', this.value)" class="font-heading font-bold text-sm text-[#2b1d0e] bg-transparent outline-none flex-1 min-w-0" />
               </div>
-              <button type="button" ${editable ? `onclick="app.castSpellSlot(${lvl})"` : 'disabled'} class="mt-1.5 w-full h-7 rounded bg-[#2b1d0e] text-[#e5c158] text-[10px] font-heading uppercase font-bold">
-                Gastar
-              </button>
+              <div class="flex items-center gap-1.5 text-xs shrink-0">
+                <select ${!editable ? 'disabled' : ''} onchange="app.updateSpell(${idx}, 'level', parseInt(this.value))" class="h-8 bg-[#f4ead5] border border-[#b89b6a] rounded px-1.5 font-mono-num">
+                  <option value="0" ${sp.level === 0 ? 'selected' : ''}>Truque</option>
+                  ${[1,2,3,4,5,6,7,8,9].map(l => `<option value="${l}" ${sp.level === l ? 'selected' : ''}>${l}º Círculo</option>`).join('')}
+                </select>
+                <button onclick="app.rollD20Check('Ataque Mágico: ${sp.name}', ${spellAtk})" class="h-8 px-2.5 rounded bg-[#8b1e1e] text-[#f4ead5] font-mono-num text-[11px] font-bold cursor-pointer">
+                  ✨ ${this.formatMod(spellAtk)}
+                </button>
+                ${editable ? `<button onclick="app.removeSpell(${idx})" class="w-8 h-8 text-[#8b1e1e] flex items-center justify-center">✕</button>` : ''}
+              </div>
+            </div>
+            <textarea ${!editable ? 'disabled' : ''} rows="2" onchange="app.updateSpell(${idx}, 'desc', this.value)" class="w-full text-sm bg-transparent outline-none text-[#5c4328] leading-relaxed">${sp.desc}</textarea>
+          </div>
+        `).join('') : `<p class="text-sm italic text-[#5c4328]">Nenhuma magia anotada no grimório.</p>`;
+      }
+
+      renderInventorySubTab(char, editable) {
+        const coins = char.coins || { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 };
+        ['cp', 'sp', 'ep', 'gp', 'pp'].forEach(c => {
+          const el = document.getElementById(`coin-${c}`);
+          if (el) {
+            if (document.activeElement !== el) el.value = coins[c] || 0;
+            el.disabled = !editable;
+          }
+        });
+
+        const invEl = document.getElementById('inventoryList');
+        const items = char.inventory || [];
+        let totalWeight = 0;
+
+        invEl.innerHTML = items.length ? items.map((item, idx) => {
+          totalWeight += (Number(item.weight) || 0) * (Number(item.qty) || 1);
+          return `
+            <div class="parchment-inset p-3 rounded-lg flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center gap-2 flex-1 min-w-0">
+                <input ${!editable ? 'disabled' : ''} type="checkbox" ${item.equipped ? 'checked' : ''} onchange="app.toggleItemFlag(${idx}, 'equipped')" class="w-4 h-4 accent-[#8b1e1e] shrink-0" title="Equipado" />
+                <input ${!editable ? 'disabled' : ''} type="text" value="${item.name}" onchange="app.updateItem(${idx}, 'name', this.value)" class="font-bold text-sm bg-transparent outline-none flex-1 min-w-0" />
+              </div>
+              <div class="flex items-center gap-2 text-xs font-mono-num shrink-0">
+                <label class="flex items-center gap-1" title="Sintonizado">
+                  <input ${!editable ? 'disabled' : ''} type="checkbox" ${item.attuned ? 'checked' : ''} onchange="app.toggleItemFlag(${idx}, 'attuned')" class="w-4 h-4 accent-amber-700" />
+                  <span class="font-heading text-[10px] uppercase">Sint.</span>
+                </label>
+                <span>Qtd:</span>
+                <input ${!editable ? 'disabled' : ''} type="number" min="0" value="${item.qty}" onchange="app.updateItem(${idx}, 'qty', parseInt(this.value)||0)" class="w-12 h-8 text-center bg-[#f4ead5] border border-[#b89b6a] rounded" />
+                <span>kg:</span>
+                <input ${!editable ? 'disabled' : ''} type="number" step="0.1" min="0" value="${item.weight}" onchange="app.updateItem(${idx}, 'weight', parseFloat(this.value)||0)" class="w-14 h-8 text-center bg-[#f4ead5] border border-[#b89b6a] rounded" />
+                ${editable ? `<button onclick="app.removeItem(${idx})" class="w-8 h-8 text-[#8b1e1e] flex items-center justify-center">✕</button>` : ''}
+              </div>
             </div>
           `;
-        }
-        slotsGrid.innerHTML = slotsHtml;
+        }).join('') : `<p class="text-sm italic text-[#5c4328]">Mochila vazia.</p>`;
 
-        const spellsList = document.getElementById('spellsList');
-        if (!sc.spells.length) {
-          spellsList.innerHTML = `<p class="text-sm italic text-[#5c4328]">Nenhuma magia anotada no grimório deste personagem.</p>`;
-          return;
-        }
-        spellsList.innerHTML = sc.spells.map((sp, idx) => `
-          <div class="parchment-inset p-3 rounded-lg space-y-1.5">
-            <div class="flex flex-wrap items-center justify-between gap-2">
-              <div class="flex items-center gap-2 flex-1 min-w-[180px]">
-                <button type="button" ${editable ? `onclick="app.toggleSpellPrepared(${idx})"` : 'disabled'} title="Magia Preparada"
-                  class="w-6 h-6 rounded-full border border-[#8b1e1e] flex items-center justify-center text-[11px] shrink-0 ${sp.prepared ? 'bg-[#8b1e1e] text-white' : ''}">
-                  ${sp.prepared ? '✦' : ''}
-                </button>
-                <input type="text" value="${sp.name}" ${editable ? `oninput="app.updateSpell(${idx}, 'name', this.value)"` : 'disabled'}
-                  class="font-heading font-bold text-sm text-[#2b1d0e] bg-transparent outline-none flex-1 min-w-0" />
+        const maxCarry = (char.attributes?.str || 10) * 7.5;
+        document.getElementById('carryWeightDisplay').textContent = `${totalWeight.toFixed(1)} / ${maxCarry.toFixed(0)} kg`;
+      }
+
+      renderBioSubTab(char, editable) {
+        const bio = char.bio || {};
+        const map = { bioTraits: 'traits', bioIdeals: 'ideals', bioBonds: 'bonds', bioFlaws: 'flaws', bioBackstory: 'backstory' };
+        Object.entries(map).forEach(([elId, key]) => {
+          const el = document.getElementById(elId);
+          if (el) {
+            if (document.activeElement !== el) el.value = bio[key] || '';
+            el.disabled = !editable;
+          }
+        });
+      }
+
+      renderCompendium() {
+        const grid = document.getElementById('compendiumGrid');
+        const q = (document.getElementById('compendiumSearch')?.value || '').toLowerCase();
+        const cat = document.getElementById('compendiumCategory')?.value || 'all';
+        const isDM = this.userProfile?.role === 'dm';
+
+        const filtered = this.compendium.filter(item => {
+          const matchCat = cat === 'all' || item.category === cat;
+          const matchText = (item.title || '').toLowerCase().includes(q) || (item.description || '').toLowerCase().includes(q);
+          return matchCat && matchText;
+        });
+
+        grid.innerHTML = filtered.map(item => `
+          <article class="parchment-page rounded-xl p-5 flex flex-col justify-between gap-3">
+            <div>
+              <div class="flex items-center justify-between gap-2 mb-1.5">
+                <span class="text-[10px] font-heading uppercase tracking-widest px-2.5 py-0.5 rounded bg-[#8b1e1e] text-[#f4ead5] font-bold">${item.category}</span>
+                ${isDM ? `<button onclick="app.deleteCompendiumEntry('${item.id}')" class="w-8 h-8 text-xs text-[#5c4328] hover:text-[#8b1e1e] flex items-center justify-center">🗑️ Excluir</button>` : ''}
               </div>
-              <div class="flex items-center gap-1.5 shrink-0">
-                <select ${editable ? `onchange="app.updateSpell(${idx}, 'level', parseInt(this.value))"` : 'disabled'} class="h-8 text-xs font-mono-num bg-[#f4ead5] border border-[#b89b6a] rounded px-1.5">
-                  <option value="0" ${sp.level === 0 ? 'selected' : ''}>Truque</option>
-                  ${[1,2,3,4,5,6,7,8,9].map(l => `<option value="${l}" ${sp.level === l ? 'selected' : ''}>${l}º Círc.</option>`).join('')}
-                </select>
-                <input type="text" value="${sp.school}" ${editable ? `oninput="app.updateSpell(${idx}, 'school', this.value)"` : 'disabled'}
-                  class="w-24 text-xs text-[#5c4328] bg-transparent border-b border-[#8b5a2b]/40 outline-none" />
-                ${editable ? `<button type="button" onclick="app.removeSpell(${idx})" class="w-8 h-8 flex items-center justify-center text-[#8b1e1e] text-xs">✕</button>` : ''}
-              </div>
+              <h3 class="font-display text-lg font-bold text-[#2b1d0e] mb-2">${item.title}</h3>
+              <hr class="dnd-divider mb-2.5" />
+              <p class="text-sm text-[#2b1d0e] leading-relaxed whitespace-pre-line">${item.description}</p>
             </div>
-            <textarea rows="2" ${editable ? `oninput="app.updateSpell(${idx}, 'desc', this.value)"` : 'disabled'}
-              class="w-full bg-transparent text-xs text-[#2b1d0e] outline-none">${sp.desc}</textarea>
-          </div>
+          </article>
         `).join('');
       }
 
-      renderInventory(char, editable) {
-        ['cp', 'sp', 'ep', 'gp', 'pp'].forEach(c => {
-          document.getElementById(`coin-${c}`).value = char.coins[c] || 0;
-        });
-
-        let totalWeight = 0;
-        char.inventory.forEach(item => {
-          totalWeight += (parseFloat(item.weight) || 0) * (parseInt(item.qty) || 1);
-        });
-        const maxCarry = Math.round((char.attributes.str || 10) * 7.5);
-        document.getElementById('carryWeightDisplay').textContent = `${totalWeight.toFixed(1)} / ${maxCarry} kg`;
-
-        const list = document.getElementById('inventoryList');
-        if (!char.inventory.length) {
-          list.innerHTML = `<p class="text-sm italic text-[#5c4328]">Mochila vazia.</p>`;
+      renderRollHistory() {
+        const list = document.getElementById('rollHistoryList');
+        if (!this.rollHistory.length) {
+          list.innerHTML = `<p class="text-xs text-[#d6c29f]/70 italic text-center py-8">Nenhuma rolagem realizada nesta sessão ainda.</p>`;
           return;
         }
-        list.innerHTML = char.inventory.map((item, idx) => `
-          <div class="parchment-inset p-2.5 rounded-lg flex flex-wrap items-center justify-between gap-2">
-            <div class="flex items-center gap-2 flex-1 min-w-[180px]">
-              <button type="button" ${editable ? `onclick="app.toggleItemEquipped(${idx})"` : 'disabled'} title="Equipado"
-                class="h-8 px-2 rounded text-[11px] font-heading font-bold border shrink-0 ${item.equipped ? 'bg-[#2b1d0e] text-[#e5c158] border-[#c59b27]' : 'bg-transparent text-[#5c4328] border-[#8b5a2b]/40'}">
-                ${item.equipped ? '🛡️ Equip.' : 'Mochila'}
-              </button>
-              <input type="text" value="${item.name}" ${editable ? `oninput="app.updateItem(${idx}, 'name', this.value)"` : 'disabled'}
-                class="font-bold text-sm text-[#2b1d0e] bg-transparent outline-none flex-1 min-w-0" />
+        list.innerHTML = this.rollHistory.map(r => `
+          <div class="p-3 rounded-lg bg-black/40 border border-[#c59b27]/30">
+            <div class="flex justify-between text-[11px] text-[#e5c158] font-heading">
+              <span class="truncate pr-2">${r.charName}</span>
+              <span class="shrink-0">${r.time}</span>
             </div>
-            <div class="flex items-center gap-2 text-xs shrink-0">
-              <label class="flex items-center gap-1 text-[#5c4328]">Qtd:
-                <input type="number" min="0" value="${item.qty}" ${editable ? `oninput="app.updateItem(${idx}, 'qty', parseInt(this.value)||0)"` : 'disabled'}
-                  class="w-12 h-8 text-center font-mono-num font-bold bg-[#f4ead5] border border-[#b89b6a] rounded" />
-              </label>
-              <label class="flex items-center gap-1 text-[#5c4328]">Kg:
-                <input type="number" step="0.1" min="0" value="${item.weight}" ${editable ? `oninput="app.updateItem(${idx}, 'weight', parseFloat(this.value)||0)"` : 'disabled'}
-                  class="w-14 h-8 text-center font-mono-num font-bold bg-[#f4ead5] border border-[#b89b6a] rounded" />
-              </label>
-              <button type="button" ${editable ? `onclick="app.toggleItemAttuned(${idx})"` : 'disabled'} title="Sintonização Mágica"
-                class="h-8 px-2 rounded border text-[11px] font-bold ${item.attuned ? 'bg-indigo-900 text-white border-indigo-400' : 'text-[#5c4328] border-[#8b5a2b]/40'}">
-                ✨ Sint.
-              </button>
-              ${editable ? `<button type="button" onclick="app.removeItem(${idx})" class="w-8 h-8 flex items-center justify-center text-[#8b1e1e] text-xs">✕</button>` : ''}
+            <div class="text-xs text-[#f4ead5] font-bold mt-0.5">${r.title}</div>
+            <div class="flex items-baseline justify-between mt-1 gap-2">
+              <span class="text-[11px] font-mono-num text-[#d6c29f] truncate">${r.formula}</span>
+              <span class="text-lg font-display font-black text-[#f4ead5] shrink-0">${r.total}</span>
             </div>
           </div>
         `).join('');
       }
 
-      renderBio(char) {
-        document.getElementById('bioTraits').value = char.bio.traits || '';
-        document.getElementById('bioIdeals').value = char.bio.ideals || '';
-        document.getElementById('bioBonds').value = char.bio.bonds || '';
-        document.getElementById('bioFlaws').value = char.bio.flaws || '';
-        document.getElementById('bioBackstory').value = char.bio.backstory || '';
+      // ---------------------------------------------------------
+      // MUTAÇÕES DE ESTADO & INTERAÇÕES
+      // ---------------------------------------------------------
+      selectCharacter(id) {
+        this.flushPendingCharSave();
+        this.activeCharId = id;
+        this.saveUiState({ activeCharId: id });
+        this.renderCharacterList();
+        this.renderSheet();
+        if (this.isAnimPopOpen) {
+          this.openAnimatedPop();
+        }
       }
 
-      // ---------------------------------------------------------
-      // MUTAÇÕES DA FICHA
-      // ---------------------------------------------------------
-      updateField(field, val) {
+      async createNewCharacter() {
+        const name = prompt("Nome do novo aventureiro:");
+        if (!name || !name.trim()) return;
+        const newId = `char_${this.currentUser.uid}_${Date.now()}`;
+        const newChar = buildStarterCharacter(this.currentUser.uid, this.userProfile.name, newId);
+        newChar.name = name.trim();
+        newChar.avatarUrl = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(name.trim())}`;
+        newChar.level = 1;
+        newChar.hp = { current: 10, max: 10, temp: 0 };
+        newChar.attacks = [];
+        newChar.features = [];
+        newChar.spellcasting.spells = [];
+
+        this.activeCharId = newId;
+        this.saveUiState({ activeCharId: newId });
+        await set(ref(db, `characters/${newId}`), newChar);
+      }
+
+      async deleteCurrentCharacter() {
         const char = this.getActiveChar();
         if (!char || !this.canEditChar(char)) return;
-        char[field] = val;
-        this.scheduleCharSave(char.id);
-        this.renderCharacterList();
+        if (this.characters.length <= 1) {
+          alert("A comunidade deve manter pelo menos uma ficha ativa.");
+          return;
+        }
+        if (!confirm(`Excluir permanentemente a ficha de ${char.name}?`)) return;
+        await remove(ref(db, `characters/${char.id}`));
+      }
+
+      updateField(field, value) {
+        const char = this.getActiveChar();
+        if (!char || !this.canEditChar(char)) return;
+        char[field] = value;
+        if (field === 'name') this.renderCharacterList();
+        this.scheduleCharSave(char);
       }
 
       updateLevel(val) {
         const char = this.getActiveChar();
         if (!char || !this.canEditChar(char)) return;
         char.level = Math.max(1, Math.min(20, parseInt(val) || 1));
-        this.scheduleCharSave(char.id);
         this.renderCharacterList();
         this.renderSheet();
+        this.scheduleCharSave(char);
+      }
+
+      updateAttribute(attrKey, val) {
+        const char = this.getActiveChar();
+        if (!char || !this.canEditChar(char)) return;
+        if (!char.attributes) char.attributes = {};
+        char.attributes[attrKey] = Math.max(1, Math.min(30, parseInt(val) || 10));
+        this.renderSheet();
+        this.scheduleCharSave(char);
       }
 
       toggleInspiration() {
         const char = this.getActiveChar();
         if (!char || !this.canEditChar(char)) return;
         char.inspiration = !char.inspiration;
-        this.scheduleCharSave(char.id);
         this.renderSheet();
+        this.scheduleCharSave(char);
       }
 
-      updateHp(key, val) {
+      updateHp(field, val) {
         const char = this.getActiveChar();
         if (!char || !this.canEditChar(char)) return;
-        char.hp[key] = Math.max(0, parseInt(val) || 0);
-        this.scheduleCharSave(char.id);
+        char.hp[field] = Math.max(0, parseInt(val) || 0);
         this.renderCharacterList();
         this.renderSheet();
+        this.scheduleCharSave(char);
       }
 
       applyHpDelta(sign) {
         const char = this.getActiveChar();
         if (!char || !this.canEditChar(char)) return;
-        const delta = Math.max(1, parseInt(document.getElementById('hpDeltaInput').value) || 0);
+        const delta = Math.max(1, parseInt(document.getElementById('hpDeltaInput').value) || 1);
+
         if (sign < 0) {
-          let remaining = delta;
+          let dmg = delta;
           if (char.hp.temp > 0) {
-            const absorbed = Math.min(char.hp.temp, remaining);
+            const absorbed = Math.min(char.hp.temp, dmg);
             char.hp.temp -= absorbed;
-            remaining -= absorbed;
+            dmg -= absorbed;
           }
-          char.hp.current = Math.max(0, char.hp.current - remaining);
+          char.hp.current = Math.max(0, char.hp.current - dmg);
         } else {
           char.hp.current = Math.min(char.hp.max, char.hp.current + delta);
-          if (char.hp.current > 0) {
-            char.deathSaves = { successes: 0, failures: 0 };
-          }
         }
-        this.scheduleCharSave(char.id);
+
         this.renderCharacterList();
         this.renderSheet();
+        this.scheduleCharSave(char);
       }
 
-      toggleDeathSave(type, count) {
+      toggleDeathSave(type, index) {
         const char = this.getActiveChar();
         if (!char || !this.canEditChar(char)) return;
-        char.deathSaves[type] = char.deathSaves[type] === count ? count - 1 : count;
-        this.scheduleCharSave(char.id);
+        if (!char.deathSaves) char.deathSaves = { successes: 0, failures: 0 };
+        char.deathSaves[type] = (char.deathSaves[type] === index) ? index - 1 : index;
         this.renderSheet();
-      }
-
-      updateAttribute(attrKey, val) {
-        const char = this.getActiveChar();
-        if (!char || !this.canEditChar(char)) return;
-        char.attributes[attrKey] = Math.max(1, Math.min(30, parseInt(val) || 10));
-        this.scheduleCharSave(char.id);
-        this.renderSheet();
+        this.scheduleCharSave(char);
       }
 
       toggleSaveProf(attrKey) {
         const char = this.getActiveChar();
         if (!char || !this.canEditChar(char)) return;
+        if (!char.savingThrows) char.savingThrows = {};
         char.savingThrows[attrKey] = !char.savingThrows[attrKey];
-        this.scheduleCharSave(char.id);
         this.renderSheet();
+        this.scheduleCharSave(char);
       }
 
-      setSkillProf(skillKey, val) {
+      updateSkillProf(skillKey, val) {
         const char = this.getActiveChar();
         if (!char || !this.canEditChar(char)) return;
-        const num = parseInt(val) || 0;
-        char.skills[skillKey] = SKILL_PROF_OPTIONS.includes(num) ? num : 0;
-        this.scheduleCharSave(char.id);
+        if (!char.skills) char.skills = {};
+        char.skills[skillKey] = parseInt(val) || 0;
         this.renderSheet();
+        this.scheduleCharSave(char);
       }
 
-      addAttack() {
-        const char = this.getActiveChar();
-        if (!char || !this.canEditChar(char)) return;
-        char.attacks.push({ name: "Nova Arma", ability: "str", damage: "1d6", type: "Perfurante" });
-        this.scheduleCharSave(char.id);
-        this.renderSheet();
-      }
-      updateAttack(idx, field, val) {
-        const char = this.getActiveChar();
-        if (!char || !this.canEditChar(char)) return;
-        char.attacks[idx][field] = val;
-        this.scheduleCharSave(char.id);
-        if (field === 'ability') this.renderSheet();
-      }
-      removeAttack(idx) {
-        const char = this.getActiveChar();
-        if (!char || !this.canEditChar(char)) return;
-        char.attacks.splice(idx, 1);
-        this.scheduleCharSave(char.id);
-        this.renderSheet();
-      }
-
-      addFeature() {
-        const char = this.getActiveChar();
-        if (!char || !this.canEditChar(char)) return;
-        char.features.push({ name: "Nova Característica", source: "Classe / Talento", desc: "Descrição do efeito..." });
-        this.scheduleCharSave(char.id);
-        this.renderSheet();
-      }
-      updateFeature(idx, field, val) {
-        const char = this.getActiveChar();
-        if (!char || !this.canEditChar(char)) return;
-        char.features[idx][field] = val;
-        this.scheduleCharSave(char.id);
-      }
-      removeFeature(idx) {
-        const char = this.getActiveChar();
-        if (!char || !this.canEditChar(char)) return;
-        char.features.splice(idx, 1);
-        this.scheduleCharSave(char.id);
-        this.renderSheet();
-      }
-
-      updateSpellcasting(field, val) {
-        const char = this.getActiveChar();
-        if (!char || !this.canEditChar(char)) return;
-        char.spellcasting[field] = val;
-        this.scheduleCharSave(char.id);
-        this.renderSheet();
-      }
-      updateSpellSlotTotal(lvl, val) {
-        const char = this.getActiveChar();
-        if (!char || !this.canEditChar(char)) return;
-        const total = Math.max(0, Math.min(9, parseInt(val) || 0));
-        char.spellcasting.slots[lvl] = { total, used: Math.min(char.spellcasting.slots[lvl]?.used || 0, total) };
-        this.scheduleCharSave(char.id);
-        this.renderSheet();
-      }
-      castSpellSlot(lvl) {
-        const char = this.getActiveChar();
-        if (!char || !this.canEditChar(char)) return;
-        const slot = char.spellcasting.slots[lvl];
-        if (slot && slot.used < slot.total) {
-          slot.used++;
-          this.scheduleCharSave(char.id);
-          this.renderSheet();
-        }
-      }
-      addSpell() {
-        const char = this.getActiveChar();
-        if (!char || !this.canEditChar(char)) return;
-        char.spellcasting.spells.push({ name: "Nova Magia", level: 1, school: "Evocação", prepared: true, desc: "Efeito da magia..." });
-        this.scheduleCharSave(char.id);
-        this.renderSheet();
-      }
-      toggleSpellPrepared(idx) {
-        const char = this.getActiveChar();
-        if (!char || !this.canEditChar(char)) return;
-        char.spellcasting.spells[idx].prepared = !char.spellcasting.spells[idx].prepared;
-        this.scheduleCharSave(char.id);
-        this.renderSheet();
-      }
-      updateSpell(idx, field, val) {
-        const char = this.getActiveChar();
-        if (!char || !this.canEditChar(char)) return;
-        char.spellcasting.spells[idx][field] = val;
-        this.scheduleCharSave(char.id);
-      }
-      removeSpell(idx) {
-        const char = this.getActiveChar();
-        if (!char || !this.canEditChar(char)) return;
-        char.spellcasting.spells.splice(idx, 1);
-        this.scheduleCharSave(char.id);
-        this.renderSheet();
-      }
-
-      updateCoin(coin, val) {
-        const char = this.getActiveChar();
-        if (!char || !this.canEditChar(char)) return;
-        char.coins[coin] = Math.max(0, parseInt(val) || 0);
-        this.scheduleCharSave(char.id);
-      }
-      addItem() {
-        const char = this.getActiveChar();
-        if (!char || !this.canEditChar(char)) return;
-        char.inventory.push({ name: "Novo Item", qty: 1, weight: 0.5, equipped: false, attuned: false });
-        this.scheduleCharSave(char.id);
-        this.renderSheet();
-      }
-      updateItem(idx, field, val) {
-        const char = this.getActiveChar();
-        if (!char || !this.canEditChar(char)) return;
-        char.inventory[idx][field] = val;
-        this.scheduleCharSave(char.id);
-        if (field === 'qty' || field === 'weight') this.renderInventory(char, this.canEditChar(char));
-      }
-      toggleItemEquipped(idx) {
-        const char = this.getActiveChar();
-        if (!char || !this.canEditChar(char)) return;
-        char.inventory[idx].equipped = !char.inventory[idx].equipped;
-        this.scheduleCharSave(char.id);
-        this.renderSheet();
-      }
-      toggleItemAttuned(idx) {
-        const char = this.getActiveChar();
-        if (!char || !this.canEditChar(char)) return;
-        const item = char.inventory[idx];
-        if (!item.attuned) {
-          const currentAttuned = char.inventory.filter(i => i.attuned).length;
-          if (currentAttuned >= 3) {
-            alert("Regra D&D 5e: Um personagem pode sintonizar no máximo 3 itens mágicos simultaneamente.");
-            return;
-          }
-        }
-        item.attuned = !item.attuned;
-        this.scheduleCharSave(char.id);
-        this.renderSheet();
-      }
-      removeItem(idx) {
-        const char = this.getActiveChar();
-        if (!char || !this.canEditChar(char)) return;
-        char.inventory.splice(idx, 1);
-        this.scheduleCharSave(char.id);
-        this.renderSheet();
-      }
-
-      updateBio(field, val) {
-        const char = this.getActiveChar();
-        if (!char || !this.canEditChar(char)) return;
-        char.bio[field] = val;
-        this.scheduleCharSave(char.id);
+      rollInitiative() {
+        this.rollD20Check('Iniciativa', 0);
       }
 
       shortRest() {
         const char = this.getActiveChar();
         if (!char || !this.canEditChar(char)) return;
-        alert(`Descanso Curto concluído para ${char.name}! Você pode gastar seus Dados de Vida (${char.hitDice}) para recuperar pontos de vida.`);
+        const conScore = char.attributes?.con || 10;
+        const heal = Math.floor(Math.random() * 8) + 1 + Math.max(0, Math.floor((conScore - 10) / 2));
+        char.hp.current = Math.min(char.hp.max, char.hp.current + heal);
+        this.recordAndShowRoll('Descanso Curto', '1d8 (Dado de Vida)', heal, `Recuperou ${heal} PV`);
+        this.renderCharacterList();
+        this.renderSheet();
+        this.scheduleCharSave(char);
       }
 
       longRest() {
@@ -5595,306 +5609,185 @@
         if (!char || !this.canEditChar(char)) return;
         char.hp.current = char.hp.max;
         char.deathSaves = { successes: 0, failures: 0 };
-        for (let lvl = 1; lvl <= 9; lvl++) {
-          if (char.spellcasting.slots[lvl]) char.spellcasting.slots[lvl].used = 0;
+        if (char.spellcasting?.slots) {
+          Object.keys(char.spellcasting.slots).forEach(lvl => {
+            char.spellcasting.slots[lvl].used = 0;
+          });
         }
-        this.scheduleCharSave(char.id);
+        this.recordAndShowRoll('Descanso Longo', 'Recuperação Total', char.hp.max, 'PV e Magias Restaurados');
         this.renderCharacterList();
         this.renderSheet();
-        alert(`Descanso Longo concluído! Pontos de Vida e Espaços de Magia de ${char.name} foram restaurados.`);
+        this.scheduleCharSave(char);
+      }
+
+      addAttack() {
+        const char = this.getActiveChar();
+        if (!char || !this.canEditChar(char)) return;
+        if (!char.attacks) char.attacks = [];
+        char.attacks.push({ name: "Nova Arma", ability: "str", damage: "1d8", type: "Cortante" });
+        this.renderSheet();
+        this.scheduleCharSave(char);
+      }
+      updateAttack(idx, field, val) {
+        const char = this.getActiveChar();
+        if (!char || !this.canEditChar(char)) return;
+        char.attacks[idx][field] = val;
+        this.renderSheet();
+        this.scheduleCharSave(char);
+      }
+      removeAttack(idx) {
+        const char = this.getActiveChar();
+        if (!char || !this.canEditChar(char)) return;
+        char.attacks.splice(idx, 1);
+        this.renderSheet();
+        this.scheduleCharSave(char);
+      }
+
+      addFeature() {
+        const char = this.getActiveChar();
+        if (!char || !this.canEditChar(char)) return;
+        if (!char.features) char.features = [];
+        char.features.push({ name: "Nova Habilidade", source: "Classe / Talento", desc: "Descrição da habilidade..." });
+        this.renderSheet();
+        this.scheduleCharSave(char);
+      }
+      updateFeature(idx, field, val) {
+        const char = this.getActiveChar();
+        if (!char || !this.canEditChar(char)) return;
+        char.features[idx][field] = val;
+        this.scheduleCharSave(char);
+      }
+      removeFeature(idx) {
+        const char = this.getActiveChar();
+        if (!char || !this.canEditChar(char)) return;
+        char.features.splice(idx, 1);
+        this.renderSheet();
+        this.scheduleCharSave(char);
+      }
+
+      updateSpellcasting(field, val) {
+        const char = this.getActiveChar();
+        if (!char || !this.canEditChar(char)) return;
+        char.spellcasting[field] = val;
+        this.renderSheet();
+        this.scheduleCharSave(char);
+      }
+      updateSpellSlot(lvl, field, val) {
+        const char = this.getActiveChar();
+        if (!char || !this.canEditChar(char)) return;
+        char.spellcasting.slots[lvl][field] = Math.max(0, parseInt(val) || 0);
+        this.scheduleCharSave(char);
+      }
+      addSpell() {
+        const char = this.getActiveChar();
+        if (!char || !this.canEditChar(char)) return;
+        if (!char.spellcasting.spells) char.spellcasting.spells = [];
+        char.spellcasting.spells.push({ name: "Nova Magia", level: 1, school: "Evocação", prepared: true, desc: "Efeito da magia..." });
+        this.renderSheet();
+        this.scheduleCharSave(char);
+      }
+      updateSpell(idx, field, val) {
+        const char = this.getActiveChar();
+        if (!char || !this.canEditChar(char)) return;
+        char.spellcasting.spells[idx][field] = val;
+        this.renderSheet();
+        this.scheduleCharSave(char);
+      }
+      toggleSpellPrepared(idx) {
+        const char = this.getActiveChar();
+        if (!char || !this.canEditChar(char)) return;
+        char.spellcasting.spells[idx].prepared = !char.spellcasting.spells[idx].prepared;
+        this.scheduleCharSave(char);
+      }
+      removeSpell(idx) {
+        const char = this.getActiveChar();
+        if (!char || !this.canEditChar(char)) return;
+        char.spellcasting.spells.splice(idx, 1);
+        this.renderSheet();
+        this.scheduleCharSave(char);
+      }
+
+      updateCoin(type, val) {
+        const char = this.getActiveChar();
+        if (!char || !this.canEditChar(char)) return;
+        if (!char.coins) char.coins = { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 };
+        char.coins[type] = Math.max(0, parseInt(val) || 0);
+        this.scheduleCharSave(char);
+      }
+      addItem() {
+        const char = this.getActiveChar();
+        if (!char || !this.canEditChar(char)) return;
+        if (!char.inventory) char.inventory = [];
+        char.inventory.push({ name: "Novo Item", qty: 1, weight: 0.5, equipped: false, attuned: false });
+        this.renderSheet();
+        this.scheduleCharSave(char);
+      }
+      updateItem(idx, field, val) {
+        const char = this.getActiveChar();
+        if (!char || !this.canEditChar(char)) return;
+        char.inventory[idx][field] = val;
+        this.renderSheet();
+        this.scheduleCharSave(char);
+      }
+      toggleItemFlag(idx, flag) {
+        const char = this.getActiveChar();
+        if (!char || !this.canEditChar(char)) return;
+        char.inventory[idx][flag] = !char.inventory[idx][flag];
+        this.scheduleCharSave(char);
+      }
+      removeItem(idx) {
+        const char = this.getActiveChar();
+        if (!char || !this.canEditChar(char)) return;
+        char.inventory.splice(idx, 1);
+        this.renderSheet();
+        this.scheduleCharSave(char);
+      }
+
+      updateBio(field, val) {
+        const char = this.getActiveChar();
+        if (!char || !this.canEditChar(char)) return;
+        if (!char.bio) char.bio = {};
+        char.bio[field] = val;
+        this.scheduleCharSave(char);
       }
 
       // ---------------------------------------------------------
-      // MOTOR DE ROLAGEM DE DADOS (D20 + VANTAGEM/DESVANTAGEM)
-      // ---------------------------------------------------------
-      setRollMode(mode, persist = true) {
-        this.rollMode = mode;
-        if (persist) this.saveUiState({ rollMode: mode });
-        ['dis', 'norm', 'adv'].forEach(m => {
-          const btn = document.getElementById(`mode${m.charAt(0).toUpperCase() + m.slice(1)}Btn`);
-          if (!btn) return;
-          if (m === mode) {
-            btn.className = 'h-8 px-2.5 rounded text-[11px] font-heading uppercase font-bold bg-[#c59b27] text-[#120c09] transition';
-          } else {
-            btn.className = 'h-8 px-2.5 rounded text-[11px] font-heading uppercase font-bold text-[#d6c29f] hover:text-white transition';
-          }
-        });
-      }
-
-      rollD20WithModifier(title, modifier, charName) {
-        const r1 = Math.floor(Math.random() * 20) + 1;
-        const r2 = Math.floor(Math.random() * 20) + 1;
-        let chosen = r1;
-        let detail = `1d20 (${r1})`;
-
-        if (this.rollMode === 'adv') {
-          chosen = Math.max(r1, r2);
-          detail = `2d20 Vant. (${r1}, ${r2} → ${chosen})`;
-        } else if (this.rollMode === 'dis') {
-          chosen = Math.min(r1, r2);
-          detail = `2d20 Desv. (${r1}, ${r2} → ${chosen})`;
-        }
-
-        const total = chosen + modifier;
-        const modStr = modifier !== 0 ? ` ${modifier >= 0 ? '+' : '-'} ${Math.abs(modifier)}` : '';
-        const critType = chosen === 20 ? 'crit-success' : chosen === 1 ? 'crit-fail' : 'normal';
-
-        this.recordRoll({ title, charName, formula: `${detail}${modStr}`, total, critType });
-      }
-
-      rollFreeDie(sides) {
-        const char = this.getActiveChar();
-        const res = Math.floor(Math.random() * sides) + 1;
-        const critType = (sides === 20 && res === 20) ? 'crit-success' : (sides === 20 && res === 1) ? 'crit-fail' : 'normal';
-        this.recordRoll({
-          title: `Dado Livre (d${sides})`,
-          charName: char ? char.name : (this.userProfile?.name || 'Mesa'),
-          formula: `1d${sides} (${res})`,
-          total: res,
-          critType
-        });
-      }
-
-      rollAbilityCheck(attrKey) {
-        const char = this.getActiveChar();
-        const label = ATTRIBUTES_META.find(a => a.key === attrKey).label;
-        this.rollD20WithModifier(`Teste de ${label}`, 0, char.name);
-      }
-
-      rollSavingThrow(attrKey) {
-        const char = this.getActiveChar();
-        const label = ATTRIBUTES_META.find(a => a.key === attrKey).label;
-        this.rollD20WithModifier(`Salvaguarda de ${label}`, this.getSaveTotal(char, attrKey), char.name);
-      }
-
-      rollSkill(skillKey) {
-        const char = this.getActiveChar();
-        const label = SKILLS_META.find(s => s.key === skillKey).label;
-        this.rollD20WithModifier(`Perícia: ${label}`, this.getSkillTotal(char, skillKey), char.name);
-      }
-
-      rollInitiative() {
-        const char = this.getActiveChar();
-        this.rollD20WithModifier('Iniciativa de Combate', 0, char.name);
-      }
-
-      rollAttack(idx) {
-        const char = this.getActiveChar();
-        const atk = char.attacks[idx];
-        const hitBonus = this.getProficiencyBonus(char.level);
-        this.rollD20WithModifier(`Ataque: ${atk.name}`, hitBonus, char.name);
-      }
-
-      rollDamage(idx) {
-        const char = this.getActiveChar();
-        const atk = char.attacks[idx];
-        const expr = (atk.damage || '1d6').replace(/\s+/g, '');
-        const match = expr.match(/^(\d+)d(\d+)([+-]\d+)?$/i);
-
-        if (!match) {
-          this.recordRoll({ title: `Dano: ${atk.name}`, charName: char.name, formula: expr, total: expr, critType: 'normal' });
-          return;
-        }
-        const count = parseInt(match[1]);
-        const sides = parseInt(match[2]);
-        const flat = parseInt(match[3] || '0');
-        let sum = 0;
-        const rolls = [];
-        for (let i = 0; i < count; i++) {
-          const r = Math.floor(Math.random() * sides) + 1;
-          rolls.push(r);
-          sum += r;
-        }
-        const total = sum + flat;
-        const flatStr = flat !== 0 ? (flat > 0 ? ` + ${flat}` : ` - ${Math.abs(flat)}`) : '';
-        this.recordRoll({
-          title: `Dano (${atk.type}): ${atk.name}`,
-          charName: char.name,
-          formula: `${count}d${sides} [${rolls.join('+')}]${flatStr}`,
-          total,
-          critType: 'normal'
-        });
-      }
-
-      recordRoll(entry) {
-        const item = { ...entry, time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) };
-        this.rollHistory.unshift(item);
-        if (this.rollHistory.length > 40) this.rollHistory.pop();
-
-        document.getElementById('rollCountBadge').textContent = this.rollHistory.length;
-        document.getElementById('rollCountBadgeMobile').textContent = this.rollHistory.length;
-
-        const toast = document.getElementById('diceToast');
-        document.getElementById('diceToastTitle').textContent = `${item.charName} • ${item.title}`;
-        document.getElementById('diceToastFormula').textContent = item.formula;
-        document.getElementById('diceToastTotal').textContent = item.total;
-
-        const badge = document.getElementById('diceToastBadge');
-        if (item.critType === 'crit-success') {
-          badge.textContent = '✨ ACERTO CRÍTICO (20 NATURAL)!';
-          badge.className = 'mt-1.5 text-[11px] font-heading uppercase tracking-widest font-bold text-emerald-400';
-        } else if (item.critType === 'crit-fail') {
-          badge.textContent = '💀 FALHA CRÍTICA (1 NATURAL)!';
-          badge.className = 'mt-1.5 text-[11px] font-heading uppercase tracking-widest font-bold text-red-400';
-        } else {
-          badge.textContent = '';
-        }
-
-        toast.classList.remove('hidden');
-        clearTimeout(this.toastTimer);
-        this.toastTimer = setTimeout(() => toast.classList.add('hidden'), 5000);
-        this.renderRollHistory();
-      }
-
-      renderRollHistory() {
-        const list = document.getElementById('rollHistoryList');
-        if (!this.rollHistory.length) {
-          list.innerHTML = `<p class="text-xs text-[#d6c29f]/70 italic">Nenhuma rolagem registrada nesta sessão.</p>`;
-          return;
-        }
-        list.innerHTML = this.rollHistory.map(r => `
-          <div class="p-3 rounded-lg bg-black/40 border ${r.critType === 'crit-success' ? 'border-emerald-500' : r.critType === 'crit-fail' ? 'border-red-500' : 'border-[#c59b27]/30'}">
-            <div class="flex justify-between text-[11px] text-[#e5c158] font-heading font-bold gap-2">
-              <span class="truncate">${r.charName}</span>
-              <span class="font-mono-num text-[#d6c29f]/70 shrink-0">${r.time}</span>
-            </div>
-            <div class="text-xs text-[#f4ead5] font-semibold mt-0.5">${r.title}</div>
-            <div class="flex justify-between items-baseline mt-1.5 gap-2">
-              <span class="font-mono-num text-[11px] text-[#d6c29f] truncate">${r.formula}</span>
-              <span class="font-display text-xl font-black text-[#e5c158] shrink-0">${r.total}</span>
-            </div>
-          </div>
-        `).join('');
-      }
-
-      toggleRollHistory() {
-        const drawer = document.getElementById('rollHistoryDrawer');
-        drawer.classList.toggle('hidden');
-        drawer.classList.toggle('flex');
-        this.renderRollHistory();
-      }
-
-      clearRollHistory() {
-        this.rollHistory = [];
-        document.getElementById('rollCountBadge').textContent = '0';
-        document.getElementById('rollCountBadgeMobile').textContent = '0';
-        this.renderRollHistory();
-      }
-
-      // ---------------------------------------------------------
-      // LIVRO DA COMUNIDADE (COMPÊNDIO COMPARTILHADO NO FIREBASE)
-      // ---------------------------------------------------------
-      renderCompendium() {
-        const query = (document.getElementById('compendiumSearch')?.value || '').toLowerCase();
-        const cat = document.getElementById('compendiumCategory')?.value || 'all';
-        const grid = document.getElementById('compendiumGrid');
-        if (!grid) return;
-
-        const isDM = this.userProfile?.role === 'dm';
-
-        const filtered = this.compendium.filter(entry => {
-          const matchCat = cat === 'all' || entry.category === cat;
-          const matchText = entry.title.toLowerCase().includes(query) || entry.description.toLowerCase().includes(query);
-          return matchCat && matchText;
-        });
-
-        grid.innerHTML = filtered.map(entry => `
-          <article class="parchment-page rounded-xl p-5 flex flex-col justify-between gap-3">
-            <div>
-              <div class="flex items-center justify-between gap-2 mb-1">
-                <span class="text-[10px] font-heading uppercase font-bold tracking-widest px-2 py-0.5 rounded bg-[#8b1e1e] text-[#f4ead5]">${entry.category}</span>
-                ${isDM ? `<button onclick="app.deleteCompendiumEntry('${entry.id}')" class="w-8 h-8 flex items-center justify-center text-xs text-[#8b1e1e] hover:underline shrink-0">Excluir</button>` : ''}
-              </div>
-              <h3 class="font-display text-lg font-black text-[#2b1d0e] mt-1">${entry.title}</h3>
-              <hr class="dnd-divider my-2" />
-              <p class="text-sm text-[#2b1d0e] leading-relaxed">${entry.description}</p>
-            </div>
-          </article>
-        `).join('');
-      }
-
-      openCompendiumModal() {
-        const modal = document.getElementById('compendiumModal');
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-      }
-
-      async saveCompendiumEntry() {
-        if (this.userProfile?.role !== 'dm') return;
-        const title = document.getElementById('newEntryTitle').value.trim();
-        const category = document.getElementById('newEntryCategory').value;
-        const description = document.getElementById('newEntryDesc').value.trim();
-        if (!title || !description) return;
-
-        const id = `comp_${Date.now()}`;
-        await set(ref(db, `compendium/${id}`), {
-          id,
-          title,
-          category,
-          description,
-          author: this.userProfile.name
-        });
-
-        document.getElementById('newEntryTitle').value = '';
-        document.getElementById('newEntryDesc').value = '';
-        document.getElementById('compendiumModal').classList.add('hidden');
-      }
-
-      async deleteCompendiumEntry(id) {
-        if (this.userProfile?.role !== 'dm') return;
-        await remove(ref(db, `compendium/${id}`));
-      }
-
-      // ---------------------------------------------------------
-      // NAVEGAÇÃO DESKTOP & MOBILE (PERSISTENTE)
+      // NAVEGAÇÃO ENTRE VISÕES, ABAS E DRAWERS
       // ---------------------------------------------------------
       switchView(view, persist = true) {
         this.currentView = view;
         if (persist) this.saveUiState({ view });
 
-        const sheetView = document.getElementById('sheetView');
-        const chaptersView = document.getElementById('chaptersView');
-        const compView = document.getElementById('compendiumView');
-        const navSheet = document.getElementById('navSheetBtn');
-        const navChapters = document.getElementById('navChaptersBtn');
-        const navComp = document.getElementById('navCompendiumBtn');
+        document.getElementById('sheetView').classList.toggle('hidden', view !== 'sheet');
+        document.getElementById('chaptersView').classList.toggle('hidden', view !== 'chapters');
+        document.getElementById('compendiumView').classList.toggle('hidden', view !== 'compendium');
 
-        const activeBtnClass = 'h-9 px-3 rounded-md font-heading text-xs font-bold tracking-wider uppercase transition bg-[#8b1e1e] text-[#f4ead5] border border-[#e5c158]/50 flex items-center gap-1';
-        const inactiveBtnClass = 'h-9 px-3 rounded-md font-heading text-xs font-bold tracking-wider uppercase transition text-[#d6c29f] hover:text-white flex items-center gap-1';
+        const activeBtnCls = 'h-9 px-3 rounded-md font-heading text-xs font-bold tracking-wider uppercase transition bg-[#8b1e1e] text-[#f4ead5] border border-[#e5c158]/50';
+        const idleBtnCls = 'h-9 px-3 rounded-md font-heading text-xs font-bold tracking-wider uppercase transition text-[#d6c29f] hover:text-white';
 
-        sheetView.classList.toggle('hidden', view !== 'sheet');
-        chaptersView.classList.toggle('hidden', view !== 'chapters');
-        compView.classList.toggle('hidden', view !== 'compendium');
-
-        if (navSheet) navSheet.className = view === 'sheet' ? activeBtnClass : inactiveBtnClass;
-        if (navChapters) navChapters.className = view === 'chapters' ? activeBtnClass : inactiveBtnClass;
-        if (navComp) navComp.className = view === 'compendium' ? activeBtnClass : inactiveBtnClass;
-
-        if (view === 'compendium') {
-          this.renderCompendium();
-        } else if (view === 'chapters') {
-          this.renderChaptersUI();
-        }
+        document.getElementById('navSheetBtn').className = view === 'sheet' ? activeBtnCls : idleBtnCls;
+        document.getElementById('navChaptersBtn').className = (view === 'chapters' ? activeBtnCls : idleBtnCls) + ' flex items-center gap-1';
+        document.getElementById('navCompendiumBtn').className = view === 'compendium' ? activeBtnCls : idleBtnCls;
       }
 
       mobileNav(target) {
-        ['sheet', 'chapters', 'compendium'].forEach(t => {
-          const btn = document.getElementById(`mobNav-${t}`);
-          if (!btn) return;
-          if (t === target) {
-            btn.className = 'flex flex-col items-center justify-center gap-0.5 text-[#e5c158] bg-[#8b1e1e]/30 border-t-2 border-[#e5c158]';
-          } else {
-            btn.className = 'flex flex-col items-center justify-center gap-0.5 text-[#d6c29f] hover:text-[#e5c158]';
-          }
-        });
-
         this.switchView(target);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        if (target === 'sheet') {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        const activeMobCls = 'flex flex-col items-center justify-center gap-0.5 text-[#e5c158] bg-[#8b1e1e]/30 border-t-2 border-[#e5c158]';
+        const idleMobCls = 'flex flex-col items-center justify-center gap-0.5 text-[#d6c29f] hover:text-[#e5c158]';
+
+        document.getElementById('mobNav-sheet').className = target === 'sheet' ? activeMobCls : idleMobCls;
+        document.getElementById('mobNav-chapters').className = target === 'chapters' ? activeMobCls : idleMobCls;
+        document.getElementById('mobNav-compendium').className = target === 'compendium' ? activeMobCls : idleMobCls;
       }
 
       switchSubTab(tab, persist = true) {
         this.currentSubTab = tab;
         if (persist) this.saveUiState({ subTab: tab });
+
         ['combat', 'spells', 'inventory', 'bio'].forEach(t => {
           const panel = document.getElementById(`panel-${t}`);
           const btn = document.getElementById(`subTab-${t}`);
@@ -5908,6 +5801,47 @@
             btn.className = 'subtab-btn min-h-[42px] px-3 py-2 rounded-lg font-heading text-[11px] font-bold uppercase tracking-wider bg-[#e6d5b8] text-[#2b1d0e] transition';
           }
         });
+      }
+
+      toggleRollHistory() {
+        const drawer = document.getElementById('rollHistoryDrawer');
+        drawer.classList.toggle('hidden');
+        drawer.classList.toggle('flex');
+      }
+
+      clearRollHistory() {
+        this.rollHistory = [];
+        document.getElementById('rollCountBadge').textContent = '0';
+        document.getElementById('rollCountBadgeMobile').textContent = '0';
+        this.renderRollHistory();
+      }
+
+      openCompendiumModal() {
+        if (this.userProfile?.role !== 'dm') return;
+        const modal = document.getElementById('compendiumModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+
+      async saveCompendiumEntry() {
+        if (this.userProfile?.role !== 'dm') return;
+        const title = document.getElementById('newEntryTitle').value.trim();
+        const category = document.getElementById('newEntryCategory').value;
+        const description = document.getElementById('newEntryDesc').value.trim();
+        if (!title || !description) return;
+
+        const id = `comp_${Date.now()}`;
+        await set(ref(db, `compendium/${id}`), { id, title, category, description });
+        document.getElementById('newEntryTitle').value = '';
+        document.getElementById('newEntryDesc').value = '';
+        document.getElementById('compendiumModal').classList.add('hidden');
+      }
+
+      async deleteCompendiumEntry(id) {
+        if (this.userProfile?.role !== 'dm') return;
+        if (confirm("Remover esta entrada do Livro da Comunidade?")) {
+          await remove(ref(db, `compendium/${id}`));
+        }
       }
     }
 
